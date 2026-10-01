@@ -1,4 +1,5 @@
 const express = require('express');
+const { LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET last_value = last_value + 1 WHERE name = $1`, [seqName]);
@@ -100,8 +101,8 @@ module.exports = function (pool) {
         // commande entière, une notification est créée) ; sinon, refus classique.
         const lotRes = await pool.query(
           `SELECT id, numero_lot, quantite_actuelle FROM lots
-           WHERE produit_id = $1 AND statut = 'LIBERE' AND quantite_actuelle >= $2
-           ORDER BY created_at ASC LIMIT 1`,
+           WHERE produit_id = $1 AND ${LOT_DISPONIBLE} AND quantite_actuelle >= $2
+           ORDER BY ${ORDRE_FEFO} LIMIT 1`,
           [l.produit_id, qtePrelevee]
         );
         const lot = lotRes.rows[0];
@@ -110,7 +111,7 @@ module.exports = function (pool) {
           let vracTotal = 0;
           if (produit.produit_source_id) {
             const vracRes = await pool.query(
-              `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND statut = 'LIBERE'`,
+              `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND ${LOT_DISPONIBLE}`,
               [produit.produit_source_id]
             );
             vracTotal = Number(vracRes.rows[0].total);
@@ -129,7 +130,7 @@ module.exports = function (pool) {
             continue;
           }
           const stockRes = await pool.query(
-            `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND statut = 'LIBERE'`,
+            `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND ${LOT_DISPONIBLE}`,
             [l.produit_id]
           );
           return res.status(409).json({

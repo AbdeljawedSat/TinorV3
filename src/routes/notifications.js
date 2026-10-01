@@ -1,4 +1,5 @@
 const express = require('express');
+const { LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -48,8 +49,8 @@ module.exports = function (pool) {
       const qtePrelevee = Number(ligne.qty) + Number(ligne.free_units || 0);
       const lotRes = await pool.query(
         `SELECT id, numero_lot, quantite_actuelle FROM lots
-         WHERE produit_id = $1 AND statut = 'LIBERE' AND quantite_actuelle >= $2
-         ORDER BY created_at ASC LIMIT 1`,
+         WHERE produit_id = $1 AND ${LOT_DISPONIBLE} AND quantite_actuelle >= $2
+         ORDER BY ${ORDRE_FEFO} LIMIT 1`,
         [notif.produit_id, qtePrelevee]
       );
       const lot = lotRes.rows[0];

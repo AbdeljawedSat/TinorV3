@@ -39,6 +39,7 @@ function createApp(pool) {
   app.use('/api/backup', requireAuth, require('./routes/backup')());
   app.use('/api/stats', requireAuth, require('./routes/stats')(pool));
   app.use('/api/grille-huiles', requireAuth, require('./routes/grilleHuiles')(pool));
+  app.use('/api/alertes', requireAuth, require('./routes/alertes')(pool));
 
   app.use((err, req, res, next) => {
     console.error(err);

@@ -116,4 +116,10 @@ async function recordEntree(pool, { produitId, lotId, quantite, typeMouvement, e
   );
 }
 
-module.exports = { nextNumero, nextLotNumber, createLot, consumeLot, recordEntree };
+// Lot utilisable pour une sortie de stock : libéré ET non périmé.
+// Ordre FEFO (premier expiré, premier sorti) : les lots datés passent d'abord,
+// du plus proche de l'expiration au plus lointain, puis les lots sans date (FIFO).
+const LOT_DISPONIBLE = `statut = 'LIBERE' AND (date_expiration IS NULL OR date_expiration >= CURDATE())`;
+const ORDRE_FEFO = `(date_expiration IS NULL), date_expiration ASC, created_at ASC`;
+
+module.exports = { nextNumero, nextLotNumber, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO };

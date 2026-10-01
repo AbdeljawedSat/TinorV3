@@ -1,5 +1,5 @@
 const express = require('express');
-const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
+const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -40,15 +40,15 @@ module.exports = function (pool) {
         const besoin = Number(ing.quantite_par_unite) * Number(qty_produite);
         const lotRes = await pool.query(
           `SELECT id, numero_lot, quantite_actuelle FROM lots
-           WHERE produit_id = $1 AND statut = 'LIBERE' AND quantite_actuelle >= $2
-           ORDER BY created_at ASC LIMIT 1`,
+           WHERE produit_id = $1 AND ${LOT_DISPONIBLE} AND quantite_actuelle >= $2
+           ORDER BY ${ORDRE_FEFO} LIMIT 1`,
           [ing.ingredient_id, besoin]
         );
         const lot = lotRes.rows[0];
         if (!lot) {
           const prodRes = await pool.query('SELECT nom FROM produits WHERE id = $1', [ing.ingredient_id]);
           const stockRes = await pool.query(
-            `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND statut = 'LIBERE'`,
+            `SELECT COALESCE(SUM(quantite_actuelle),0) AS total FROM lots WHERE produit_id = $1 AND ${LOT_DISPONIBLE}`,
             [ing.ingredient_id]
           );
           return res.status(409).json({
