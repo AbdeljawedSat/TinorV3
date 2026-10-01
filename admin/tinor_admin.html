@@ -447,6 +447,7 @@
           <a data-view="tracabilite"><span>Traçabilité</span></a>
           <a data-view="stock"><span>Stock</span></a>
           <a data-view="stock-mouvements"><span>Mouvements</span></a>
+          <a data-view="inventaires"><span>Inventaires</span></a>
         </div>
       </div>
 
@@ -1375,6 +1376,37 @@
       </div>
 
       <!-- ===== LOCAUX & ZONES ===== -->
+      <!-- ===== INVENTAIRES ===== -->
+      <div class="view" id="view-inventaires">
+        <div class="pageHead"><h1>Inventaires</h1><p>Comptage physique du stock par local — les écarts sont ajustés et tracés à la clôture</p></div>
+        <div class="panel" id="invNouveauPanel" style="padding:16px 18px; display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Local à inventorier</label>
+            <select id="invLocal" style="min-width:220px; padding:8px 10px; border:1px solid var(--line); border-radius:7px; background:var(--sand);"></select>
+          </div>
+          <label style="display:flex; gap:6px; align-items:center; font-size:12.5px; padding-bottom:9px;">
+            <input type="checkbox" id="invSansLocal" checked> Inclure les lots sans emplacement
+          </label>
+          <button class="btnPrimary" id="invOuvrirBtn">＋ Ouvrir un inventaire</button>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Date</th><th>Local</th><th class="num">Lots</th><th class="num">Écarts</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="inventairesBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel" id="invDetailPanel" style="display:none;">
+          <div class="panelHead" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div><h2 id="invDetailTitre"></h2><div class="sub" id="invDetailSub"></div></div>
+            <div id="invDetailActions" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+          </div>
+          <table>
+            <thead><tr><th>N° lot</th><th>Produit</th><th>Expiration</th><th class="num">Théorique</th><th class="num">Compté</th><th class="num">Écart</th></tr></thead>
+            <tbody id="invLignesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="view" id="view-locaux">
         <div class="pageHead"><h1>Locaux &amp; Zones</h1><p>Dépôts, ateliers, points de vente — et leurs zones internes</p></div>
         <div class="panel">
@@ -6122,6 +6154,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats: () => openAchatModal(),
     receptions: () => openReceptionModal(),
     lots: () => openLotManuelModal(),
+    inventaires: () => document.getElementById('invLocal').focus(),
     certificats: () => openCertificatModal(null),
   };
   // Actions rapides du Tableau de bord — navigue vers l'écran concerné PUIS
@@ -6300,6 +6333,145 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       ];
     });
   }
+
+  // ============================================================================
+  // INVENTAIRES — comptage physique, écarts, clôture avec ajustement du stock
+  // ============================================================================
+  let INVENTAIRES = [];
+  let INVENTAIRE_OUVERT = null;
+  const fmtQte = v => Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 3 });
+
+  async function chargerInventaires() {
+    document.getElementById('invLocal').innerHTML = APP_DATA.locaux.length
+      ? APP_DATA.locaux.map(l => `<option value="${l.id}">${l.nom}</option>`).join('')
+      : `<option value="">Aucun local — créez-en un dans Locaux & Zones</option>`;
+    try {
+      INVENTAIRES = await apiFetch('/inventaires');
+      renderInventaires();
+      if (INVENTAIRE_OUVERT) await ouvrirInventaire(INVENTAIRE_OUVERT.id);
+    } catch (err) {
+      document.getElementById('inventairesBody').innerHTML = `<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">${err.message}</td></tr>`;
+    }
+  }
+
+  function renderInventaires() {
+    const body = document.getElementById('inventairesBody');
+    if (!INVENTAIRES.length) {
+      body.innerHTML = `<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Aucun inventaire pour l'instant.</td></tr>`;
+      return;
+    }
+    body.innerHTML = INVENTAIRES.map(i => `
+      <tr>
+        <td class="lotCode">${i.numero}</td>
+        <td class="rowMeta num">${fmtDate(i.date)}</td>
+        <td>${i.local_nom || '—'}</td>
+        <td class="num">${i.nb_lignes}</td>
+        <td class="num" style="${Number(i.nb_ecarts) ? 'color:var(--warn); font-weight:600;' : ''}">${i.nb_ecarts}</td>
+        <td>${i.statut === 'en_cours' ? '<span class="pill warn">En cours</span>' : '<span class="pill good">Clôturé</span>'}</td>
+        <td class="rowActions"><button class="rowActionBtn" onclick="ouvrirInventaire(${i.id})">${i.statut === 'en_cours' ? 'Compter' : 'Voir'}</button></td>
+      </tr>`).join('');
+  }
+
+  async function ouvrirInventaire(id) {
+    try { INVENTAIRE_OUVERT = await apiFetch(`/inventaires/${id}`); }
+    catch (err) { alert(err.message); return; }
+    const inv = INVENTAIRE_OUVERT;
+    const enCours = inv.statut === 'en_cours';
+    document.getElementById('invDetailPanel').style.display = 'block';
+    document.getElementById('invDetailTitre').textContent = `Inventaire ${inv.numero} — ${inv.local_nom || ''}`;
+    document.getElementById('invDetailSub').textContent = enCours
+      ? `Ouvert le ${fmtDate(inv.date)} — saisissez les quantités comptées, puis enregistrez ou clôturez.`
+      : `Clôturé — ${inv.lignes.filter(l => Number(l.ecart) !== 0).length} écart(s) ajusté(s) dans le stock.`;
+    document.getElementById('invDetailActions').innerHTML = enCours ? `
+      <button class="btnGhost" onclick="abandonnerInventaire()">Abandonner</button>
+      <button class="btnGhost" onclick="enregistrerComptage()">Enregistrer le comptage</button>
+      <button class="btnPrimary" onclick="cloturerInventaire()">Clôturer et ajuster le stock</button>` : '';
+    document.getElementById('invLignesBody').innerHTML = inv.lignes.map(l => `
+      <tr data-ligne="${l.id}">
+        <td class="lotCode">${l.numero_lot || '—'}</td>
+        <td>${l.produit_nom || '—'}</td>
+        <td class="rowMeta num">${l.date_expiration ? fmtDate(l.date_expiration) : '—'}</td>
+        <td class="num">${fmtQte(l.quantite_theorique)} ${l.unite_symbole || ''}</td>
+        <td class="num">${enCours
+          ? `<input type="number" min="0" step="any" class="invCompte" data-theorique="${l.quantite_theorique}" value="${Number(l.quantite_physique)}" style="width:100px; padding:5px 8px; border:1px solid var(--line); border-radius:6px; text-align:right; font-family:inherit;">`
+          : `${fmtQte(l.quantite_physique)} ${l.unite_symbole || ''}`}</td>
+        <td class="num invEcart">${celluleEcart(Number(l.ecart))}</td>
+      </tr>`).join('');
+    document.querySelectorAll('#invLignesBody .invCompte').forEach(input => {
+      input.addEventListener('input', () => {
+        const ecart = Number(input.value || 0) - Number(input.dataset.theorique);
+        input.closest('tr').querySelector('.invEcart').innerHTML = celluleEcart(ecart);
+      });
+    });
+    document.getElementById('invDetailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function celluleEcart(ecart) {
+    const e = Math.round(ecart * 1000) / 1000;
+    if (!e) return '<span class="rowMeta">—</span>';
+    return `<b style="color:${e > 0 ? 'var(--good)' : 'var(--danger)'};">${e > 0 ? '+' : ''}${fmtQte(e)}</b>`;
+  }
+
+  function lignesSaisies() {
+    return [...document.querySelectorAll('#invLignesBody tr[data-ligne]')].map(tr => ({
+      id: Number(tr.dataset.ligne),
+      quantite_physique: tr.querySelector('.invCompte').value === '' ? NaN : Number(tr.querySelector('.invCompte').value),
+    }));
+  }
+
+  async function enregistrerComptage(silencieux) {
+    const lignes = lignesSaisies();
+    if (lignes.some(l => !Number.isFinite(l.quantite_physique) || l.quantite_physique < 0)) {
+      alert('Chaque quantité comptée doit être un nombre positif ou nul.');
+      return false;
+    }
+    try {
+      await apiFetch(`/inventaires/${INVENTAIRE_OUVERT.id}/lignes`, { method: 'PUT', body: JSON.stringify({ lignes }) });
+      if (!silencieux) { await chargerInventaires(); }
+      return true;
+    } catch (err) { alert(err.message); return false; }
+  }
+
+  async function cloturerInventaire() {
+    if (!(await enregistrerComptage(true))) return;
+    const inv = await apiFetch(`/inventaires/${INVENTAIRE_OUVERT.id}`);
+    const ecarts = inv.lignes.filter(l => Number(l.ecart) !== 0);
+    const detail = ecarts.slice(0, 12).map(l => `• ${l.numero_lot} (${l.produit_nom}) : ${Number(l.ecart) > 0 ? '+' : ''}${fmtQte(l.ecart)}`).join('\n');
+    const msg = ecarts.length
+      ? `Clôturer l'inventaire ${inv.numero} ?\n\n${ecarts.length} écart(s) seront appliqués au stock :\n${detail}${ecarts.length > 12 ? '\n…' : ''}\n\nCette opération est définitive.`
+      : `Clôturer l'inventaire ${inv.numero} ?\n\nAucun écart : le stock ne sera pas modifié.`;
+    if (!confirm(msg)) return;
+    try {
+      await apiFetch(`/inventaires/${inv.id}/cloturer`, { method: 'POST', body: JSON.stringify({ employe_id: CURRENT_USER && CURRENT_USER.employe_id }) });
+      APP_DATA.lots = await apiFetch('/lots');
+      renderLotsRegistre(); renderDashboard();
+      await chargerInventaires();
+    } catch (err) { alert(err.message); }
+  }
+
+  async function abandonnerInventaire() {
+    if (!confirm(`Abandonner l'inventaire ${INVENTAIRE_OUVERT.numero} ? Le comptage saisi sera perdu ; le stock n'a pas été modifié.`)) return;
+    try {
+      await apiFetch(`/inventaires/${INVENTAIRE_OUVERT.id}`, { method: 'DELETE' });
+      INVENTAIRE_OUVERT = null;
+      document.getElementById('invDetailPanel').style.display = 'none';
+      await chargerInventaires();
+    } catch (err) { alert(err.message); }
+  }
+
+  document.getElementById('invOuvrirBtn').addEventListener('click', async () => {
+    const localId = Number(document.getElementById('invLocal').value);
+    if (!localId) { alert('Choisissez un local.'); return; }
+    try {
+      const inv = await apiFetch('/inventaires', { method: 'POST', body: JSON.stringify({
+        local_id: localId,
+        inclure_sans_local: document.getElementById('invSansLocal').checked,
+        employe_id: CURRENT_USER && CURRENT_USER.employe_id,
+      }) });
+      INVENTAIRE_OUVERT = inv;
+      await chargerInventaires();
+    } catch (err) { alert(err.message); }
+  });
 
   const TYPE_MVT_LABEL = {
     ACHAT: 'Achat', RECEPTION: 'Réception', VENTE: 'Vente', PRODUCTION: 'Production',
@@ -7057,7 +7229,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'grille-prix':'view-grille-prix', remises:'view-remises',
     achats:'view-achats', receptions:'view-receptions',
     'stock':'view-stock',
-    'stock-mouvements':'view-stock-mouvements',
+    'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires',
     notifications:'view-notifications', paiements:'view-paiements', stats:'view-stats',
     certificats:'view-certificats', parametres:'view-parametres'
   };
@@ -7068,7 +7240,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'grille-prix':['Commerce','Grille de prix'], remises:['Commerce','Remises'],
     produits:['Catalogue & Stock','Produits'], recettes:['Catalogue & Stock','Recettes'],
     lots:['Catalogue & Stock','Registre des lots'], tracabilite:['Catalogue & Stock','Traçabilité'],
-    'stock':['Catalogue & Stock','Stock'], 'stock-mouvements':['Catalogue & Stock','Mouvements'],
+    'stock':['Catalogue & Stock','Stock'], 'stock-mouvements':['Catalogue & Stock','Mouvements'], inventaires:['Catalogue & Stock','Inventaires'],
     presse:['Production','Lots de presse'], filtration:['Production','Filtration'],
     'conditionnement':['Production','Conditionnement'], 'historique-prod':['Production','Historique'],
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
@@ -7115,6 +7287,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (key === 'stock' && TOKEN) {
       apiFetch('/lots').then(lots => { APP_DATA.lots = lots; renderStockAll(); });
     }
+    if (key === 'inventaires' && TOKEN) chargerInventaires();
     if (key === 'stock-mouvements' && TOKEN) {
       apiFetch('/stock-mouvements').then(m => { APP_DATA.stockMouvements = m; renderStockMouvements(); });
     }
