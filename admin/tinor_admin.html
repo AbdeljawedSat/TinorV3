@@ -428,9 +428,9 @@
       <div class="navGroup open">
         <button class="navGroupBtn"><span class="code">01</span><span class="lbl">Commerce</span><span class="chev">›</span></button>
         <div class="navChildren">
-          <a data-view="commandes" class="active"><span>Commandes</span><span class="cnt">128</span></a>
-          <a data-view="factures"><span>Factures</span><span class="cnt">96</span></a>
-          <a data-view="paiements"><span>Paiements</span><span class="cnt">—</span></a>
+          <a data-view="commandes"><span>Commandes</span><span class="cnt" style="display:none;"></span></a>
+          <a data-view="factures"><span>Factures</span><span class="cnt" style="display:none;"></span></a>
+          <a data-view="paiements"><span>Paiements</span></a>
           <a data-view="stats"><span>Statistiques</span></a>
           <a data-view="clients"><span>Clients</span></a>
           <a data-view="grille-prix"><span>Grille de prix</span></a>
@@ -441,9 +441,9 @@
       <div class="navGroup">
         <button class="navGroupBtn"><span class="code">02</span><span class="lbl">Catalogue &amp; Stock</span><span class="chev">›</span></button>
         <div class="navChildren">
-          <a data-view="produits"><span>Produits</span><span class="cnt">14</span></a>
+          <a data-view="produits"><span>Produits</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="recettes"><span>Recettes</span></a>
-          <a data-view="lots"><span>Registre des lots</span><span class="cnt">312</span></a>
+          <a data-view="lots"><span>Registre des lots</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="tracabilite"><span>Traçabilité</span></a>
           <a data-view="stock"><span>Stock</span></a>
           <a data-view="stock-mouvements"><span>Mouvements</span></a>
@@ -466,7 +466,7 @@
         <div class="navChildren">
           <a data-view="achats"><span>Achats</span></a>
           <a data-view="receptions"><span>Réceptions MP</span></a>
-          <a data-view="fournisseurs"><span>Fournisseurs</span><span class="cnt">7</span></a>
+          <a data-view="fournisseurs"><span>Fournisseurs</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="certificats"><span>Certificats Bio</span></a>
           <a data-view="locaux"><span>Locaux &amp; Zones</span></a>
           <a data-view="employes"><span>Employés</span></a>
@@ -6700,6 +6700,26 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }).catch(() => {});
 
     renderDashboardActivite();
+    majBadgesMenu();
+  }
+
+  // Compteurs du menu, calculés à partir des données réelles (avant : valeurs
+  // fixes de maquette). Masqués quand ils valent zéro.
+  function majBadgesMenu() {
+    const compteurs = {
+      commandes: { n: APP_DATA.commandes.filter(c => c.statut === 'en_attente').length, titre: 'commande(s) en attente' },
+      factures: { n: APP_DATA.factures.filter(f => f.statut !== 'annulee' && Number(f.solde) > 0).length, titre: 'facture(s) avec un solde impayé' },
+      produits: { n: APP_DATA.produits.length, titre: 'produit(s) au catalogue' },
+      lots: { n: APP_DATA.lots.filter(l => Number(l.quantite_actuelle) > 0 && !['EPUISE', 'CLOTURE', 'REJETE'].includes(l.statut)).length, titre: 'lot(s) en stock' },
+      fournisseurs: { n: APP_DATA.fournisseurs.length, titre: 'fournisseur(s)' },
+    };
+    Object.entries(compteurs).forEach(([vue, { n, titre }]) => {
+      const badge = document.querySelector(`.navChildren a[data-view="${vue}"] .cnt`);
+      if (!badge) return;
+      badge.textContent = n;
+      badge.title = `${n} ${titre}`;
+      badge.style.display = n ? '' : 'none';
+    });
   }
 
   async function expirerLotsPerimes(lots) {
@@ -7288,6 +7308,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       apiFetch('/lots').then(lots => { APP_DATA.lots = lots; renderStockAll(); });
     }
     if (key === 'inventaires' && TOKEN) chargerInventaires();
+    if (TOKEN) majBadgesMenu(); // les compteurs suivent les créations faites depuis n'importe quel écran
     if (key === 'stock-mouvements' && TOKEN) {
       apiFetch('/stock-mouvements').then(m => { APP_DATA.stockMouvements = m; renderStockMouvements(); });
     }
