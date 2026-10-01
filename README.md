@@ -87,9 +87,13 @@ Dans les deux cas, **exécuter `npm run seed` une seule fois manuellement** apr�
 - `GET/POST /api/presse` (consomme un lot matière première, calcule le rendement réel)
 - `GET/POST /api/filtration` (combine un ou plusieurs lots de presse)
 - `GET/POST /api/conditionnement` (transforme du vrac presse/filtration en produit fini formaté)
+- `GET /api/alertes/peremption?jours=30`, `POST /api/alertes/peremption/expirer` (lots périmés / proches de l'expiration)
+- `GET/POST /api/inventaires`, `GET/DELETE /api/inventaires/:id`, `PUT /api/inventaires/:id/lignes`, `POST /api/inventaires/:id/cloturer` (inventaire physique)
+
+Les sorties de stock automatiques (ventes, conditionnement, ordres de production) ignorent les lots périmés et suivent l'ordre FEFO.
 
 ## Reste à implémenter
 
-recettes/ordres_production (production générale hors huile), grille_huiles (tarification dynamique), inventaires, stats.
+Voir `AMELIORATIONS.md` pour la feuille de route.
 
 Testé de bout en bout sur MariaDB réelle à chaque module (pas seulement relu) : login, produit avec code auto, lot avec numérotation TT-SSS auto, traçabilité ascendants/descendants via `lot_origines`, changement de statut avec historique complet, achat générique + réception avec création de lot automatique, commande avec remise "lot" et FIFO, facturation, paiement partiel, annulation avec réintégration de stock, chaîne complète réception→presse→filtration→conditionnement avec rendements calculés et stock vérifié cohérent à chaque étape.

@@ -22,19 +22,20 @@ petite structure de transformation : huiles, savons, cosmétiques) :
 
 ## 2. Écarts constatés (ce que les autres ont et pas TinOR)
 
-Vérifié dans le code : les tables `inventaires`, `inventaire_lignes` et `controles_qualite`
-existent dans le schéma mais n'ont **ni route API ni écran**.
+Vérifié dans le code d'origine : les tables `inventaires`, `inventaire_lignes` et `controles_qualite`
+existaient dans le schéma sans route API ni écran. La colonne « TinOR » indique l'état actuel
+(✅ = ajouté lors de la priorité 1).
 
 | # | Fonction | Odoo | Dolibarr | ERPNext | Katana | TinOR |
 |---|---|:-:|:-:|:-:|:-:|:-:|
-| 1 | Alertes péremption des lots (date d'expiration proche / dépassée) | ✓ | ✓ | ✓ | ✓ | ✗ (champ présent, aucune alerte) |
-| 2 | Alertes stock minimum (réapprovisionnement) | ✓ | ✓ | ✓ | ✓ | partiel (champ `stock_min`, pas de notification) |
-| 3 | Inventaire physique (comptage, écarts, ajustement) | ✓ | ✓ | ✓ | ✓ | ✗ (tables vides) |
+| 1 | Alertes péremption des lots (date d'expiration proche / dépassée) | ✓ | ✓ | ✓ | ✓ | ✅ alertes + lot périmé exclu des ventes |
+| 2 | Alertes stock minimum (réapprovisionnement) | ✓ | ✓ | ✓ | ✓ | ✓ (existait déjà : rupture et sous-seuil au tableau de bord) |
+| 3 | Inventaire physique (comptage, écarts, ajustement) | ✓ | ✓ | ✓ | ✓ | ✅ |
 | 4 | Contrôle qualité des lots (analyses, acidité, conformité) | ✓ | – | ✓ | – | ✗ (table vide) |
 | 5 | Devis → commande | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 6 | Bon de livraison | ✓ | ✓ | ✓ | ✓ | ✗ |
 | 7 | Avoir (note de crédit) au lieu d'annuler la facture | ✓ | ✓ | ✓ | – | ✗ (annulation seulement) |
-| 8 | Étiquettes lot avec QR code / code-barres | ✓ | ✓ | ✓ | ✓ | ✗ |
+| 8 | Étiquettes lot avec QR code / code-barres | ✓ | ✓ | ✓ | ✓ | ✅ |
 | 9 | Facture PDF + envoi par e-mail | ✓ | ✓ | ✓ | ✓ | partiel (impression navigateur, exports Excel/Word ; pas d'e-mail) |
 | 10 | Journal d'audit (qui a modifié quoi) | ✓ | ✓ | ✓ | ✓ | ✗ (choix assumé dans le schéma) |
 | 11 | Rôles plus fins que gérant / vendeur | ✓ | ✓ | ✓ | ✓ | 2 rôles |
@@ -44,12 +45,19 @@ existent dans le schéma mais n'ont **ni route API ni écran**.
 
 ## 3. Feuille de route proposée
 
-### Priorité 1 — gains rapides, forte valeur (réutilisent l'existant)
-1. **Alertes péremption + stock minimum** dans les notifications et le tableau de bord
-   (lots expirant sous 30 jours, lots expirés → statut `EXPIRE`, produits sous `stock_min`).
-2. **Inventaire physique** : écran de comptage par local/zone, calcul des écarts,
-   validation qui génère les mouvements de stock (origine `INVENTAIRE` déjà prévue).
-3. **Étiquettes de lot avec QR code** imprimables (le QR renvoie vers la fiche de traçabilité).
+### Priorité 1 — gains rapides ✅ réalisée
+1. ✅ **Péremption** : les ventes, le conditionnement et les ordres de production n'utilisent
+   plus de lot périmé et suivent l'ordre **FEFO** (premier expiré, premier sorti) — avant,
+   un lot périmé pouvait être vendu. Alertes au tableau de bord (périmés / sous 30 jours),
+   passage au statut `EXPIRE` en un clic (historisé), date d'expiration colorée dans le registre.
+   API : `GET /api/alertes/peremption?jours=30`, `POST /api/alertes/peremption/expirer`.
+2. ✅ **Inventaire physique** : écran Catalogue & Stock › Inventaires. Ouverture par local,
+   comptage avec écarts en direct, clôture qui ajuste les lots par des mouvements `INVENTAIRE`
+   (transaction). API : `/api/inventaires`.
+3. ✅ **Étiquettes de lot 70 × 40 mm avec QR code** (bouton « Étiquette » du registre des lots).
+   Le QR contient le n° de lot : scanné (douchette USB) dans la recherche + Entrée, il ouvre
+   la traçabilité. Fonctionne hors ligne (bibliothèque intégrée au fichier).
+4. ✅ En plus : compteurs du menu reliés aux vraies données (valeurs fixes de maquette avant).
 
 ### Priorité 2 — cycle de vente complet
 4. **Devis** convertible en commande.
