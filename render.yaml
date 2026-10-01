@@ -1,0 +1,22 @@
+# Blueprint Render — importer ce fichier sur render.com/deploy pour créer
+# automatiquement le service web.
+#
+# ATTENTION : comme pour tinor-api (V2), Render n'héberge pas de base MariaDB/
+# MySQL en natif. Il faut une base externe (PlanetScale, Aiven, ou votre
+# hébergement cPanel existant). Configurez DATABASE_URL (ou DB_HOST/DB_USER/
+# DB_PASSWORD/DB_NAME) manuellement dans les variables d'environnement du
+# service après sa création.
+services:
+  - type: web
+    name: tinor-api-v3
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run migrate && npm run seed && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false   # à renseigner manuellement après création du service
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
