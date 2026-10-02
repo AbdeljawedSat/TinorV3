@@ -83,8 +83,9 @@ async function ecart(lotId) {
     await bilan('F', l.id, 100); }
 
   console.log('G. Deux pressages simultanés sur le même lot de matière première');
-  { const mp = (await api('/produits', { method: 'POST', body: { nom: 'MP test ' + Date.now(), categorie_id: cat.id, unite_id: unite.id, type_article: 'MATIERE_PREMIERE' } })).data;
-    const vrac = (await api('/produits', { method: 'POST', body: { nom: 'Vrac test ' + Date.now(), categorie_id: cat.id, unite_id: unite.id, type_article: 'PRODUIT_FABRIQUE' } })).data;
+  { const graine = 'Test' + Date.now();
+    const mp = (await api('/produits', { method: 'POST', body: { nom: 'Graines de ' + graine, categorie_id: cat.id, unite_id: unite.id, type_article: 'MATIERE_PREMIERE' } })).data;
+    const vrac = (await api('/produits', { method: 'POST', body: { nom: 'Huile de ' + graine + ' — Vrac', categorie_id: cat.id, unite_id: unite.id, type_article: 'PRODUIT_FABRIQUE' } })).data;
     const lmp = (await api('/lots', { method: 'POST', body: { produit_id: mp.id, origine: 'RECEPTION_MP', quantite_initiale: 100 } })).data;
     const rs = await Promise.all([1, 2].map(() => api('/presse', { method: 'POST', body: { date: '2026-10-02', produit_id: vrac.id, lot_source_id: lmp.id, quantite_matiere_utilisee: 70, quantite_produite: 20 } })));
     console.log('   réponses :', rs.map(r => r.status).join(', '));
@@ -92,6 +93,28 @@ async function ecart(lotId) {
     await bilan('G', lmp.id, 30);
     const [[{ n }]] = await db.query('SELECT COUNT(*) AS n FROM lots WHERE produit_id = ?', [vrac.id]);
     check(Number(n) === 1, `G — un seul lot de vrac créé (${n}) : le refusé n'a rien laissé`); }
+
+  console.log('I. Pressage : graines → huile en vrac de la même graine uniquement');
+  { const t = Date.now();
+    const mk = (nom, type_article) => api('/produits', { method: 'POST', body: { nom, categorie_id: cat.id, unite_id: unite.id, type_article } }).then(r => r.data);
+    const sesame = await mk(`Graines de Sésame ${t}`, 'MATIERE_PREMIERE');
+    const nigelle = await mk(`Graines de Nigelle ${t}`, 'MATIERE_PREMIERE');
+    const olive = await mk(`Huile d'Olive ${t}`, 'MATIERE_PREMIERE');
+    const huileSesame = await mk(`Huile de Sesame ${t} — Vrac`, 'PRODUIT_FABRIQUE');
+    const savon = await mk(`Pâte à Savon ${t} — Vrac`, 'PRODUIT_FABRIQUE');
+    const lot = async (p) => (await api('/lots', { method: 'POST', body: { produit_id: p.id, origine: 'RECEPTION_MP', quantite_initiale: 50 } })).data;
+    const lSesame = await lot(sesame), lNigelle = await lot(nigelle), lOlive = await lot(olive);
+    const presse = (produit, source) => api('/presse', { method: 'POST', body: { date: '2026-10-02', produit_id: produit.id, lot_source_id: source.id, quantite_matiere_utilisee: 10, quantite_produite: 3 } });
+    const ok = await presse(huileSesame, lSesame);
+    check(ok.status === 201, `graines de sésame → huile de sésame en vrac acceptée, accents ignorés (HTTP ${ok.status})`);
+    const r1 = await presse(huileSesame, lNigelle);
+    check(r1.status === 400, `graines de nigelle → huile de sésame refusée : ${r1.data.error}`);
+    const r2 = await presse(huileSesame, lOlive);
+    check(r2.status === 400, `matière qui n'est pas une graine refusée : ${r2.data.error}`);
+    const r3 = await presse(savon, lSesame);
+    check(r3.status === 400, `savon en vrac comme produit obtenu refusé : ${r3.data.error}`);
+    const e = await ecart(lNigelle.id);
+    check(e.q === 50 && e.m === 50, "les pressages refusés n'ont rien consommé"); }
 
   console.log('H. Commande refusée : aucune trace partielle');
   { const { p, l } = await lotNeuf(5);

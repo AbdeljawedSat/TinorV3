@@ -1,6 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
+const { cleGraine, cleHuileVrac, estGraine, estHuileVrac } = require('../services/graines');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -44,9 +45,24 @@ module.exports = function (pool) {
       if (lot_source_id && !quantite_matiere_utilisee) {
         return res.status(400).json({ error: 'quantite_matiere_utilisee est requis quand lot_source_id est fourni.' });
       }
+      // Règle du pressage : graines consommées → huile en vrac de la même graine.
+      const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
+      if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
+      if (!estHuileVrac(produitObtenu)) {
+        return res.status(400).json({ error: `Le produit obtenu d'un pressage doit être une huile en vrac (ex. « Huile de Sésame — Vrac ») : « ${produitObtenu.nom} » ne l'est pas.` });
+      }
       if (lot_source_id) {
-        const srcRes = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [lot_source_id]);
+        const srcRes = await pool.query(
+          `SELECT l.quantite_actuelle, l.numero_lot, p.nom, p.type_article, p.format_id
+           FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1`, [lot_source_id]);
         if (!srcRes.rows[0]) return res.status(400).json({ error: 'Lot source introuvable.' });
+        const source = srcRes.rows[0];
+        if (!estGraine(source)) {
+          return res.status(400).json({ error: `La matière consommée d'un pressage doit être un lot de graines (ex. « Graines de Sésame ») : le lot ${source.numero_lot} est « ${source.nom} ».` });
+        }
+        if (cleGraine(source.nom) !== cleHuileVrac(produitObtenu.nom)) {
+          return res.status(400).json({ error: `« ${produitObtenu.nom} » ne correspond pas aux graines du lot ${source.numero_lot} (« ${source.nom} ») : choisissez l'huile en vrac de la même graine.` });
+        }
         if (Number(srcRes.rows[0].quantite_actuelle) < Number(quantite_matiere_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot source (disponible ${srcRes.rows[0].quantite_actuelle}, demandé ${quantite_matiere_utilisee}).` });
         }

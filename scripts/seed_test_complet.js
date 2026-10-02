@@ -225,23 +225,17 @@ async function main() {
     sources: [{ lot_presse_id: pNigelle.id, quantite_utilisee: 12 }], employe_id: emp2.id,
   });
 
-  console.log('\n=== Savon : réception + presse + conditionnement direct (pas de filtration) ===');
-  // Produit "matière première" générique pour l'huile d'olive utilisée en savonnerie.
-  const mpOliveSavon = await post('/produits', {
-    nom: 'Huile d\'Olive (savonnerie)', categorie_id: catId('SAVON'), unite_id: uniteId('kg'),
-    type_article: 'MATIERE_PREMIERE', stockable: true, achetable: true,
-  });
-  const recOlive = await post('/receptions', {
+  console.log('\n=== Savon : réception de pâte à savon en vrac + conditionnement direct ===');
+  // Le savon en vrac ne passe ni par la presse ni par la filtration (réservées
+  // aux graines → huiles) : il entre en stock par réception, puis il est
+  // conditionné directement depuis son lot.
+  const recSavon = await post('/receptions', {
     fournisseur_id: fourExterne.id, date_reception: '2026-08-05', local_id: stock1.id,
-    lignes: [{ produit_id: mpOliveSavon.id, quantite: 100 }],
-  });
-  const pSavon = await post('/presse', {
-    date: '2026-08-10', produit_id: vracSavon.id, lot_source_id: recOlive.lignes[0].lot_id,
-    quantite_matiere_utilisee: 80, quantite_produite: 76, employe_id: emp1.id,
+    lignes: [{ produit_id: vracSavon.id, quantite: 76 }],
   });
   await post('/conditionnement', {
     date: '2026-08-11', produit_id: savon80.id, format_id: format80g.id, qty: 900,
-    sources: [{ lot_presse_id: pSavon.id, quantite_utilisee: 72 }], employe_id: emp2.id,
+    sources: [{ lot_id: recSavon.lignes[0].lot_id, quantite_utilisee: 72 }], employe_id: emp2.id,
   });
 
   console.log('\n=== Commandes & Factures ===');
@@ -272,7 +266,7 @@ async function main() {
   await post('/factures', { commande_id: cmd3.id }); // facture non payée, volontairement
 
   console.log('\n✅ Terminé. Jeu de données complet créé : matière première, presse, filtration,');
-  console.log('   conditionnement (huile ET savon), achats, réceptions, 3 commandes/factures');
+  console.log('   conditionnement (huile ; savon en vrac conditionné directement), achats, réceptions, 3 commandes/factures');
   console.log('   (payée, partiellement payée, non payée), remises, certificat bio.');
 }
 

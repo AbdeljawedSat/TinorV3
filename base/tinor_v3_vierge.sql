@@ -825,38 +825,38 @@ INSERT INTO `categories` (`id`, `code`, `nom`, `type_category`, `actif`) VALUES 
 (3,'EMBALLAGE','Emballages','EMBALLAGE',1),
 (4,'SAVON','Savons','PRODUIT',1),
 (5,'COMPOSE','Produits composés','PRODUIT',1);
-INSERT INTO `employes` (`id`, `matricule`, `nom`, `prenom`, `fonction`, `telephone`, `email`, `date_entree`, `actif`, `created_at`, `updated_at`) VALUES (1,'EMP-000','Admin','Compte','Gérant',NULL,NULL,NULL,1,'2026-10-02 21:05:36','2026-10-02 21:05:36');
+INSERT INTO `employes` (`id`, `matricule`, `nom`, `prenom`, `fonction`, `telephone`, `email`, `date_entree`, `actif`, `created_at`, `updated_at`) VALUES (1,'EMP-000','Admin','Compte','Gérant',NULL,NULL,NULL,1,'2026-10-02 21:53:43','2026-10-02 21:53:43');
 INSERT INTO `formats` (`id`, `code`, `nom`, `volume`, `poids`, `unite_id`, `actif`) VALUES (1,'10ml','10 ml',10.000,NULL,2,1),
 (2,'30ml','30 ml',30.000,NULL,2,1),
 (3,'100ml','100 ml',100.000,NULL,2,1),
 (4,'250ml','250 ml',250.000,NULL,2,1),
 (5,'1000ml','1000 ml',1000.000,NULL,2,1);
-INSERT INTO `locaux` (`id`, `code`, `nom`, `type_local`, `description`, `adresse`, `actif`, `created_at`) VALUES (1,'ATELIER','Atelier Djerba','PRODUCTION',NULL,NULL,1,'2026-10-02 21:05:36'),
-(2,'STOCK1','Entrepôt Principal','STOCK',NULL,NULL,1,'2026-10-02 21:05:36');
-INSERT INTO `lot_type_champs` (`id`, `type_lot`, `nom`, `type_champ`, `obligatoire`, `verrouille`, `ordre`, `created_at`) VALUES (1,'ACHAT','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(2,'ACHAT','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(3,'ACHAT','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(4,'RECEPTION_MP','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(5,'RECEPTION_MP','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(6,'RECEPTION_MP','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(7,'PRESSE','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(8,'PRESSE','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(9,'PRESSE','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(10,'FILTRATION','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(11,'FILTRATION','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(12,'FILTRATION','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(13,'CONDITIONNEMENT','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(14,'CONDITIONNEMENT','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(15,'CONDITIONNEMENT','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(16,'PRODUCTION_RECETTE','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(17,'PRODUCTION_RECETTE','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(18,'PRODUCTION_RECETTE','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(19,'INVENTAIRE','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(20,'INVENTAIRE','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(21,'INVENTAIRE','Date','date',1,1,2,'2026-10-02 21:05:36'),
-(22,'AUTRE','N° de lot','texte',1,1,0,'2026-10-02 21:05:36'),
-(23,'AUTRE','Produit','liste',1,1,1,'2026-10-02 21:05:36'),
-(24,'AUTRE','Date','date',1,1,2,'2026-10-02 21:05:36');
+INSERT INTO `locaux` (`id`, `code`, `nom`, `type_local`, `description`, `adresse`, `actif`, `created_at`) VALUES (1,'ATELIER','Atelier Djerba','PRODUCTION',NULL,NULL,1,'2026-10-02 21:53:43'),
+(2,'STOCK1','Entrepôt Principal','STOCK',NULL,NULL,1,'2026-10-02 21:53:43');
+INSERT INTO `lot_type_champs` (`id`, `type_lot`, `nom`, `type_champ`, `obligatoire`, `verrouille`, `ordre`, `created_at`) VALUES (1,'ACHAT','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(2,'ACHAT','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(3,'ACHAT','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(4,'RECEPTION_MP','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(5,'RECEPTION_MP','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(6,'RECEPTION_MP','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(7,'PRESSE','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(8,'PRESSE','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(9,'PRESSE','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(10,'FILTRATION','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(11,'FILTRATION','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(12,'FILTRATION','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(13,'CONDITIONNEMENT','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(14,'CONDITIONNEMENT','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(15,'CONDITIONNEMENT','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(16,'PRODUCTION_RECETTE','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(17,'PRODUCTION_RECETTE','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(18,'PRODUCTION_RECETTE','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(19,'INVENTAIRE','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(20,'INVENTAIRE','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(21,'INVENTAIRE','Date','date',1,1,2,'2026-10-02 21:53:43'),
+(22,'AUTRE','N° de lot','texte',1,1,0,'2026-10-02 21:53:43'),
+(23,'AUTRE','Produit','liste',1,1,1,'2026-10-02 21:53:43'),
+(24,'AUTRE','Date','date',1,1,2,'2026-10-02 21:53:43');
 INSERT INTO `sequences` (`name`, `last_value`) VALUES ('produit_code_seq',0);
 INSERT INTO `settings` (`id`, `salaire`, `matiere_pct`, `rend_pct`, `marge`, `tva`, `ref_source`, `prix_remise_id`, `cumuler_lot`, `offre_achete`, `offre_gratuit`, `fodec_rate`, `droit_timbre`, `timbre_seuil`, `entreprise_nom`, `entreprise_adresse`, `entreprise_telephone`, `entreprise_email`, `entreprise_matricule_fiscal`, `entreprise_logo`, `facture_couleur`, `lot_format_style`, `lot_seq_par_origine`) VALUES (1,40.00,0.00,0.00,45.00,19.00,'tableau',NULL,1,9,1,1.00,1.000,1000.000,NULL,NULL,NULL,NULL,NULL,NULL,'#17231D','code_origine_seq',0);
 INSERT INTO `unites` (`id`, `code`, `nom`, `symbole`, `actif`) VALUES (1,'litre','Litre','L',1),
@@ -864,5 +864,5 @@ INSERT INTO `unites` (`id`, `code`, `nom`, `symbole`, `actif`) VALUES (1,'litre'
 (3,'kg','Kilogramme','kg',1),
 (4,'g','Gramme','g',1),
 (5,'unite','Unité','u',1);
-INSERT INTO `users` (`id`, `username`, `password_hash`, `employe_id`, `role`, `actif`, `created_at`) VALUES (1,'admin','$2b$10$bIJZaaqDokmyCVos3WGRN.1b9BIqlppPLLTosO2nfUp2ba89sHktG',1,'gerant',1,'2026-10-02 21:05:36');
+INSERT INTO `users` (`id`, `username`, `password_hash`, `employe_id`, `role`, `actif`, `created_at`) VALUES (1,'admin','$2b$10$HR2pIfMBY564orJkzTlsSuLphdz9Zfn7UMc63YtLeGPE4erkMBYEy',1,'gerant',1,'2026-10-02 21:53:43');
 SET FOREIGN_KEY_CHECKS = 1;

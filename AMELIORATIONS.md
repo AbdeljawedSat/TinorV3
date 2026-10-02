@@ -96,3 +96,14 @@ La version initiale ne s'installait pas sur MySQL 8 : la colonne `sequences.last
 d'une fonction réservée de MySQL 8 (`LAST_VALUE`). Elle est désormais écrite entre accents graves dans
 le schéma et les requêtes — même colonne, base identique. Toute l'API (41 routes), l'installation,
 les données de démonstration et les tests de stock passent sur MariaDB 10.11 et MySQL 8.4.
+
+## Règles de production : presse et savon
+
+- **Lot de presse** : la matière consommée est uniquement un **lot de graines** (matière première
+  « Graines de … ») et le produit obtenu uniquement l'**huile en vrac de la même graine**
+  (« Graines de Sésame » → « Huile de Sésame — Vrac »). Correspondance par le nom, sans tenir compte
+  des accents ni des majuscules (`src/services/graines.js`, même logique dans la console).
+  Appliqué dans le formulaire (listes filtrées, matière choisie en premier) **et** par l'API (refus 400).
+- **Savon en vrac** : ne passe ni par la presse ni par la filtration ; il entre en stock par
+  réception puis est **conditionné directement** depuis son lot.
+- Données de démonstration et fichiers `base/*.sql` régénérés en conséquence.

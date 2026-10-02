@@ -1730,7 +1730,7 @@
 <div class="modalOverlay" id="presseModalOverlay">
   <div class="modal" style="max-width:480px;">
     <div class="modalHead">
-      <div><h2>Nouveau lot de presse</h2><div class="sub">Consomme un lot matière première</div></div>
+      <div><h2>Nouveau lot de presse</h2><div class="sub">Consomme un lot de graines → huile en vrac</div></div>
       <button class="modalClose" id="presseModalCloseBtn">×</button>
     </div>
     <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
@@ -1739,10 +1739,11 @@
       <input type="hidden" id="presseModalId">
       <label class="formLbl">Date</label>
       <input type="date" id="presseDate" class="formInput">
-      <label class="formLbl">Produit obtenu (huile vrac)</label>
-      <select id="presseProduit" class="formInput"></select>
-      <label class="formLbl">Lot source (matière consommée)</label>
+      <label class="formLbl">Matière consommée (lot de graines)</label>
       <select id="presseLotSource" class="formInput"><option value="">— Aucun (sans consommation tracée) —</option></select>
+      <label class="formLbl">Produit obtenu (huile en vrac de la même graine)</label>
+      <select id="presseProduit" class="formInput"></select>
+      <div id="presseCorrespondance" class="rowMeta" style="font-size:11.5px; margin:6px 0 12px;"></div>
       <label class="formLbl">Quantité de matière utilisée</label>
       <input type="number" step="0.001" id="presseQteUtilisee" class="formInput">
       <label class="formLbl">Quantité de tourteau (optionnel)</label>
@@ -3178,21 +3179,75 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       tri.map(l => `<option value="${l.id}">${l.numero_lot} — ${l.produit_nom} (dispo: ${l.quantite_actuelle})</option>`).join('');
   }
 
+  // Règle du pressage (identique à src/services/graines.js côté API) :
+  // graines consommées → huile en vrac de la même graine, reconnue par le nom
+  // (« Graines de Sésame » ↔ « Huile de Sésame — Vrac »), sans tenir compte des accents.
+  function normaliserNomGraine(nom) {
+    return String(nom || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
+  }
+  function cleGraine(nom) {
+    const m = normaliserNomGraine(nom).match(/^graines?\s*(?:de\s+|d')(.+)$/);
+    return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+  }
+  function cleHuileVrac(nom) {
+    const m = normaliserNomGraine(nom).match(/^huiles?\s*(?:de\s+|d')(.+)$/);
+    return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+  }
+  const estGraine = p => !!p && p.type_article === 'MATIERE_PREMIERE' && !!cleGraine(p.nom);
+  const estHuileVrac = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && !!cleHuileVrac(p.nom);
+
+  // Liste « Produit obtenu » : uniquement les huiles en vrac, et seulement celle(s)
+  // de la graine du lot choisi quand un lot de graines est sélectionné.
+  function majProduitsPresse() {
+    const selProduit = document.getElementById('presseProduit');
+    const info = document.getElementById('presseCorrespondance');
+    const lotId = Number(document.getElementById('presseLotSource').value) || null;
+    const lot = lotId ? APP_DATA.lots.find(l => l.id === lotId) : null;
+    let huiles = APP_DATA.produits.filter(estHuileVrac);
+    info.style.color = '';
+    if (lot) {
+      const cle = cleGraine(lot.produit_nom);
+      huiles = huiles.filter(p => cleHuileVrac(p.nom) === cle);
+      if (!huiles.length) {
+        selProduit.innerHTML = `<option value="">— Aucune huile en vrac pour ces graines —</option>`;
+        info.textContent = `Aucune huile en vrac correspondant à « ${lot.produit_nom} » au catalogue : créez d'abord le produit « Huile de ${lot.produit_nom.replace(/^graines?\s*(de\s+|d')/i, '')} — Vrac » (Produits).`;
+        info.style.color = 'var(--danger)';
+        return;
+      }
+      info.textContent = `Graines « ${lot.produit_nom} » → ${huiles.length > 1 ? 'huiles en vrac de la même graine' : `« ${huiles[0].nom} »`}`;
+    } else {
+      info.textContent = huiles.length ? 'Sans lot de graines : toutes les huiles en vrac sont proposées.' : 'Aucune huile en vrac au catalogue.';
+    }
+    selProduit.innerHTML = huiles.map(p => `<option value="${p.id}">${p.nom}</option>`).join('')
+      || `<option value="">— Aucune huile en vrac au catalogue —</option>`;
+  }
+
   async function openPresseModal(id) {
     document.getElementById('presseFormError').style.display = 'none';
-    populateSelect(document.getElementById('presseProduit'), APP_DATA.produits, 'id', 'nom');
     APP_DATA.lots = await apiFetch('/lots'); // toujours le stock le plus frais avant de proposer une source
     const lotSel = document.getElementById('presseLotSource');
-    const dispo = APP_DATA.lots.filter(l => l.statut === 'LIBERE' && Number(l.quantite_actuelle) > 0);
-    const produitChoisi = Number(document.getElementById('presseProduit').value) || null;
-    populateLotSourceSelect(lotSel, dispo, produitChoisi, '— Aucun (sans consommation tracée) —');
+    const produitsParId = new Map(APP_DATA.produits.map(pr => [pr.id, pr]));
+    // Matière consommée : uniquement des lots de graines disponibles.
+    const dispo = APP_DATA.lots.filter(l => l.statut === 'LIBERE' && Number(l.quantite_actuelle) > 0 && estGraine(produitsParId.get(l.produit_id)));
+    populateLotSourceSelect(lotSel, dispo, null, '— Aucun (sans consommation tracée) —');
+    lotSel.value = dispo.length ? lotSel.options[1].value : ''; // 1er lot de graines proposé par défaut
 
     const p = id ? APP_DATA.lotsPresse.find(x => x.id === id) : null;
+    if (p) {
+      // Lot existant : affichage du produit enregistré (liste figée).
+      populateSelect(document.getElementById('presseProduit'), APP_DATA.produits, 'id', 'nom');
+      document.getElementById('presseCorrespondance').textContent = '';
+    } else {
+      majProduitsPresse();
+    }
     document.getElementById('presseModalId').value = p ? p.id : '';
     document.querySelector('#presseModalOverlay .modalHead h2').textContent = p ? `Modifier — ${p.numero_lot}` : 'Nouveau lot de presse';
     document.getElementById('presseDate').value = p ? p.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    document.getElementById('presseProduit').value = p ? p.produit_id : document.getElementById('presseProduit').value;
-    document.getElementById('presseLotSource').value = '';
+    if (p) {
+      document.getElementById('presseProduit').value = p.produit_id;
+      document.getElementById('presseLotSource').value = '';
+    }
     document.getElementById('presseQteUtilisee').value = p ? (p.quantite_matiere_utilisee ?? '') : '';
     document.getElementById('presseQteTourteau').value = p ? (p.quantite_tourteau ?? '') : '';
     document.getElementById('presseQteProduite').value = p ? p.quantite_produite : '';
@@ -3255,11 +3310,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; }
   }
   document.getElementById('presseSaveBtn').addEventListener('click', savePresse);
-  document.getElementById('presseProduit').addEventListener('change', () => {
-    const dispo = APP_DATA.lots.filter(l => l.statut === 'LIBERE' && Number(l.quantite_actuelle) > 0);
-    const produitChoisi = Number(document.getElementById('presseProduit').value) || null;
-    populateLotSourceSelect(document.getElementById('presseLotSource'), dispo, produitChoisi, '— Aucun (sans consommation tracée) —');
-  });
+  document.getElementById('presseLotSource').addEventListener('change', majProduitsPresse);
   document.getElementById('presseCancelBtn').addEventListener('click', closePresseModal);
   document.getElementById('presseModalCloseBtn').addEventListener('click', closePresseModal);
 
