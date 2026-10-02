@@ -61,6 +61,11 @@ Les fois suivantes : tâche **1** (si Docker a été arrêté) puis tâche **3**
 Depuis un vrai téléphone sur le même Wi-Fi : `http://<adresse IP du PC>:3001/api`
 (adresse IP : commande `ipconfig` sous Windows ; autoriser Node.js dans le pare-feu).
 
+## Effacer tout et recharger les données de démonstration
+
+Tâche **TinOR · Effacer tout et charger les données de démonstration** (⚠ efface tout le contenu
+de la base, puis connexion admin / changeme). Détails : `base/README.md`.
+
 ## Arrêter
 
 Tâche **TinOR · Arrêter la base (Docker)**. Les données sont conservées pour la fois suivante.

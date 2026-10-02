@@ -35,6 +35,12 @@
       "problemMatcher": []
     },
     {
+      "label": "TinOR · Effacer tout et charger les données de démonstration",
+      "type": "shell",
+      "command": "npm run reset:demo -- --confirmer",
+      "problemMatcher": []
+    },
+    {
       "label": "TinOR · Tests de stock (API démarrée)",
       "type": "npm",
       "script": "test:stock",
