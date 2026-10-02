@@ -1,0 +1,51 @@
+{
+  // TinOR — Terminal › Exécuter la tâche… (ou Ctrl+Maj+P › « Tasks: Run Task »)
+  // Ordre au premier lancement : 1 → 2 → 3, puis 4 (facultatif).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TinOR 1 · Démarrer la base MariaDB (Docker)",
+      "type": "shell",
+      "command": "docker compose up -d --wait",
+      "problemMatcher": []
+    },
+    {
+      "label": "TinOR 2 · Installer et préparer la base",
+      "dependsOrder": "sequence",
+      "dependsOn": ["TinOR · npm install", "TinOR · npm run setup"],
+      "problemMatcher": []
+    },
+    { "label": "TinOR · npm install", "type": "npm", "script": "install", "problemMatcher": [] },
+    { "label": "TinOR · npm run setup", "type": "npm", "script": "setup", "problemMatcher": [] },
+    {
+      "label": "TinOR 3 · Démarrer l'API (rechargement auto)",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "tinor",
+        "pattern": { "regexp": "^__jamais__$" },
+        "background": { "activesBegin": true, "beginsPattern": ".", "endsPattern": "démarrée sur le port" }
+      }
+    },
+    {
+      "label": "TinOR 4 · Charger les données de test (API démarrée)",
+      "type": "npm",
+      "script": "demo",
+      "problemMatcher": []
+    },
+    {
+      "label": "TinOR · Tests de stock (API démarrée)",
+      "type": "npm",
+      "script": "test:stock",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "TinOR · Arrêter la base (Docker)",
+      "type": "shell",
+      "command": "docker compose down",
+      "problemMatcher": []
+    }
+  ]
+}

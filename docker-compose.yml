@@ -1,0 +1,25 @@
+# Base MariaDB pour tester TinOR sur un PC (Docker Desktop).
+# Démarrer : docker compose up -d   — Arrêter : docker compose down
+# Identifiants identiques à .env.example (base tinor_v3, utilisateur tinor / tinor).
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: tinor-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: tinor_v3
+      MARIADB_USER: tinor
+      MARIADB_PASSWORD: tinor
+    ports:
+      - "3306:3306"
+    volumes:
+      - tinor-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  tinor-data:

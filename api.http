@@ -1,0 +1,52 @@
+# Requêtes de test de l'API TinOR — extension VS Code « REST Client » (humao.rest-client).
+# Cliquer sur « Send Request » au-dessus de chaque requête. Commencer par la connexion :
+# le jeton est ensuite réutilisé automatiquement par les autres requêtes.
+
+@api = http://localhost:3001/api
+@token = {{connexion.response.body.token}}
+
+### Santé de l'API (sans connexion)
+GET {{api}}/health
+
+### Connexion (admin / changeme par défaut)
+# @name connexion
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "changeme" }
+
+### Produits
+GET {{api}}/produits
+Authorization: Bearer {{token}}
+
+### Lots (registre)
+GET {{api}}/lots
+Authorization: Bearer {{token}}
+
+### Contrôle de cohérence du stock (quantité des lots = mouvements)
+GET {{api}}/controle-stock
+Authorization: Bearer {{token}}
+
+### Lots périmés ou expirant dans les 30 jours
+GET {{api}}/alertes/peremption?jours=30
+Authorization: Bearer {{token}}
+
+### Inventaires
+GET {{api}}/inventaires
+Authorization: Bearer {{token}}
+
+### Commandes
+GET {{api}}/commandes
+Authorization: Bearer {{token}}
+
+### Factures
+GET {{api}}/factures
+Authorization: Bearer {{token}}
+
+### Meilleures ventes
+GET {{api}}/stats/top-produits?limit=5
+Authorization: Bearer {{token}}
+
+### Mouvements de stock
+GET {{api}}/stock-mouvements
+Authorization: Bearer {{token}}

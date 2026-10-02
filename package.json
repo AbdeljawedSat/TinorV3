@@ -8,6 +8,8 @@
     "dev": "node --watch src/server.js",
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
+    "setup": "node scripts/init-env.js && npm run migrate && npm run seed",
+    "demo": "node scripts/seed_test_complet.js",
     "backup": "node scripts/backup.js",
     "test:stock": "node test/stock/run.js"
   },

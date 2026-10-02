@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "humao.rest-client",
+    "ms-azuretools.vscode-docker",
+    "cweijan.vscode-database-client2"
+  ]
+}

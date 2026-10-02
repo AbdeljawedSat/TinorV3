@@ -1,0 +1,36 @@
+{
+  // TinOR — onglet « Exécuter et déboguer » (Ctrl+Maj+D), puis F5.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API TinOR (débogage)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/server.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Console TinOR dans Edge",
+      "type": "msedge",
+      "request": "launch",
+      "url": "http://localhost:3001/",
+      "webRoot": "${workspaceFolder}/admin"
+    },
+    {
+      "name": "Console TinOR dans Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3001/",
+      "webRoot": "${workspaceFolder}/admin"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "TinOR complet : API + console (Edge)",
+      "configurations": ["API TinOR (débogage)", "Console TinOR dans Edge"],
+      "stopAll": true
+    }
+  ]
+}
