@@ -2436,6 +2436,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // fictives : tout ce qui suit vient réellement de la base.
   // ============================================================================
   let API_BASE = 'http://127.0.0.1:3001/api';
+  // Adresse de l'API proposée à la connexion : celle utilisée la dernière fois
+  // (mémorisée sur cet appareil) ; sinon, si la console est servie par l'API
+  // elle-même (ex. https://tinor.up.railway.app/), la même adresse + /api.
+  const API_BASE_CLE = 'tinor_api_base';
+  (function initAdresseApi() {
+    const champ = document.getElementById('apiBaseInput');
+    let adresse = null;
+    try { adresse = localStorage.getItem(API_BASE_CLE); } catch {}
+    if (adresse) { champ.value = adresse; return; }
+    if (!/^https?:$/.test(location.protocol) || location.hostname === 'appassets.androidplatform.net') return;
+    fetch(`${location.origin}/api/health`).then(r => r.ok ? r.json() : null).then(h => {
+      if (h && h.version === 'v3' && champ.value === champ.defaultValue) champ.value = `${location.origin}/api`;
+    }).catch(() => {});
+  })();
   let TOKEN = null; // gardé en mémoire JS uniquement (pas de stockage navigateur)
   let CURRENT_USER = null;
   function isGerant() { return CURRENT_USER && CURRENT_USER.role === 'gerant'; }
@@ -2466,6 +2480,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
       TOKEN = data.token;
       CURRENT_USER = data.user;
+      try { localStorage.setItem(API_BASE_CLE, API_BASE); } catch {}
       document.getElementById('loginOverlay').classList.remove('open');
       document.getElementById('appRoot').style.display = 'flex';
       const who = document.querySelector('.sidebarFoot .who');

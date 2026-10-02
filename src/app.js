@@ -7,6 +7,10 @@ function createApp(pool) {
   app.use(cors());
   app.use(express.json());
 
+  // Console d'administration servie par l'API : https://<domaine>/ ouvre la
+  // console, déjà reliée à cette API, et installable comme application.
+  app.use(express.static(require('path').join(__dirname, '..', 'admin'), { index: 'tinor_admin.html' }));
+
   app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3' }));
 
   app.use('/api/auth', require('./routes/auth')(pool));
