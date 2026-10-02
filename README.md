@@ -6,6 +6,10 @@
 | `admin/tinor_admin.html` | Console d'administration (fichier HTML autonome) |
 | `archive/tinor-api-v3.zip` | Archive d'origine de l'API (référence de secours 1) |
 | `DEPLOIEMENT.md` | Mise en ligne pas à pas sur Railway |
+| `android/` | Application Android (APK compilé par GitHub Actions) — voir `android/README.md` |
+
+**Sur Android** : installer `https://github.com/AbdeljawedSat/TinorV3/releases/latest/download/TinOR.apk`.
+Une fois l'API en ligne, `https://<domaine>/` ouvre aussi directement la console.
 
 Connexion à la console : ouvrir `admin/tinor_admin.html`, renseigner l'**Adresse de l'API**
 (`http://127.0.0.1:3001/api` en local, ou l'URL Railway), puis `admin` / `changeme`.
