@@ -4,11 +4,11 @@
 // par diverger.
 
 async function nextNumero(pool, seqName, prefix) {
-  const upd = await pool.query(`UPDATE sequences SET last_value = last_value + 1 WHERE name = $1`, [seqName]);
+  const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
   if (!upd.affectedRows) {
-    await pool.query(`INSERT INTO sequences (name, last_value) VALUES ($1, 1)`, [seqName]);
+    await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ($1, 1)`, [seqName]);
   }
-  const cur = await pool.query(`SELECT last_value FROM sequences WHERE name = $1`, [seqName]);
+  const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = $1`, [seqName]);
   return `${prefix}-${String(cur.rows[0].last_value).padStart(4, '0')}`;
 }
 
@@ -72,7 +72,8 @@ async function decrementerLot(pool, lotId, quantite) {
     [quantite, lotId]
   );
   if (!upd.affectedRows) {
-    const lot = await pool.query('SELECT numero_lot, quantite_actuelle FROM lots WHERE id = $1', [lotId]);
+    // FOR UPDATE : lecture de la valeur à jour (pas celle du début de la transaction).
+    const lot = await pool.query('SELECT numero_lot, quantite_actuelle FROM lots WHERE id = $1 FOR UPDATE', [lotId]);
     const l = lot.rows[0];
     throw new StockInsuffisant(l
       ? `Stock insuffisant sur le lot ${l.numero_lot} : disponible ${Number(l.quantite_actuelle)}, demandé ${Number(quantite)} (il a pu être utilisé entre-temps par une autre opération).`

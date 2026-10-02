@@ -3,11 +3,11 @@ const express = require('express');
 const { LOT_DISPONIBLE, ORDRE_FEFO, decrementerLot } = require('../services/lotService');
 
 async function nextNumero(pool, seqName, prefix) {
-  const upd = await pool.query(`UPDATE sequences SET last_value = last_value + 1 WHERE name = $1`, [seqName]);
+  const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
   if (!upd.affectedRows) {
-    await pool.query(`INSERT INTO sequences (name, last_value) VALUES ($1, 1)`, [seqName]);
+    await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ($1, 1)`, [seqName]);
   }
-  const cur = await pool.query(`SELECT last_value FROM sequences WHERE name = $1`, [seqName]);
+  const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = $1`, [seqName]);
   return `${prefix}-${String(cur.rows[0].last_value).padStart(4, '0')}`;
 }
 

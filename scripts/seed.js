@@ -40,7 +40,7 @@ async function main() {
   await conn.query(`INSERT IGNORE INTO locaux (code, nom, type_local) VALUES
     ('ATELIER','Atelier Djerba','PRODUCTION'), ('STOCK1','Entrepôt Principal','STOCK')`);
 
-  await conn.query(`INSERT INTO sequences (name, last_value) VALUES ('produit_code_seq', 0)
+  await conn.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ('produit_code_seq', 0)
     ON DUPLICATE KEY UPDATE name = name`);
 
   // Structure de lots par défaut : les 3 champs communs verrouillés pour chaque type.

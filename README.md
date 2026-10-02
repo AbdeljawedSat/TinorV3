@@ -6,6 +6,7 @@
 | `admin/tinor_admin.html` | Console d'administration (fichier HTML autonome) |
 | `archive/tinor-api-v3.zip` | Archive d'origine de l'API (référence de secours 1) |
 | `DEPLOIEMENT.md` | Mise en ligne pas à pas sur Railway |
+| `base/` | Base de données prête à importer (vierge ou démonstration), MariaDB et MySQL — voir `base/README.md` |
 | `TESTER-SUR-PC.md` | Tester sur un PC avec VS Code (tâches prêtes, base MariaDB via Docker) |
 | `android/` | Application Android (APK compilé par GitHub Actions) — voir `android/README.md` |
 

@@ -30,12 +30,12 @@ module.exports = function (pool) {
   // Génère le prochain code produit à 2 chiffres (protocole TT conservé de la V2).
   async function nextProductCode(pool) {
     const seq = await pool.query(
-      `UPDATE sequences SET last_value = last_value + 1 WHERE name = 'produit_code_seq'`
+      `UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = 'produit_code_seq'`
     );
     if (!seq.affectedRows) {
-      await pool.query(`INSERT INTO sequences (name, last_value) VALUES ('produit_code_seq', 1)`);
+      await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ('produit_code_seq', 1)`);
     }
-    const cur = await pool.query(`SELECT last_value FROM sequences WHERE name = 'produit_code_seq'`);
+    const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = 'produit_code_seq'`);
     return String(cur.rows[0].last_value).padStart(2, '0');
   }
 

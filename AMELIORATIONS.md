@@ -89,3 +89,10 @@ Contrôle : quantité de chaque lot comparée à la somme de ses mouvements. Cau
 | Statut de commande invalide via l'API | erreur 500 | refus clair (400) |
 
 Un écart de type « stock fantôme » reste cohérent avec les mouvements : seul un **inventaire** le révèle.
+
+## Compatibilité MySQL 8 (Railway)
+
+La version initiale ne s'installait pas sur MySQL 8 : la colonne `sequences.last_value` porte le nom
+d'une fonction réservée de MySQL 8 (`LAST_VALUE`). Elle est désormais écrite entre accents graves dans
+le schéma et les requêtes — même colonne, base identique. Toute l'API (41 routes), l'installation,
+les données de démonstration et les tests de stock passent sur MariaDB 10.11 et MySQL 8.4.

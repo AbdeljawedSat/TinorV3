@@ -32,6 +32,9 @@ La commande de démarrage est lue dans `railway.json` :
 
 `PORT` est fourni automatiquement par Railway.
 
+La base MySQL de Railway est compatible (testé sur MySQL 8.4). Pour partir avec les données
+d'exemple, importer `base/tinor_v3_demo.sql` dans la base Railway **avant** le premier démarrage.
+
 ## 4. Obtenir l'adresse publique
 
 Service API → **Settings → Networking → Generate Domain**.
