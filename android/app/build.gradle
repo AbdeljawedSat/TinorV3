@@ -1,0 +1,82 @@
+plugins {
+    id 'com.android.application'
+}
+
+// La console embarquée est copiée depuis ../admin à chaque build : une seule
+// source à maintenir pour le web et pour Android.
+def consoleDir = layout.buildDirectory.dir('generated/console')
+def copierConsole = tasks.register('copierConsole', Sync) {
+    from(rootProject.file('../admin')) {
+        include 'tinor_admin.html', 'manifest.json', 'icon-192.png', 'icon-512.png'
+    }
+    into consoleDir
+}
+
+// Signature : clé de publication si les secrets sont fournis (variables
+// d'environnement en CI), sinon la clé « debug » du dépôt (stable d'un build à
+// l'autre : les mises à jour s'installent par-dessus l'ancienne version).
+def cleSignature = System.getenv('TINOR_KEYSTORE_FILE')
+
+android {
+    namespace 'tn.lesjardinsdejerba.tinor'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'tn.lesjardinsdejerba.tinor'
+        minSdk 24
+        targetSdk 35
+        versionCode((System.getenv('TINOR_VERSION_CODE') ?: '1') as int)
+        versionName '3.1.' + (System.getenv('TINOR_VERSION_CODE') ?: '0')
+    }
+
+    signingConfigs {
+        tinor {
+            if (cleSignature) {
+                storeFile file(cleSignature)
+                storePassword System.getenv('TINOR_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('TINOR_KEY_ALIAS')
+                keyPassword System.getenv('TINOR_KEY_PASSWORD')
+            } else {
+                storeFile file('tinor-debug.keystore')
+                storePassword 'android'
+                keyAlias 'androiddebugkey'
+                keyPassword 'android'
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.tinor
+        }
+        debug {
+            signingConfig signingConfigs.tinor
+        }
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs += consoleDir
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        // La console est une page web embarquée : pas d'échec du build sur des
+        // avertissements de style, seulement sur les erreurs.
+        abortOnError true
+        checkReleaseBuilds true
+        warningsAsErrors false
+    }
+}
+
+tasks.named('preBuild') { dependsOn copierConsole }
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
