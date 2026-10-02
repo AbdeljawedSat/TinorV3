@@ -45,6 +45,20 @@ module.exports = function (pool) {
       if (lot_source_id && !quantite_matiere_utilisee) {
         return res.status(400).json({ error: 'quantite_matiere_utilisee est requis quand lot_source_id est fourni.' });
       }
+      // Bilan matière : la matière utilisée ne peut jamais être inférieure à
+      // huile + tourteau (ni donc à l'un des deux) — le reste correspond aux pertes.
+      const qMatiere = quantite_matiere_utilisee == null || quantite_matiere_utilisee === '' ? null : Number(quantite_matiere_utilisee);
+      const qHuile = Number(quantite_produite);
+      const qTourteau = quantite_tourteau == null || quantite_tourteau === '' ? 0 : Number(quantite_tourteau);
+      if (!Number.isFinite(qHuile) || qHuile <= 0) return res.status(400).json({ error: "La quantité d'huile obtenue doit être supérieure à 0." });
+      if (!Number.isFinite(qTourteau) || qTourteau < 0) return res.status(400).json({ error: 'La quantité de tourteau ne peut pas être négative.' });
+      if (qMatiere != null) {
+        if (!Number.isFinite(qMatiere) || qMatiere <= 0) return res.status(400).json({ error: 'La quantité de matière utilisée doit être supérieure à 0.' });
+        const somme = Math.round((qHuile + qTourteau) * 1000) / 1000;
+        if (somme > Math.round(qMatiere * 1000) / 1000) {
+          return res.status(400).json({ error: `Bilan impossible : huile (${qHuile}) + tourteau (${qTourteau}) = ${somme}, supérieur à la matière utilisée (${qMatiere}). La matière utilisée doit être au moins égale à la somme.` });
+        }
+      }
       // Règle du pressage : graines consommées → huile en vrac de la même graine.
       const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
       if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });

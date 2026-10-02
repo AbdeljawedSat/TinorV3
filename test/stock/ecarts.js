@@ -114,7 +114,21 @@ async function ecart(lotId) {
     const r3 = await presse(savon, lSesame);
     check(r3.status === 400, `savon en vrac comme produit obtenu refusé : ${r3.data.error}`);
     const e = await ecart(lNigelle.id);
-    check(e.q === 50 && e.m === 50, "les pressages refusés n'ont rien consommé"); }
+    check(e.q === 50 && e.m === 50, "les pressages refusés n'ont rien consommé");
+
+    console.log('J. Pressage : matière utilisée ≥ huile + tourteau');
+    const bilan = (mat, huile, tourteau) => api('/presse', { method: 'POST', body: { date: '2026-10-02', produit_id: huileSesame.id, lot_source_id: lSesame.id, quantite_matiere_utilisee: mat, quantite_produite: huile, quantite_tourteau: tourteau } });
+    const avant = await ecart(lSesame.id);
+    check((await bilan(10, 3, 7)).status === 201, 'matière = huile + tourteau (10 = 3 + 7) acceptée');
+    check((await bilan(10, 3, 6)).status === 201, 'matière > huile + tourteau (pertes de 1) acceptée');
+    const b1 = await bilan(10, 4, 7);
+    check(b1.status === 400, `somme supérieure à la matière refusée : ${b1.data.error}`);
+    check((await bilan(10, 11, null)).status === 400, 'huile seule supérieure à la matière refusée');
+    check((await bilan(10, 1, 12)).status === 400, 'tourteau seul supérieur à la matière refusé');
+    check((await bilan(10, 0, 5)).status === 400, 'huile nulle refusée');
+    check((await bilan(10, 3, -1)).status === 400, 'tourteau négatif refusé');
+    const apres = await ecart(lSesame.id);
+    check(apres.q === avant.q - 20 && apres.q === apres.m, `seuls les 2 pressages valides ont consommé (${avant.q} → ${apres.q})`); }
 
   console.log('H. Commande refusée : aucune trace partielle');
   { const { p, l } = await lotNeuf(5);

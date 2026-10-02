@@ -1750,6 +1750,7 @@
       <input type="number" step="0.001" id="presseQteTourteau" class="formInput">
       <label class="formLbl">Quantité produite (huile obtenue)</label>
       <input type="number" step="0.001" id="presseQteProduite" class="formInput">
+      <div id="presseBilan" class="rowMeta" style="font-size:11.5px; margin:6px 0 12px;"></div>
       <label class="formLbl">Notes</label>
       <input type="text" id="presseNotes" class="formInput">
       <div id="presseChampsPerso"></div>
@@ -3223,6 +3224,30 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       || `<option value="">— Aucune huile en vrac au catalogue —</option>`;
   }
 
+  // Bilan matière du pressage : matière utilisée ≥ huile + tourteau (jamais moins,
+  // ni moins que l'un des deux). Renvoie un message d'erreur, ou null si correct.
+  function verifierBilanPresse() {
+    const val = fid => { const v = document.getElementById(fid).value; return v === '' ? null : Number(v); };
+    const matiere = val('presseQteUtilisee'), huile = val('presseQteProduite'), tourteau = val('presseQteTourteau') || 0;
+    const zone = document.getElementById('presseBilan');
+    zone.style.color = '';
+    if (huile != null && huile <= 0) { zone.textContent = ''; return "La quantité d'huile obtenue doit être supérieure à 0."; }
+    if (tourteau < 0) { zone.textContent = ''; return 'La quantité de tourteau ne peut pas être négative.'; }
+    if (matiere == null || huile == null) { zone.textContent = 'Bilan : matière utilisée ≥ huile + tourteau.'; return null; }
+    if (matiere <= 0) { zone.textContent = ''; return 'La quantité de matière utilisée doit être supérieure à 0.'; }
+    const r = x => Math.round(x * 1000) / 1000;
+    const pertes = r(matiere - huile - tourteau);
+    if (pertes < 0) {
+      zone.textContent = `⚠ Impossible : huile (${huile}) + tourteau (${tourteau}) = ${r(huile + tourteau)}, plus que la matière utilisée (${matiere}).`;
+      zone.style.color = 'var(--danger)';
+      return `Bilan impossible : la matière utilisée (${matiere}) doit être au moins égale à huile + tourteau (${r(huile + tourteau)}).`;
+    }
+    zone.textContent = `Bilan : ${matiere} = ${huile} huile + ${tourteau} tourteau + ${pertes} pertes — rendement huile ${(huile / matiere * 100).toFixed(1)} %`;
+    return null;
+  }
+  ['presseQteUtilisee', 'presseQteTourteau', 'presseQteProduite'].forEach(fid =>
+    document.getElementById(fid).addEventListener('input', verifierBilanPresse));
+
   async function openPresseModal(id) {
     document.getElementById('presseFormError').style.display = 'none';
     APP_DATA.lots = await apiFetch('/lots'); // toujours le stock le plus frais avant de proposer une source
@@ -3258,6 +3283,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       document.getElementById(fid).disabled = !!p;
     });
     document.getElementById('presseQuantitesLockedNote').style.display = p ? 'block' : 'none';
+    verifierBilanPresse();
     await afficherChampsPerso('presseChampsPerso', 'PRESSE', p && p.champs_perso ? p.champs_perso : {});
     document.getElementById('presseModalOverlay').classList.add('open');
   }
@@ -3301,6 +3327,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!payload.date || !payload.produit_id || !payload.quantite_produite) {
       errEl.textContent = 'Date, produit et quantité produite sont requis.'; errEl.style.display = 'block'; return;
     }
+    const erreurBilan = verifierBilanPresse();
+    if (erreurBilan) { errEl.textContent = erreurBilan; errEl.style.display = 'block'; return; }
     try {
       await apiFetch('/presse', { method: 'POST', body: JSON.stringify(payload) });
       closePresseModal();

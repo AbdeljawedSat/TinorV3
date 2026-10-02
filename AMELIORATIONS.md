@@ -104,6 +104,9 @@ les données de démonstration et les tests de stock passent sur MariaDB 10.11 e
   (« Graines de Sésame » → « Huile de Sésame — Vrac »). Correspondance par le nom, sans tenir compte
   des accents ni des majuscules (`src/services/graines.js`, même logique dans la console).
   Appliqué dans le formulaire (listes filtrées, matière choisie en premier) **et** par l'API (refus 400).
+- **Bilan matière du pressage** : quantité de matière utilisée **≥ huile + tourteau** (donc jamais
+  inférieure à la somme, ni à l'un des deux) ; huile > 0, tourteau ≥ 0. Contrôle en direct dans le
+  formulaire (bilan avec pertes et rendement) et refus par l'API.
 - **Savon en vrac** : ne passe ni par la presse ni par la filtration ; il entre en stock par
   réception puis est **conditionné directement** depuis son lot.
 - Données de démonstration et fichiers `base/*.sql` régénérés en conséquence.
