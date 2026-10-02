@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
@@ -52,7 +53,7 @@ module.exports = function (pool) {
   // consommables (optionnel) : [{ produit_id, quantite }] — flacons, bouchons,
   // étiquettes... sélection FIFO d'un lot par consommable, même logique de
   // traçabilité que le vrac (lot_origines + stock_mouvements).
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { date, produit_id, format_id, qty, note, employe_id, sources, consommables, champs_perso } = req.body;
       if (!date || !produit_id || !qty) {
@@ -183,7 +184,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM conditionnements WHERE id = $1', [conditionnementId]);
       res.status(201).json(result.rows[0]);
     } catch (err) { next(err); }
-  });
+  }));
 
   router.put('/:id', async (req, res) => {
     const { date, note, employe_id } = req.body;

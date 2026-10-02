@@ -116,14 +116,19 @@ module.exports = function (pool) {
         [req.params.id]
       );
       for (const l of lignes.rows) {
-        const ecart = Number(l.ecart);
-        const nouvelle = Math.max(0, Number(l.quantite_actuelle) + ecart);
+        const avant = Number(l.quantite_actuelle);
+        const nouvelle = Math.max(0, avant + Number(l.ecart));
+        // Le mouvement enregistre la variation RÉELLEMENT appliquée au lot (et non
+        // l'écart de comptage brut) : si le lot a bougé pendant le comptage et que
+        // le résultat est ramené à zéro, les deux restent cohérents.
+        const variation = Math.round((nouvelle - avant) * 1000) / 1000;
+        if (!variation) continue;
         await conn.query('UPDATE lots SET quantite_actuelle = $1 WHERE id = $2', [nouvelle, l.lot_id]);
         const numeroMvt = await nextNumero(conn, 'mouvement_seq', 'MVT');
         const mvt = await conn.query(
           `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, local_id, quantite, source_type, source_id, note, employe_id)
            VALUES ($1,'INVENTAIRE',$2,$3,$4,$5,$6,'inventaire',$7,$8,$9)`,
-          [numeroMvt, ecart > 0 ? 'ENTREE' : 'SORTIE', l.produit_id, l.lot_id, inv.rows[0].local_id, Math.abs(ecart),
+          [numeroMvt, variation > 0 ? 'ENTREE' : 'SORTIE', l.produit_id, l.lot_id, inv.rows[0].local_id, Math.abs(variation),
            req.params.id, `Inventaire ${inv.rows[0].numero}`, employe_id || null]
         );
         await conn.query('UPDATE inventaire_lignes SET mouvement_ajustement_id = $1 WHERE id = $2', [mvt.insertId, l.id]);

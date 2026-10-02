@@ -60,6 +60,26 @@ async function nextLotNumber(pool, produitId, origine) {
   return `${code}-${suffixe}${numeroSeq}`;
 }
 
+const { StockInsuffisant } = require('../db/transaction');
+
+// Seul point de décrément d'un lot. La condition `quantite_actuelle >= quantité`
+// est évaluée par MariaDB au moment de l'écriture (lecture courante, ligne
+// verrouillée) : deux opérations simultanées sur le même lot ne peuvent plus le
+// faire passer sous zéro — la seconde est refusée et sa transaction annulée.
+async function decrementerLot(pool, lotId, quantite) {
+  const upd = await pool.query(
+    'UPDATE lots SET quantite_actuelle = quantite_actuelle - $1 WHERE id = $2 AND quantite_actuelle >= $1',
+    [quantite, lotId]
+  );
+  if (!upd.affectedRows) {
+    const lot = await pool.query('SELECT numero_lot, quantite_actuelle FROM lots WHERE id = $1', [lotId]);
+    const l = lot.rows[0];
+    throw new StockInsuffisant(l
+      ? `Stock insuffisant sur le lot ${l.numero_lot} : disponible ${Number(l.quantite_actuelle)}, demandé ${Number(quantite)} (il a pu être utilisé entre-temps par une autre opération).`
+      : 'Lot introuvable.');
+  }
+}
+
 // Crée un lot générique + sa première entrée d'historique de statut. Renvoie l'id du lot.
 async function createLot(pool, { produit_id, origine, quantite, employe_id, motif, extra = {} }) {
   const numeroLot = await nextLotNumber(pool, produit_id, origine);
@@ -88,7 +108,7 @@ async function createLot(pool, { produit_id, origine, quantite, employe_id, moti
 // mouvement de sortie de stock correspondant. Fait passer le lot à EPUISE
 // s'il tombe à zéro.
 async function consumeLot(pool, { lotSourceId, lotFilsId, quantite, typeMouvement, employeId, numeroMouvement, groupId, sourceType, sourceId }) {
-  await pool.query('UPDATE lots SET quantite_actuelle = quantite_actuelle - $1 WHERE id = $2', [quantite, lotSourceId]);
+  await decrementerLot(pool, lotSourceId, quantite);
   await pool.query(
     `INSERT INTO lot_origines (lot_fils_id, lot_source_id, quantite_utilisee) VALUES ($1,$2,$3)`,
     [lotFilsId, lotSourceId, quantite]
@@ -122,4 +142,4 @@ async function recordEntree(pool, { produitId, lotId, quantite, typeMouvement, e
 const LOT_DISPONIBLE = `statut = 'LIBERE' AND (date_expiration IS NULL OR date_expiration >= CURDATE())`;
 const ORDRE_FEFO = `(date_expiration IS NULL), date_expiration ASC, created_at ASC`;
 
-module.exports = { nextNumero, nextLotNumber, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO };
+module.exports = { nextNumero, nextLotNumber, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };

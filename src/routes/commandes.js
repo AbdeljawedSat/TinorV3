@@ -1,5 +1,6 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
-const { LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
+const { LOT_DISPONIBLE, ORDRE_FEFO, decrementerLot } = require('../services/lotService');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET last_value = last_value + 1 WHERE name = $1`, [seqName]);
@@ -9,6 +10,8 @@ async function nextNumero(pool, seqName, prefix) {
   const cur = await pool.query(`SELECT last_value FROM sequences WHERE name = $1`, [seqName]);
   return `${prefix}-${String(cur.rows[0].last_value).padStart(4, '0')}`;
 }
+
+const STATUTS_COMMANDE = ['en_attente', 'confirmee', 'livree', 'payee'];
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -60,7 +63,7 @@ module.exports = function (pool) {
     return { unitPrice: prixDetail, freeUnits: 0 };
   }
 
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { client_id, statut, notes, employe_id, lignes } = req.body;
       if (!client_id) return res.status(400).json({ error: 'client_id est requis.' });
@@ -166,10 +169,7 @@ module.exports = function (pool) {
 
         if (l.enAttente) continue; // rien à décrémenter, en attente de conditionnement
 
-        await pool.query(
-          `UPDATE lots SET quantite_actuelle = quantite_actuelle - $1 WHERE id = $2`,
-          [l.qtePrelevee, l.lot_id]
-        );
+        await decrementerLot(pool, l.lot_id, l.qtePrelevee);
         const lotApres = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [l.lot_id]);
         if (Number(lotApres.rows[0].quantite_actuelle) <= 0) {
           await pool.query(`UPDATE lots SET statut = 'EPUISE' WHERE id = $1`, [l.lot_id]);
@@ -182,7 +182,9 @@ module.exports = function (pool) {
         await pool.query(
           `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, group_id, employe_id)
            VALUES ($1,'VENTE','SORTIE',$2,$3,$4,'commande',$5,$6,$7)`,
-          [`MVT-${numero}-${l.produit_id}`, l.produit_id, l.lot_id, l.qtePrelevee, commandeId, groupId, employe_id || null]
+          // N° issu de la séquence : l'ancien `MVT-<commande>-<produit>` entrait en
+          // collision quand un même produit figurait sur deux lignes.
+          [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, l.qtePrelevee, commandeId, groupId, employe_id || null]
         );
       }
 
@@ -201,7 +203,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM commandes WHERE id = $1', [commandeId]);
       res.status(201).json({ ...result.rows[0], lignes: lignesAConstruire, notifications_creees: notificationsAPreparer.length });
     } catch (err) { next(err); }
-  });
+  }));
 
   // Modification limitée aux notes — les lignes ont déjà décrémenté du stock
   // réel (FIFO) ; les rééditer nécessiterait la même logique de réversion que
@@ -217,6 +219,9 @@ module.exports = function (pool) {
   router.put('/:id/statut', async (req, res) => {
     const { statut } = req.body;
     if (!statut) return res.status(400).json({ error: 'statut est requis.' });
+    if (!STATUTS_COMMANDE.includes(statut)) {
+      return res.status(400).json({ error: `Statut invalide. Valeurs possibles : ${STATUTS_COMMANDE.join(', ')}. Pour annuler une vente, annulez sa facture (le stock est alors réintégré).` });
+    }
     const updateRes = await pool.query('UPDATE commandes SET statut = $1 WHERE id = $2', [statut, req.params.id]);
     if (!updateRes.affectedRows) return res.status(404).json({ error: 'Commande introuvable.' });
     const result = await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id]);

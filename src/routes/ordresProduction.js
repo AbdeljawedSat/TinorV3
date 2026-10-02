@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
@@ -21,7 +22,7 @@ module.exports = function (pool) {
   // besoin (quantite_par_unite × qty_produite), sélectionne un lot en FIFO
   // (pas de fractionnement multi-lots, même limite assumée que pour les
   // commandes), le consomme, puis crée le lot de produit fini.
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { recette_id, date, qty_produite, notes, employe_id } = req.body;
       if (!recette_id || !date || !qty_produite) {
@@ -86,7 +87,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM ordres_production WHERE id = $1', [ordreId]);
       res.status(201).json({ ...result.rows[0], numero_lot: numeroLot });
     } catch (err) { next(err); }
-  });
+  }));
 
   return router;
 };

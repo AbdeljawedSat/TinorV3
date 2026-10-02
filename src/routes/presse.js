@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
@@ -30,7 +31,7 @@ module.exports = function (pool) {
   // Presse un lot de matière première (huile vrac) en un nouveau lot d'huile
   // pressée — consomme lot_source_id (généralement un lot RECEPTION_MP), crée
   // le lot générique résultant, et trace le rendement réel.
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const {
         date, produit_id, reception_id, lot_source_id,
@@ -83,7 +84,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM lots_presse WHERE lot_id = $1', [lotId]);
       res.status(201).json(result.rows[0]);
     } catch (err) { next(err); }
-  });
+  }));
 
   // Modification limitée aux champs sans impact sur le stock déjà mouvementé
   // (date, notes, employé) — les quantités et le lot source restent figés une

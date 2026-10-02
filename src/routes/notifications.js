@@ -1,5 +1,6 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
-const { LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
+const { LOT_DISPONIBLE, ORDRE_FEFO, decrementerLot, nextNumero } = require('../services/lotService');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -25,9 +26,11 @@ module.exports = function (pool) {
   // Retente le prélèvement FIFO pour la ligne de commande restée en attente
   // (lot_id IS NULL) liée à cette notification — à appeler une fois le
   // conditionnement fait pour ce format.
-  router.post('/:id/resoudre', async (req, res, next) => {
+  router.post('/:id/resoudre', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const notifRes = await pool.query('SELECT * FROM notifications WHERE id = $1', [req.params.id]);
+      // FOR UPDATE : deux résolutions simultanées (double clic) sont sérialisées,
+      // la seconde voit la notification déjà résolue — un seul prélèvement de stock.
+      const notifRes = await pool.query('SELECT * FROM notifications WHERE id = $1 FOR UPDATE', [req.params.id]);
       const notif = notifRes.rows[0];
       if (!notif) return res.status(404).json({ error: 'Notification introuvable.' });
       if (notif.statut === 'RESOLUE') return res.status(409).json({ error: 'Cette notification est déjà résolue.' });
@@ -59,7 +62,7 @@ module.exports = function (pool) {
       }
 
       await pool.query('UPDATE commande_lignes SET lot_id = $1 WHERE id = $2', [lot.id, ligne.id]);
-      await pool.query('UPDATE lots SET quantite_actuelle = quantite_actuelle - $1 WHERE id = $2', [qtePrelevee, lot.id]);
+      await decrementerLot(pool, lot.id, qtePrelevee);
       const lotApres = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [lot.id]);
       if (Number(lotApres.rows[0].quantite_actuelle) <= 0) {
         await pool.query(`UPDATE lots SET statut = 'EPUISE' WHERE id = $1`, [lot.id]);
@@ -71,7 +74,7 @@ module.exports = function (pool) {
       await pool.query(
         `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id)
          VALUES ($1,'VENTE','SORTIE',$2,$3,$4,'notification',$5)`,
-        [`MVT-RESOLU-${req.params.id}`, notif.produit_id, lot.id, qtePrelevee, req.params.id]
+        [await nextNumero(pool, 'mouvement_seq', 'MVT'), notif.produit_id, lot.id, qtePrelevee, req.params.id]
       );
 
       // Si plus aucune ligne en attente sur cette commande, elle sort du statut "en_attente".
@@ -87,7 +90,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM notifications WHERE id = $1', [req.params.id]);
       res.json({ ...result.rows[0], lot_assigne: lot.numero_lot, commande_toujours_en_attente: Number(resteEnAttente.rows[0].n) > 1 });
     } catch (err) { next(err); }
-  });
+  }));
 
   return router;
 };

@@ -74,3 +74,18 @@ existaient dans le schéma sans route API ni écran. La colonne « TinOR » indi
 ### Priorité 4 — selon besoin
 11. Rôles supplémentaires (production, magasinier, comptable).
 12. Facturation électronique El Fatoora (si l'entreprise y est soumise).
+
+## Écarts de stock — causes trouvées et corrigées
+
+Contrôle : quantité de chaque lot comparée à la somme de ses mouvements. Causes reproduites puis corrigées :
+
+| Cause | Effet avant correction | Correction |
+|---|---|---|
+| Même produit sur deux lignes d'une commande | erreur 500 après décrément du lot : stock baissé sans mouvement, commande à moitié créée | n° de mouvement unique + transaction |
+| Facture annulée puis commande refacturée | stock réintégré à l'annulation, jamais ressorti : stock fantôme | la refacturation ressort le stock |
+| Deux commandes / pressages simultanés sur un lot | stock négatif | décrément conditionnel (`decrementerLot`) + transaction |
+| Double clic sur « Annuler la facture » | risque de double réintégration | annulation conditionnelle sur le statut |
+| Inventaire clôturé alors que le lot a bougé pendant le comptage | mouvement ≠ variation appliquée | mouvement = variation réelle |
+| Statut de commande invalide via l'API | erreur 500 | refus clair (400) |
+
+Un écart de type « stock fantôme » reste cohérent avec les mouvements : seul un **inventaire** le révèle.

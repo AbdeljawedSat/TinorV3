@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
@@ -32,7 +33,7 @@ module.exports = function (pool) {
   // Filtre un ou plusieurs lots de presse en un nouveau lot d'huile filtrée.
   // sources : [{ lot_presse_id, quantite_utilisee }] — peut combiner plusieurs
   // pressages (ex: fusion de deux petits lots avant filtration).
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { date, produit_id, filtre_utilise, quantite_dechet, quantite_produite, notes, employe_id, sources, champs_perso } = req.body;
       if (!date || !produit_id || !quantite_produite) {
@@ -95,7 +96,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM lots_filtration WHERE id = $1', [filtrationId]);
       res.status(201).json(result.rows[0]);
     } catch (err) { next(err); }
-  });
+  }));
 
   router.put('/:id', async (req, res) => {
     const { date, filtre_utilise, notes, employe_id } = req.body;

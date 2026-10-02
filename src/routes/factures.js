@@ -1,5 +1,8 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { computeFactureTotals, computeFactureTotalsDepuisLignes } = require('../services/pricing');
+const { decrementerLot, LOT_DISPONIBLE } = require('../services/lotService');
+const { StockInsuffisant } = require('../db/transaction');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET last_value = last_value + 1 WHERE name = $1`, [seqName]);
@@ -40,14 +43,14 @@ module.exports = function (pool) {
   // Émet une facture à partir d'une commande — recopie figée des lignes
   // (designation, prix, remise) au moment de la facturation, cohérent avec
   // le schéma qui dénormalise volontairement client_nom/commande_numero.
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { commande_id, tva_rate } = req.body;
       if (!commande_id) return res.status(400).json({ error: 'commande_id est requis.' });
 
       const cmdRes = await pool.query(
         `SELECT c.*, cl.nom AS client_nom FROM commandes c
-         LEFT JOIN clients cl ON cl.id = c.client_id WHERE c.id = $1`,
+         LEFT JOIN clients cl ON cl.id = c.client_id WHERE c.id = $1 FOR UPDATE`,
         [commande_id]
       );
       const commande = cmdRes.rows[0];
@@ -81,6 +84,30 @@ module.exports = function (pool) {
         rate, fodecRate, droitTimbreConfigure, timbreSeuil
       );
 
+      // Refacturation après annulation : l'annulation a réintégré le stock des
+      // lots vendus ; la nouvelle facture le ressort (sinon les marchandises
+      // livrées restaient comptées en stock — écart constaté).
+      const annulees = await pool.query(
+        `SELECT COUNT(*) AS n FROM factures WHERE commande_id = $1 AND statut = 'annulee'`, [commande_id]
+      );
+      if (Number(annulees.rows[0].n) > 0) {
+        for (const l of lignesRes.rows) {
+          if (!l.lot_id) continue;
+          const qte = Number(l.qty) + Number(l.free_units || 0);
+          const dispo = await pool.query(`SELECT numero_lot FROM lots WHERE id = $1 AND ${LOT_DISPONIBLE}`, [l.lot_id]);
+          if (!dispo.rows[0]) {
+            throw new StockInsuffisant(`Refacturation impossible : le lot de « ${l.produit_nom} » n'est plus disponible (périmé, bloqué ou épuisé). Créez une nouvelle commande.`);
+          }
+          await decrementerLot(pool, l.lot_id, qte);
+          await pool.query(`UPDATE lots SET statut = 'EPUISE' WHERE id = $1 AND quantite_actuelle <= 0`, [l.lot_id]);
+          await pool.query(
+            `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
+             VALUES ($1,'VENTE','SORTIE',$2,$3,$4,'commande',$5,'Refacturation après annulation')`,
+            [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, qte, commande_id]
+          );
+        }
+      }
+
       const numero = await nextNumero(pool, 'facture_seq', 'FAC');
       const facRes = await pool.query(
         `INSERT INTO factures (numero, commande_id, commande_numero, client_id, client_nom, tva_rate, fodec_montant, droit_timbre, total_ht, montant_tva, total_ttc)
@@ -102,16 +129,19 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM factures WHERE id = $1', [factureId]);
       res.status(201).json(result.rows[0]);
     } catch (err) { next(err); }
-  });
+  }));
 
   // Annule une facture et réintègre le stock des lots vendus via la commande liée.
-  router.post('/:id/annuler', async (req, res) => {
+  router.post('/:id/annuler', enTransaction(pool, async (req, res, next, pool) => {
     const facRes = await pool.query('SELECT * FROM factures WHERE id = $1', [req.params.id]);
     const facture = facRes.rows[0];
     if (!facture) return res.status(404).json({ error: 'Facture introuvable.' });
     if (facture.statut === 'annulee') return res.status(409).json({ error: 'Cette facture est déjà annulée.' });
 
-    await pool.query(`UPDATE factures SET statut = 'annulee' WHERE id = $1`, [req.params.id]);
+    // Condition sur le statut : si deux demandes d'annulation arrivent en même
+    // temps (double clic), une seule passe — le stock n'est réintégré qu'une fois.
+    const annul = await pool.query(`UPDATE factures SET statut = 'annulee' WHERE id = $1 AND statut <> 'annulee'`, [req.params.id]);
+    if (!annul.affectedRows) return res.status(409).json({ error: 'Cette facture est déjà annulée.' });
 
     if (facture.commande_id) {
       const lignesRes = await pool.query(
@@ -125,14 +155,14 @@ module.exports = function (pool) {
         await pool.query(
           `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
            VALUES ($1,'RETOUR_CLIENT','ENTREE',$2,$3,$4,'facture',$5,'Annulation facture')`,
-          [`MVT-ANNUL-${facture.numero}-${l.produit_id}`, l.produit_id, l.lot_id, qteRestituee, req.params.id]
+          [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, qteRestituee, req.params.id]
         );
       }
       await pool.query(`UPDATE commandes SET statut = 'confirmee' WHERE id = $1`, [facture.commande_id]);
     }
     const result = await pool.query('SELECT * FROM factures WHERE id = $1', [req.params.id]);
     res.json(result.rows[0]);
-  });
+  }));
 
   router.post('/:id/paiements', async (req, res) => {
     const { date_paiement, montant, mode, reference, notes } = req.body;

@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextLotNumber, nextNumero, recordEntree } = require('../services/lotService');
 
@@ -104,7 +105,7 @@ module.exports = function (pool) {
     res.json(result.rows);
   });
 
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const {
         produit_id, origine, fournisseur_id, lot_fournisseur, certificat_bio_id, bio_status,
@@ -161,7 +162,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM lots WHERE id = $1', [newLotId]);
       res.status(201).json(result.rows[0]);
     } catch (err) { next(err); }
-  });
+  }));
 
   // Changement de statut — trace obligatoirement le motif dans l'historique
   // (voir BD Gestion Commerciale V3 : lots.statut = valeur courante seule,

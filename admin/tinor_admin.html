@@ -6683,6 +6683,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         : `<tr><td colspan="2" class="rowMeta" style="text-align:center; padding:16px;">Aucune vente pour l'instant.</td></tr>`;
     }).catch(() => {});
 
+    // ---------- Contrôle de cohérence du stock (quantité des lots = mouvements) ----------
+    apiFetch('/controle-stock').then(ctrl => {
+      if (ctrl.ok) return;
+      const negatifs = ctrl.lots.filter(l => l.negatif).length;
+      const row = document.createElement('div');
+      document.querySelectorAll('#dashboardAlertes .alerteEcartStock').forEach(el => el.remove()); // appels rapprochés
+      row.className = 'alerteRow danger alerteEcartStock';
+      row.innerHTML = `
+        <span class="alerteBadge">Urgent</span>
+        <span class="alerteTexte"><b>${ctrl.nb_lots_en_ecart} lot${ctrl.nb_lots_en_ecart > 1 ? 's' : ''}</b> avec un écart de stock (quantité ≠ historique des mouvements)${negatifs ? ` dont ${negatifs} négatif${negatifs > 1 ? 's' : ''}` : ''} — ${ctrl.lots.slice(0, 3).map(l => l.numero_lot).join(', ')}${ctrl.lots.length > 3 ? '…' : ''} (cliquer pour régulariser)</span>
+        <span class="alerteFleche">Voir →</span>`;
+      row.addEventListener('click', () => regulariserEcartsStock(ctrl));
+      document.getElementById('dashboardAlertesPanel').style.display = 'block';
+      document.getElementById('dashboardAlertes').prepend(row);
+    }).catch(() => {});
+
     // ---------- Alerte marge faible ----------
     apiFetch('/stats/marge-faible?seuil=15').then(produits => {
       const panel = document.getElementById('dashboardMargePanel');
@@ -6720,6 +6736,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       badge.title = `${n} ${titre}`;
       badge.style.display = n ? '' : 'none';
     });
+  }
+
+  async function regulariserEcartsStock(ctrl) {
+    const detail = ctrl.lots.slice(0, 12).map(l =>
+      `• ${l.numero_lot} (${l.produit_nom || ''}) : en stock ${l.quantite_actuelle}, selon mouvements ${l.selon_mouvements}${l.negatif ? ' — NÉGATIF' : ''}`
+    ).join('\n');
+    if (!confirm(`Régulariser ${ctrl.nb_lots_en_ecart} lot(s) en écart ?\n\n${detail}${ctrl.lots.length > 12 ? '\n…' : ''}\n\nUn mouvement « Ajustement » sera ajouté pour que l'historique corresponde à la quantité en stock (un lot négatif est ramené à zéro).\nPour connaître la quantité physique réelle, faites ensuite un inventaire de ces lots.`)) return;
+    try {
+      const r = await apiFetch('/controle-stock/regulariser', { method: 'POST', body: JSON.stringify({ employe_id: CURRENT_USER && CURRENT_USER.employe_id }) });
+      const [lots, mouvements] = await Promise.all([apiFetch('/lots'), apiFetch('/stock-mouvements')]);
+      APP_DATA.lots = lots; APP_DATA.stockMouvements = mouvements;
+      renderLotsRegistre(); renderStockMouvements(); renderDashboard();
+      alert(`${r.regularises} lot(s) régularisé(s).`);
+    } catch (err) { alert(err.message); }
   }
 
   async function expirerLotsPerimes(lots) {

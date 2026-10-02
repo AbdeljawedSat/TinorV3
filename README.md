@@ -91,6 +91,20 @@ Dans les deux cas, **exécuter `npm run seed` une seule fois manuellement** apr�
 - `GET/POST /api/inventaires`, `GET/DELETE /api/inventaires/:id`, `PUT /api/inventaires/:id/lignes`, `POST /api/inventaires/:id/cloturer` (inventaire physique)
 
 Les sorties de stock automatiques (ventes, conditionnement, ordres de production) ignorent les lots périmés et suivent l'ordre FEFO.
+- `GET /api/controle-stock`, `POST /api/controle-stock/regulariser` (cohérence quantité des lots ↔ mouvements)
+
+## Cohérence du stock
+
+Règle : pour chaque lot, `quantite_actuelle` = entrées − sorties de `stock_mouvements`, et jamais négative.
+
+- Toute opération qui modifie du stock (commande, facture et annulation, résolution de notification,
+  presse, filtration, conditionnement, ordre de production, réception, lot manuel, inventaire) s'exécute
+  dans **une transaction** (`src/db/transaction.js`) : tout est enregistré, ou rien.
+- Tout décrément de lot passe par `decrementerLot` (`src/services/lotService.js`), qui refuse de faire
+  passer un lot sous zéro, y compris quand deux opérations arrivent en même temps.
+- Le tableau de bord signale tout écart (`/api/controle-stock`) et permet de le régulariser par un
+  mouvement « Ajustement ». La quantité physique réelle se confirme ensuite par un inventaire.
+- Tests de bout en bout : `npm run test:stock` (API démarrée sur une base **de test**).
 
 ## Reste à implémenter
 

@@ -41,6 +41,7 @@ function createApp(pool) {
   app.use('/api/grille-huiles', requireAuth, require('./routes/grilleHuiles')(pool));
   app.use('/api/alertes', requireAuth, require('./routes/alertes')(pool));
   app.use('/api/inventaires', requireAuth, require('./routes/inventaires')(pool));
+  app.use('/api/controle-stock', requireAuth, require('./routes/controleStock')(pool));
 
   app.use((err, req, res, next) => {
     console.error(err);

@@ -1,3 +1,4 @@
+const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, recordEntree, nextLotNumber } = require('../services/lotService');
 
@@ -44,7 +45,7 @@ module.exports = function (pool) {
   // consommable reçu directement reste un achat, même sans bon formel) ;
   // 'RECEPTION_MP' seulement pour une vraie matière première sans bon d'achat
   // (cueillette/apport direct d'une parcelle).
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { fournisseur_id, achat_id, date_reception, local_id, statut, notes, employe_id, lignes } = req.body;
       if (!fournisseur_id || !date_reception || !local_id) {
@@ -118,7 +119,7 @@ module.exports = function (pool) {
       const result = await pool.query('SELECT * FROM receptions WHERE id = $1', [receptionId]);
       res.status(201).json({ ...result.rows[0], lignes: lignesCreees });
     } catch (err) { next(err); }
-  });
+  }));
 
   return router;
 };
