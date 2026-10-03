@@ -141,3 +141,22 @@ API : `POST /api/presse` avec `sources: [{lot_id, quantite}]` et
 | Produits | prix, coût, stock minimum ≥ 0 ; TVA entre 0 et 100 | calculs faussés |
 
 Règles communes : `src/services/regles.js`. Tests : `test/stock/contraintes.js` (inclus dans `npm run test:stock`).
+
+## V3.3 — refonte de l'interface (12 propositions)
+
+Aucune modification de l'API ni de la base : tout est dans `admin/tinor_admin.html`.
+
+| # | Proposition | Ce qui change |
+|---|---|---|
+| 1 | Listes en cartes (téléphone) | Sous 700 px, chaque ligne devient une carte : nom en titre, libellé devant chaque valeur |
+| 2 | Onglets en bas, formulaires plein écran | Accueil / Ventes / Production / Stock / Plus ; fenêtres de saisie sur tout l'écran |
+| 3 | Saisie de commande en une étape | Entrée choisit le produit puis ajoute la ligne ; stock disponible affiché, alerte si dépassé |
+| 4 | Une action par ligne + « ⋯ » | Facturer / Encaisser / Imprimer ; le reste dans « ⋯ » (même menu que le clic droit), annulation séparée et confirmée |
+| 5 | Exporter ▾ + périodes | Un bouton Word / Excel / PDF ; Tout, Aujourd'hui, 7 jours, Ce mois, Autre période |
+| 6 | Statut par bouton | Badge + « → étape suivante » ; autres statuts dans « ⋯ » |
+| 7 | Menu par activité | Ventes, Production, Stock, Achats, Réglages (icônes, sans les codes 00–04) |
+| 8 | Recherche universelle | Ctrl+K : écrans, créations, clients, lots, commandes, factures, au clavier |
+| 9 | Connexion simplifiée | « Serveur : … changer » ; le champ s'ouvre seul si le serveur est injoignable |
+| 10 | Messages intégrés | Notifications et confirmations dans la page (plus de fenêtres du navigateur) |
+| 11 | « À faire aujourd'hui » | Commandes à confirmer / livrer / facturer, factures à encaisser, lots qui périment ; ventes des 6 derniers mois |
+| 12 | Finitions | États vides avec action, contraste des textes secondaires, contour de focus clavier |
