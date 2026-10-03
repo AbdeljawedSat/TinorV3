@@ -8,6 +8,8 @@
 
 Télécharger une archive : sur GitHub, choisir la branche `archive/statut-2` puis **Code → Download ZIP**,
 ou `https://github.com/AbdeljawedSat/TinorV3/archive/refs/heads/archive/statut-2.zip` (connecté à GitHub si le dépôt est privé).
+Copies zip prêtes à télécharger dans le dossier `archive/` : `tinor-v3.2-statut-2.zip` (Statut 2) et `tinor-v3.3.zip` (V3.3).
+
 Une branche d'archive ne doit plus recevoir de modifications.
 
 ## V3.3 — refonte de l'interface
