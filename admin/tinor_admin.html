@@ -377,6 +377,18 @@
     .content{padding:18px 16px 50px;}
   }
 
+  /* ---------- Rapidité (V3.3) : menu ⋯, Exporter, périodes, statut par bouton ---------- */
+  .rowActionBtn.principal{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .rowActionBtn.principal:hover{opacity:.9;}
+  .rowActionBtn.plus{padding:4px 9px; font-weight:700; letter-spacing:1px;}
+  .statutCell{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .etapeBtn{background:none; border:1px dashed var(--brass-dim); color:var(--text); border-radius:20px; padding:2px 9px; font-size:11px; cursor:pointer; font-family:inherit;}
+  .etapeBtn:hover{border-style:solid; border-color:var(--brass);}
+  .periodeChips{display:flex; gap:6px; flex-wrap:wrap; align-items:center; width:100%;}
+  .periodeChips .chip{cursor:pointer;}
+  .periodeCachee{display:none !important;}
+  .stageInfo{font-size:11.5px; color:var(--text-soft); margin:4px 2px 0;}
+  .stageInfo.alerte{color:var(--danger); font-weight:600;}
   /* ---------- Téléphone (V3.3) : listes en cartes, onglets en bas, formulaires plein écran ---------- */
   #ongletsMobile{display:none;}
   @media (max-width: 700px){
@@ -1963,7 +1975,8 @@
         <div class="ligneNum ligneTotal" id="commandeStageTotal" data-label="Total">—</div>
         <button type="button" class="delField" id="commandeStageClearBtn" title="Vider">✕</button>
       </div>
-      <button type="button" class="btnPrimary" id="commandeStageAddBtn" style="margin:8px 0 16px; font-size:12.5px; padding:7px 16px;">＋ Ajouter au tableau</button>
+      <div class="stageInfo" id="commandeStageInfo">Tapez un nom de produit, Entrée pour choisir, puis la quantité et Entrée pour ajouter.</div>
+      <button type="button" class="btnPrimary" id="commandeStageAddBtn" style="margin:8px 0 16px; font-size:12.5px; padding:7px 16px;">＋ Ajouter la ligne <span style="opacity:.6; font-weight:400;">(Entrée)</span></button>
 
       <div class="cmdTableWrap">
         <table class="cmdTable">
@@ -4192,6 +4205,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('commandeStagePuht').textContent = produit ? fmtDT(puHt).replace(' DT', '') : '—';
     document.getElementById('commandeStageTtc').textContent = produit ? fmtDT(prixTtcFacture).replace(' DT', '') : '—';
     document.getElementById('commandeStageTotal').textContent = produit ? fmtDT(prixTtcFacture * qty).replace(' DT', '') : '—';
+    const info = document.getElementById('commandeStageInfo');
+    if (produit) {
+      const deja = Number(document.querySelector(`#commandeLignesRows tr[data-produit-id="${produit.id}"] .ligneQty`)?.value || 0);
+      const dispo = stockDisponiblePourProduit(produit.id);
+      const manque = qty + deja > dispo;
+      info.className = 'stageInfo' + (manque ? ' alerte' : '');
+      info.textContent = `Stock disponible : ${dispo}` + (deja ? ` · déjà ${deja} dans la commande` : '') + (manque ? ' — quantité supérieure au stock' : '');
+    } else {
+      info.className = 'stageInfo';
+      info.textContent = 'Tapez un nom de produit, Entrée pour choisir, puis la quantité et Entrée pour ajouter.';
+    }
   }
   function commandeStageReset() {
     document.getElementById('commandeStageSearch').value = '';
@@ -4218,6 +4242,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       resultsEl.style.display = 'none';
       // Reprend automatiquement la remise du client si une est déjà définie sur la ligne de configuration.
       updateCommandeStagePreview();
+      const qtyEl = document.getElementById('commandeStageQty');
+      qtyEl.focus(); qtyEl.select();
+    });
+    // Entrée dans la recherche : choisit le premier produit proposé.
+    searchEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const premier = resultsEl.querySelector('.comboItem');
+      if (premier && resultsEl.style.display !== 'none') premier.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      else if (commandeStageProduit()) document.getElementById('commandeStageAddBtn').click();
+    });
+    // Entrée dans la quantité : ajoute la ligne et revient à la recherche.
+    document.getElementById('commandeStageQty').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('commandeStageAddBtn').click(); }
     });
     document.getElementById('commandeStageQty').addEventListener('input', updateCommandeStagePreview);
     document.getElementById('commandeStageRemise').addEventListener('change', updateCommandeStagePreview);
@@ -4372,7 +4410,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('facturesCount').textContent = `${rows.length} facture${rows.length > 1 ? 's' : ''}`;
     if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucune facture pour ce filtre.</td></tr>`; return; }
     body.innerHTML = rows.map(f => `
-      <tr>
+      <tr data-id="${f.id}">
         <td class="lotCode">${f.numero}</td>
         <td>${f.client_nom || '—'}</td>
         <td class="rowMeta num">${fmtDate(f.date_emission)}</td>
@@ -4381,15 +4419,25 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="num">${fmtDT(f.total_paye)}</td>
         <td class="num">${fmtDT(f.solde)}</td>
         <td class="rowActions">
-          <button class="rowActionBtn" onclick="imprimerFacture(${f.id})">🖨 Imprimer</button>
-          <button class="rowActionBtn" onclick="exportFactureDocx(${f.id})">DOCX</button>
-          <button class="rowActionBtn" onclick="exportFactureXlsx(${f.id})">XLSX</button>
-          ${f.statut === 'annulee' ? '' : `
-            <button class="rowActionBtn" onclick="openPaiementModal(${f.id})">Payer</button>
-            ${isGerant() ? `<button class="rowActionBtn danger" onclick="annulerFacture(${f.id}, '${f.numero}')">Annuler</button>` : ''}`}
+          ${factureAEncaisser(f)
+            ? `<button class="rowActionBtn principal" onclick="openPaiementModal(${f.id})">Encaisser</button>`
+            : `<button class="rowActionBtn" onclick="imprimerFacture(${f.id})">🖨 Imprimer</button>`}
+          <button class="rowActionBtn plus" title="Plus d'actions" onclick="ouvrirMenuLigne(event, 'facturesBody', ${f.id})">⋯</button>
         </td>
       </tr>`).join('');
+    cablerMenuContextuel('facturesBody', (id) => {
+      const f = APP_DATA.factures.find(x => x.id === id);
+      if (!f) return [];
+      const items = [];
+      if (factureAEncaisser(f)) items.push({ label: '💰 Encaisser un paiement', action: () => openPaiementModal(id) });
+      items.push({ label: '🖨 Imprimer / PDF', action: () => imprimerFacture(id) });
+      items.push({ label: '⬇ Word (.docx)', action: () => exportFactureDocx(id) });
+      items.push({ label: '⬇ Excel (.xlsx)', action: () => exportFactureXlsx(id) });
+      if (f.statut !== 'annulee' && isGerant()) items.push(null, { label: 'Annuler la facture…', danger: true, action: () => annulerFacture(id, f.numero) });
+      return items;
+    });
   }
+  const factureAEncaisser = (f) => f.statut !== 'annulee' && Number(f.solde) > 0.0005;
 
   // ---------- Impression / export de facture (DOCX, XLSX, PDF via impression) ----------
   function factureHtmlContent(f) {
@@ -6192,7 +6240,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Attache le clic droit à toutes les lignes <tr data-id> d'un tbody, en
   // appelant buildItems(id) pour construire le menu à la volée (les données
   // peuvent changer entre deux rendus, donc jamais figé à l'avance).
+  const MENUS_LIGNE = {};
   function cablerMenuContextuel(tbodyId, buildItems) {
+    MENUS_LIGNE[tbodyId] = buildItems;
     const tbody = document.getElementById(tbodyId);
     if (!tbody || tbody._menuContextuelCable) return; // évite d'empiler les écouteurs à chaque rendu
     tbody._menuContextuelCable = true;
@@ -6456,6 +6506,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
 
   let COMMANDES_FILTER = '';
+  const STATUTS_COMMANDE = { en_attente: 'En attente', confirmee: 'Confirmée', livree: 'Livrée', payee: 'Payée' };
+  const ETAPE_SUIVANTE = { en_attente: ['confirmee', 'Confirmer'], confirmee: ['livree', 'Livrée'], livree: ['payee', 'Payée'] };
   function renderCommandes() {
     const body = document.getElementById('commandesBody');
 
@@ -6478,20 +6530,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="lotCode">${c.numero}</td>
         <td>${c.client_nom || '—'}</td>
         <td class="rowMeta num">${fmtDate(c.date_iso)}</td>
-        <td>
-          <select class="formInput" style="padding:3px 6px; font-size:11px; width:auto;" onchange="changerStatutCommande(${c.id}, this.value)">
-            <option value="en_attente" ${c.statut==='en_attente'?'selected':''}>En attente</option>
-            <option value="confirmee" ${c.statut==='confirmee'?'selected':''}>Confirmée</option>
-            <option value="livree" ${c.statut==='livree'?'selected':''}>Livrée</option>
-            <option value="payee" ${c.statut==='payee'?'selected':''}>Payée</option>
-          </select>
-        </td>
+        <td><div class="statutCell">
+          <span class="pill ${cls}">${label}</span>
+          ${ETAPE_SUIVANTE[c.statut] ? `<button class="etapeBtn" title="Passer à l'étape suivante" onclick="changerStatutCommande(${c.id}, '${ETAPE_SUIVANTE[c.statut][0]}')">→ ${ETAPE_SUIVANTE[c.statut][1]}</button>` : ''}
+        </div></td>
         <td class="num">${fmtDT(c.total)}</td>
         <td class="rowActions">
-          <button class="rowActionBtn" onclick="openCommandeModal(${c.id})">Modifier</button>
           ${dejaFacturee
             ? `<span class="rowMeta">Facturée</span>`
-            : `<button class="rowActionBtn" onclick="emettreFacture(${c.id})">Facturer</button>`}
+            : `<button class="rowActionBtn principal" onclick="emettreFacture(${c.id})">Facturer</button>`}
+          <button class="rowActionBtn plus" title="Plus d'actions" onclick="ouvrirMenuLigne(event, 'commandesBody', ${c.id})">⋯</button>
         </td>
       </tr>`;
     }).join('');
@@ -6501,6 +6549,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const dejaFacturee = APP_DATA.factures.some(f => f.statut === 'emise' && f.commande_id === id);
       const items = [{ label: '✎ Modifier', action: () => openCommandeModal(id) }];
       if (!dejaFacturee) items.push({ label: '🧾 Émettre la facture', action: () => emettreFacture(id) });
+      items.push(null);
+      Object.entries(STATUTS_COMMANDE).filter(([k]) => k !== c.statut)
+        .forEach(([k, libelle]) => items.push({ label: `Statut : ${libelle}`, action: () => changerStatutCommande(id, k) }));
       return items;
     });
   }
@@ -7639,6 +7690,85 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.querySelectorAll('.navGroupBtn').forEach(btn=>{
     btn.addEventListener('click', ()=> btn.closest('.navGroup').classList.toggle('open'));
   });
+
+  // ---------- Rapidité (V3.3) ----------
+  // Menu « ⋯ » d'une ligne : mêmes entrées que le clic droit (une seule
+  // définition par tableau, enregistrée par cablerMenuContextuel).
+  function ouvrirMenuLigne(event, tbodyId, id) {
+    event.stopPropagation();
+    const construire = MENUS_LIGNE[tbodyId];
+    const items = construire ? construire(id) : [];
+    if (!items.length) return;
+    const r = event.currentTarget.getBoundingClientRect();
+    afficherMenuContextuel({ preventDefault() {}, clientX: r.right - 170, clientY: r.bottom + 4 }, items);
+  }
+
+  // Un seul bouton « Exporter ▾ » à la place des trois boutons DOCX / XLSX / PDF.
+  function regrouperExports() {
+    document.querySelectorAll('button[id$="ExportDocxBtn"]').forEach(docx => {
+      const groupe = docx.parentElement;
+      if (groupe.dataset.exportGroupe) return;
+      groupe.dataset.exportGroupe = '1';
+      const formats = [['Docx', 'Word (.docx)'], ['Xlsx', 'Excel (.xlsx)'], ['Pdf', 'PDF / impression']]
+        .map(([f, libelle]) => [document.getElementById(docx.id.replace('Docx', f)), libelle])
+        .filter(([b]) => b && b.parentElement === groupe);
+      formats.forEach(([b]) => b.style.display = 'none');
+      const bouton = document.createElement('button');
+      bouton.type = 'button';
+      bouton.className = 'btnGhost exportBtn';
+      bouton.textContent = '⬇ Exporter ▾';
+      bouton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = bouton.getBoundingClientRect();
+        afficherMenuContextuel({ preventDefault() {}, clientX: r.left, clientY: r.bottom + 4 },
+          formats.map(([b, libelle]) => ({ label: libelle, action: () => b.click() })));
+      });
+      groupe.insertBefore(bouton, docx);
+    });
+  }
+
+  // Filtres de période : Aujourd'hui / 7 jours / Ce mois / Tout / Autre période.
+  // Les champs Du / Au restent la source du filtre ; ils ne s'affichent que pour
+  // « Autre période ».
+  function isoLocal(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+  function ajouterChipsPeriode() {
+    document.querySelectorAll('input[type="date"][id$="FilterDateDebut"]').forEach(du => {
+      const au = document.getElementById(du.id.replace('Debut', 'Fin'));
+      if (!au || du.dataset.periode) return;
+      du.dataset.periode = '1';
+      const blocs = [du.parentElement, au.parentElement];
+      const chips = document.createElement('div');
+      chips.className = 'periodeChips';
+      const choix = [['tout', 'Tout'], ['jour', "Aujourd'hui"], ['7j', '7 jours'], ['mois', 'Ce mois'], ['autre', 'Autre période…']];
+      chips.innerHTML = choix.map(([k, l]) => `<span class="chip${k === 'tout' ? ' active' : ''}" data-periode="${k}">${l}</span>`).join('');
+      const marquer = (k) => chips.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.periode === k));
+      const montrerDates = (oui) => blocs.forEach(b => b.classList.toggle('periodeCachee', !oui));
+      const appliquer = (debut, fin) => {
+        du.value = debut; au.value = fin;
+        du.dispatchEvent(new Event('input', { bubbles: true }));
+        au.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      chips.addEventListener('click', (e) => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const k = chip.dataset.periode, auj = new Date();
+        marquer(k);
+        montrerDates(k === 'autre');
+        if (k === 'tout') appliquer('', '');
+        if (k === 'jour') appliquer(isoLocal(auj), isoLocal(auj));
+        if (k === '7j') appliquer(isoLocal(new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() - 6)), isoLocal(auj));
+        if (k === 'mois') appliquer(isoLocal(new Date(auj.getFullYear(), auj.getMonth(), 1)), isoLocal(auj));
+        if (k === 'autre') du.focus();
+      });
+      blocs[0].parentElement.insertBefore(chips, blocs[0]);
+      montrerDates(false);
+      // Le bouton « Réinitialiser » de l'écran remet aussi la période sur « Tout ».
+      const reset = document.getElementById(du.id.replace('FilterDateDebut', 'FilterResetBtn'));
+      if (reset) reset.addEventListener('click', () => { marquer('tout'); montrerDates(false); });
+    });
+  }
+  regrouperExports();
+  ajouterChipsPeriode();
 
   // ---------- Téléphone (V3.3) : libellés des cartes et onglets du bas ----------
   // Chaque cellule reçoit le titre de sa colonne (affiché devant la valeur quand
