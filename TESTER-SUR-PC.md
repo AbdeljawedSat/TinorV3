@@ -18,7 +18,7 @@ Pas de Docker ? Voir « Sans Docker » en bas de page.
 1. VS Code → **Fichier › Nouvelle fenêtre**, puis **Cloner le dépôt Git…**
    (ou `Ctrl+Maj+P` → `Git: Clone`) → coller `https://github.com/AbdeljawedSat/TinorV3`
    → choisir un dossier → **Ouvrir**.
-   *Ou* décompresser `tinorV3-corrige.zip` et faire **Fichier › Ouvrir le dossier…**
+   *Ou* télécharger https://github.com/AbdeljawedSat/TinorV3/archive/refs/heads/main.zip, le décompresser et faire **Fichier › Ouvrir le dossier…**
 2. Accepter **« Faire confiance aux auteurs »**.
 3. Accepter l'installation des **extensions recommandées** (REST Client, Docker, client de base de données).
 
