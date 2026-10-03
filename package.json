@@ -1,6 +1,6 @@
 {
   "name": "tinor-api-v3",
-  "version": "3.1.0",
+  "version": "3.3.0",
   "description": "API backend TinOR V3 — BD Gestion Commerciale V3 (Express + MariaDB)",
   "main": "src/server.js",
   "scripts": {
