@@ -1,5 +1,6 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
+const { positif, datesOrdonnees } = require('../services/regles');
 const { nextNumero, recordEntree, nextLotNumber } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -68,6 +69,8 @@ module.exports = function (pool) {
         if (!l.produit_id || !l.quantite) {
           return res.status(400).json({ error: 'Chaque ligne nécessite produit_id et quantite.' });
         }
+        positif(l.quantite, 'La quantité reçue');
+        datesOrdonnees(date_reception, l.date_expiration, `Lot déjà périmé à la réception : expiration (${l.date_expiration}) antérieure à la date de réception (${date_reception}).`);
         const produitRes = await pool.query('SELECT type_article FROM produits WHERE id = $1', [l.produit_id]);
         if (!produitRes.rows[0]) {
           return res.status(400).json({ error: `Produit ${l.produit_id} introuvable.` });

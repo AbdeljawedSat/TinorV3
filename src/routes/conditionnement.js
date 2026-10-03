@@ -1,5 +1,6 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
+const { positif, entierSiUnite, arrondi, facteurConversion } = require('../services/regles');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -62,6 +63,22 @@ module.exports = function (pool) {
       if (!Array.isArray(sources) || !sources.length) {
         return res.status(400).json({ error: 'Au moins une source (lot_presse_id, lot_filtration_id ou lot_id + quantite_utilisee) est requise.' });
       }
+      // Produit conditionné : unité, format et vrac d'origine attendus.
+      const produitRes = await pool.query(
+        `SELECT p.nom, p.format_id, p.produit_source_id, u.code AS unite, f.volume AS format_volume, uf.code AS format_unite, uf.symbole AS format_symbole,
+                ps.nom AS vrac_nom, us.code AS vrac_unite, us.symbole AS vrac_symbole
+         FROM produits p
+         LEFT JOIN unites u ON u.id = p.unite_id
+         LEFT JOIN formats f ON f.id = COALESCE($2, p.format_id)
+         LEFT JOIN unites uf ON uf.id = f.unite_id
+         LEFT JOIN produits ps ON ps.id = p.produit_source_id
+         LEFT JOIN unites us ON us.id = ps.unite_id
+         WHERE p.id = $1`, [produit_id, format_id || null]);
+      const produit = produitRes.rows[0];
+      if (!produit) return res.status(400).json({ error: 'Produit conditionné introuvable.' });
+      const qty_ = positif(qty, 'La quantité conditionnée');
+      entierSiUnite(qty_, produit.unite, 'La quantité conditionnée');
+
       let quantiteSourceTotale = 0;
       for (const s of sources) {
         const types = [s.lot_presse_id, s.lot_filtration_id, s.lot_id].filter(Boolean);
@@ -69,6 +86,7 @@ module.exports = function (pool) {
           return res.status(400).json({ error: 'Chaque source doit avoir exactement un type (lot_presse_id, lot_filtration_id ou lot_id).' });
         }
         if (!s.quantite_utilisee) return res.status(400).json({ error: 'quantite_utilisee est requis pour chaque source.' });
+        positif(s.quantite_utilisee, 'La quantité utilisée de chaque source');
 
         let quantiteDisponible;
         if (s.lot_presse_id) {
@@ -87,10 +105,30 @@ module.exports = function (pool) {
           if (!lotRes.rows[0]) return res.status(400).json({ error: `Lot ${s.lot_id} introuvable.` });
           quantiteDisponible = lotRes.rows[0].quantite_actuelle;
         }
+        // La source doit être le vrac de CE produit (pas de flacon de sésame rempli de nigelle).
+        if (produit.produit_source_id) {
+          const lotSourceId = s.lot_id || (s.lot_presse_id
+            ? (await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id])).rows[0].lot_id
+            : (await pool.query('SELECT lot_id FROM lots_filtration WHERE id = $1', [s.lot_filtration_id])).rows[0].lot_id);
+          const src = (await pool.query(
+            'SELECT l.numero_lot, l.produit_id, p.nom FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1', [lotSourceId])).rows[0];
+          if (src.produit_id !== produit.produit_source_id) {
+            return res.status(400).json({ error: `« ${produit.nom} » se conditionne à partir de « ${produit.vrac_nom} » : le lot ${src.numero_lot} est « ${src.nom} ».` });
+          }
+        }
         if (Number(quantiteDisponible) < Number(s.quantite_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur cette source (disponible ${quantiteDisponible}, demandé ${s.quantite_utilisee}).` });
         }
         quantiteSourceTotale += Number(s.quantite_utilisee);
+      }
+
+      // Bilan : le contenu conditionné (nombre × format) ne peut pas dépasser le vrac utilisé.
+      const facteur = facteurConversion(produit.format_unite, produit.vrac_unite);
+      if (produit.format_volume && facteur) {
+        const contenu = arrondi(qty_ * Number(produit.format_volume) * facteur);
+        if (contenu > arrondi(quantiteSourceTotale)) {
+          return res.status(400).json({ error: `Bilan impossible : ${qty_} × ${Number(produit.format_volume)} ${produit.format_symbole} = ${contenu} ${produit.vrac_symbole}, plus que le vrac utilisé (${arrondi(quantiteSourceTotale)} ${produit.vrac_symbole}).` });
+        }
       }
 
       // Vérification tout-ou-rien des consommables AVANT toute écriture,
@@ -98,6 +136,7 @@ module.exports = function (pool) {
       const consommablesResolus = [];
       for (const c of (consommables || [])) {
         if (!c.produit_id || !c.quantite) continue;
+        positif(c.quantite, 'La quantité de chaque consommable');
         const lotRes = await pool.query(
           `SELECT id, quantite_actuelle FROM lots
            WHERE produit_id = $1 AND ${LOT_DISPONIBLE} AND quantite_actuelle >= $2

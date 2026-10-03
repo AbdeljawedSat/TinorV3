@@ -1,4 +1,14 @@
 const express = require('express');
+const { positifOuZero, entreBornes } = require('../services/regles');
+
+// Prix, coût et seuil de stock ne peuvent pas être négatifs ; TVA entre 0 et 100 %.
+function verifierProduit({ prix_vente, cout_standard, stock_min, tva }) {
+  positifOuZero(prix_vente, 'Le prix de vente');
+  positifOuZero(cout_standard, 'Le coût standard');
+  positifOuZero(stock_min, 'Le stock minimum');
+  entreBornes(tva, 0, 100, 'La TVA');
+}
+
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -48,6 +58,7 @@ module.exports = function (pool) {
     if (!nom || !categorie_id || !unite_id || !type_article) {
       return res.status(400).json({ error: 'nom, categorie_id, unite_id et type_article sont requis.' });
     }
+    verifierProduit(req.body);
     const code = await nextProductCode(pool);
     const insertRes = await pool.query(
       `INSERT INTO produits
@@ -75,6 +86,7 @@ module.exports = function (pool) {
       produit_source_id, vendable, achetable, fabriquable, stockable, actif,
       bio_eligible, prix_vente, cout_standard, stock_min, tva, notes,
     } = req.body;
+    verifierProduit(req.body);
     const updateRes = await pool.query(
       `UPDATE produits SET
         nom=$1, description=$2, barcode=$3, categorie_id=$4, unite_id=$5, format_id=$6, type_article=$7,

@@ -1,6 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { LOT_DISPONIBLE, ORDRE_FEFO, decrementerLot } = require('../services/lotService');
+const { positif, positifOuZero, entierSiUnite } = require('../services/regles');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
@@ -82,10 +83,13 @@ module.exports = function (pool) {
         if (!l.produit_id || !l.qty) {
           return res.status(400).json({ error: 'Chaque ligne nécessite produit_id et qty.' });
         }
-        const prodRes = await pool.query('SELECT * FROM produits WHERE id = $1', [l.produit_id]);
+        const prodRes = await pool.query(
+          'SELECT p.*, u.code AS unite_code FROM produits p LEFT JOIN unites u ON u.id = p.unite_id WHERE p.id = $1', [l.produit_id]);
         const produit = prodRes.rows[0];
         if (!produit) return res.status(400).json({ error: `Produit ${l.produit_id} introuvable.` });
-        const prixDetail = l.prix_detail ?? produit.prix_vente ?? 0;
+        positif(l.qty, `La quantité de « ${produit.nom} »`);
+        entierSiUnite(l.qty, produit.unite_code, `La quantité de « ${produit.nom} »`);
+        const prixDetail = positifOuZero(l.prix_detail ?? produit.prix_vente, `Le prix de « ${produit.nom} »`);
 
         let remise = null;
         if (l.remise_id) {

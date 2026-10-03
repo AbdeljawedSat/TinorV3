@@ -1,5 +1,6 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
+const { positif } = require('../services/regles');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -28,6 +29,7 @@ module.exports = function (pool) {
       if (!recette_id || !date || !qty_produite) {
         return res.status(400).json({ error: 'recette_id, date et qty_produite sont requis.' });
       }
+      positif(qty_produite, 'La quantité à produire');
       const recRes = await pool.query('SELECT * FROM recettes WHERE id = $1', [recette_id]);
       const recette = recRes.rows[0];
       if (!recette) return res.status(400).json({ error: 'Recette introuvable.' });

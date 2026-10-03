@@ -1,4 +1,5 @@
 const express = require('express');
+const { positif, positifOuZero, datesOrdonnees } = require('../services/regles');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
@@ -58,6 +59,9 @@ module.exports = function (pool) {
         if (!l.produit_id || !l.quantite) {
           return res.status(400).json({ error: 'Chaque ligne nécessite produit_id et quantite.' });
         }
+        positif(l.quantite, 'La quantité achetée');
+        positifOuZero(l.prix_unitaire, "Le prix unitaire d'achat");
+        datesOrdonnees(date_achat, l.date_expiration, `Expiration (${l.date_expiration}) antérieure à la date d'achat (${date_achat}).`);
         totalHt += Number(l.quantite) * Number(l.prix_unitaire || 0);
       }
       const rate = tva_rate ?? 19;

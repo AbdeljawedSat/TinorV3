@@ -61,12 +61,15 @@ async function nextLotNumber(pool, produitId, origine) {
 }
 
 const { StockInsuffisant } = require('../db/transaction');
+const { Invalide } = require('./regles');
 
 // Seul point de décrément d'un lot. La condition `quantite_actuelle >= quantité`
 // est évaluée par MariaDB au moment de l'écriture (lecture courante, ligne
 // verrouillée) : deux opérations simultanées sur le même lot ne peuvent plus le
 // faire passer sous zéro — la seconde est refusée et sa transaction annulée.
 async function decrementerLot(pool, lotId, quantite) {
+  // Une quantité nulle ou négative ferait AUGMENTER le stock du lot.
+  if (!(Number(quantite) > 0)) throw new Invalide(`Quantité à consommer invalide (${quantite}) : elle doit être supérieure à 0.`);
   const upd = await pool.query(
     'UPDATE lots SET quantite_actuelle = quantite_actuelle - $1 WHERE id = $2 AND quantite_actuelle >= $1',
     [quantite, lotId]

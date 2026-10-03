@@ -1,4 +1,5 @@
 const express = require('express');
+const { positif } = require('../services/regles');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -46,6 +47,7 @@ module.exports = function (pool) {
       const recetteId = recRes.insertId;
       for (const ing of ingredients) {
         if (!ing.ingredient_id || !ing.quantite_par_unite) continue;
+        positif(ing.quantite_par_unite, "La quantité d'ingrédient par unité");
         await pool.query(
           `INSERT INTO recette_ingredients (recette_id, ingredient_id, quantite_par_unite) VALUES ($1,$2,$3)`,
           [recetteId, ing.ingredient_id, ing.quantite_par_unite]
@@ -69,6 +71,7 @@ module.exports = function (pool) {
         await pool.query('DELETE FROM recette_ingredients WHERE recette_id = $1', [req.params.id]);
         for (const ing of ingredients) {
           if (!ing.ingredient_id || !ing.quantite_par_unite) continue;
+        positif(ing.quantite_par_unite, "La quantité d'ingrédient par unité");
           await pool.query(
             `INSERT INTO recette_ingredients (recette_id, ingredient_id, quantite_par_unite) VALUES ($1,$2,$3)`,
             [req.params.id, ing.ingredient_id, ing.quantite_par_unite]

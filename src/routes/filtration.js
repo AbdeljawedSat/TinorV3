@@ -1,5 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
+const { positif, positifOuZero, arrondi } = require('../services/regles');
+const { estHuileVrac } = require('../services/graines');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -42,11 +44,19 @@ module.exports = function (pool) {
       if (!Array.isArray(sources) || !sources.length) {
         return res.status(400).json({ error: 'Au moins une source (lot_presse_id + quantite_utilisee) est requise.' });
       }
+      const qFiltre = positif(quantite_produite, "La quantité d'huile filtrée");
+      const qDechet = positifOuZero(quantite_dechet, 'La quantité de déchet');
+      const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
+      if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
+      if (!estHuileVrac(produitObtenu)) {
+        return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile en vrac : « ${produitObtenu.nom} » ne l'est pas.` });
+      }
       let totalUtilise = 0;
       for (const s of sources) {
         if (!s.lot_presse_id || !s.quantite_utilisee) {
           return res.status(400).json({ error: 'Chaque source nécessite lot_presse_id et quantite_utilisee.' });
         }
+        positif(s.quantite_utilisee, 'La quantité utilisée de chaque lot de presse');
         const presseRes = await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id]);
         if (!presseRes.rows[0]) return res.status(400).json({ error: `Lot de presse ${s.lot_presse_id} introuvable.` });
         const lotRes = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [presseRes.rows[0].lot_id]);
@@ -54,6 +64,11 @@ module.exports = function (pool) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot de presse ${s.lot_presse_id} (disponible ${lotRes.rows[0].quantite_actuelle}, demandé ${s.quantite_utilisee}).` });
         }
         totalUtilise += Number(s.quantite_utilisee);
+      }
+
+      // Bilan : l'huile filtrée et le déchet viennent de l'huile pressée utilisée.
+      if (arrondi(qFiltre + qDechet) > arrondi(totalUtilise)) {
+        return res.status(400).json({ error: `Bilan impossible : huile filtrée (${qFiltre}) + déchet (${qDechet}) = ${arrondi(qFiltre + qDechet)}, supérieur à l'huile pressée utilisée (${arrondi(totalUtilise)}).` });
       }
 
       const { lotId, numeroLot } = await createLot(pool, {

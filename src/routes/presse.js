@@ -2,6 +2,8 @@ const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 const { cleGraine, cleHuileVrac, estGraine, estHuileVrac } = require('../services/graines');
+const { positif, positifOuZero, arrondi } = require('../services/regles');
+const vide = v => v === undefined || v === null || v === '';
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -9,7 +11,9 @@ module.exports = function (pool) {
   router.get('/', async (req, res) => {
     const result = await pool.query(`
       SELECT lp.*, p.nom AS produit_nom, e.nom AS employe_nom,
-        l.quantite_actuelle, l.statut AS lot_statut, l.champs_perso
+        l.quantite_actuelle, l.statut AS lot_statut, l.champs_perso,
+        (SELECT GROUP_CONCAT(CONCAT(ls.numero_lot, ' (', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM lo.quantite_utilisee)), ')') ORDER BY ls.numero_lot SEPARATOR ', ')
+           FROM lot_origines lo JOIN lots ls ON ls.id = lo.lot_source_id WHERE lo.lot_fils_id = lp.lot_id) AS lots_graines
       FROM lots_presse lp
       LEFT JOIN produits p ON p.id = lp.produit_id
       LEFT JOIN employes e ON e.id = lp.employe_id
@@ -29,90 +33,140 @@ module.exports = function (pool) {
     res.json(result.rows[0]);
   });
 
-  // Presse un lot de matière première (huile vrac) en un nouveau lot d'huile
-  // pressée — consomme lot_source_id (généralement un lot RECEPTION_MP), crée
-  // le lot générique résultant, et trace le rendement réel.
+  // Pressage : une opération consomme un ou PLUSIEURS lots de graines et produit
+  // une huile en vrac PAR GRAINE (ex. 2 lots de sésame + 1 lot de nigelle →
+  // huile de sésame + huile de nigelle). Chaque huile obtenue devient un lot
+  // (une ligne lots_presse) relié à ses lots de graines (lot_origines).
+  //
+  // Corps : { date, sources: [{ lot_id, quantite }],
+  //           sorties: [{ produit_id, quantite_produite, quantite_tourteau }], notes, employe_id }
+  // Ancien format accepté : { produit_id, lot_source_id, quantite_matiere_utilisee,
+  //                           quantite_tourteau, quantite_produite } (un lot → une huile).
+  //
+  // Bilan, par graine et donc au total : graines utilisées ≥ huile + tourteau.
   router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const {
-        date, produit_id, reception_id, lot_source_id,
-        quantite_matiere_utilisee, quantite_tourteau, quantite_produite,
-        notes, employe_id, champs_perso,
-      } = req.body;
-      if (!date || !produit_id || !quantite_produite) {
-        return res.status(400).json({ error: 'date, produit_id et quantite_produite sont requis.' });
-      }
-      if (lot_source_id && !quantite_matiere_utilisee) {
-        return res.status(400).json({ error: 'quantite_matiere_utilisee est requis quand lot_source_id est fourni.' });
-      }
-      // Bilan matière : la matière utilisée ne peut jamais être inférieure à
-      // huile + tourteau (ni donc à l'un des deux) — le reste correspond aux pertes.
-      const qMatiere = quantite_matiere_utilisee == null || quantite_matiere_utilisee === '' ? null : Number(quantite_matiere_utilisee);
-      const qHuile = Number(quantite_produite);
-      const qTourteau = quantite_tourteau == null || quantite_tourteau === '' ? 0 : Number(quantite_tourteau);
-      if (!Number.isFinite(qHuile) || qHuile <= 0) return res.status(400).json({ error: "La quantité d'huile obtenue doit être supérieure à 0." });
-      if (!Number.isFinite(qTourteau) || qTourteau < 0) return res.status(400).json({ error: 'La quantité de tourteau ne peut pas être négative.' });
-      if (qMatiere != null) {
-        if (!Number.isFinite(qMatiere) || qMatiere <= 0) return res.status(400).json({ error: 'La quantité de matière utilisée doit être supérieure à 0.' });
-        const somme = Math.round((qHuile + qTourteau) * 1000) / 1000;
-        if (somme > Math.round(qMatiere * 1000) / 1000) {
-          return res.status(400).json({ error: `Bilan impossible : huile (${qHuile}) + tourteau (${qTourteau}) = ${somme}, supérieur à la matière utilisée (${qMatiere}). La matière utilisée doit être au moins égale à la somme.` });
+      const { date, reception_id, notes, employe_id, champs_perso } = req.body;
+      let { sources, sorties } = req.body;
+      let matiereSansSource = null; // ancien format sans lot : bilan sur la quantité déclarée
+      if (!Array.isArray(sorties)) {
+        const { produit_id, lot_source_id, quantite_matiere_utilisee, quantite_tourteau, quantite_produite } = req.body;
+        if (lot_source_id && !quantite_matiere_utilisee) {
+          return res.status(400).json({ error: 'quantite_matiere_utilisee est requis quand lot_source_id est fourni.' });
         }
+        sorties = [{ produit_id, quantite_produite, quantite_tourteau }];
+        sources = lot_source_id ? [{ lot_id: lot_source_id, quantite: quantite_matiere_utilisee }] : [];
+        if (!lot_source_id && !vide(quantite_matiere_utilisee)) matiereSansSource = positif(quantite_matiere_utilisee, 'La quantité de matière utilisée');
       }
-      // Règle du pressage : graines consommées → huile en vrac de la même graine.
-      const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
-      if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
-      if (!estHuileVrac(produitObtenu)) {
-        return res.status(400).json({ error: `Le produit obtenu d'un pressage doit être une huile en vrac (ex. « Huile de Sésame — Vrac ») : « ${produitObtenu.nom} » ne l'est pas.` });
-      }
-      if (lot_source_id) {
-        const srcRes = await pool.query(
-          `SELECT l.quantite_actuelle, l.numero_lot, p.nom, p.type_article, p.format_id
-           FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1`, [lot_source_id]);
-        if (!srcRes.rows[0]) return res.status(400).json({ error: 'Lot source introuvable.' });
-        const source = srcRes.rows[0];
-        if (!estGraine(source)) {
-          return res.status(400).json({ error: `La matière consommée d'un pressage doit être un lot de graines (ex. « Graines de Sésame ») : le lot ${source.numero_lot} est « ${source.nom} ».` });
-        }
-        if (cleGraine(source.nom) !== cleHuileVrac(produitObtenu.nom)) {
-          return res.status(400).json({ error: `« ${produitObtenu.nom} » ne correspond pas aux graines du lot ${source.numero_lot} (« ${source.nom} ») : choisissez l'huile en vrac de la même graine.` });
-        }
-        if (Number(srcRes.rows[0].quantite_actuelle) < Number(quantite_matiere_utilisee)) {
-          return res.status(409).json({ error: `Stock insuffisant sur le lot source (disponible ${srcRes.rows[0].quantite_actuelle}, demandé ${quantite_matiere_utilisee}).` });
-        }
+      sources = Array.isArray(sources) ? sources.filter(s => s && s.lot_id) : [];
+      if (!date) return res.status(400).json({ error: 'La date est requise.' });
+      if (!sorties.length) return res.status(400).json({ error: 'Au moins une huile obtenue est requise.' });
+      if (!sources.length && sorties.length > 1) {
+        return res.status(400).json({ error: 'Un pressage sans lot de graines ne peut produire qu\'une seule huile.' });
       }
 
-      const { lotId, numeroLot } = await createLot(pool, {
-        produit_id, origine: 'PRESSE', quantite: quantite_produite, employe_id, motif: 'Création via pressage',
-        extra: { champs_perso },
-      });
+      // ---- Sources : des lots de graines, chacun une seule fois, quantité > 0 et disponible
+      const graines = new Map(); // clé de graine → { total, lots: [...] }
+      const vus = new Set();
+      for (const s of sources) {
+        if (vus.has(Number(s.lot_id))) return res.status(400).json({ error: 'Un même lot de graines est saisi deux fois : regroupez les quantités sur une seule ligne.' });
+        vus.add(Number(s.lot_id));
+        const q = positif(s.quantite, 'La quantité de graines utilisée');
+        const lot = (await pool.query(
+          `SELECT l.id, l.quantite_actuelle, l.numero_lot, l.statut, p.nom, p.type_article, p.format_id
+           FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1`, [s.lot_id])).rows[0];
+        if (!lot) return res.status(400).json({ error: `Lot de graines ${s.lot_id} introuvable.` });
+        if (!estGraine(lot)) {
+          return res.status(400).json({ error: `La matière consommée d'un pressage doit être un lot de graines (ex. « Graines de Sésame ») : le lot ${lot.numero_lot} est « ${lot.nom} ».` });
+        }
+        if (Number(lot.quantite_actuelle) < q) {
+          return res.status(409).json({ error: `Stock insuffisant sur le lot ${lot.numero_lot} (disponible ${Number(lot.quantite_actuelle)}, demandé ${q}).` });
+        }
+        const cle = cleGraine(lot.nom);
+        if (!graines.has(cle)) graines.set(cle, { nom: lot.nom, total: 0, lots: [] });
+        const g = graines.get(cle);
+        g.total = arrondi(g.total + q);
+        g.lots.push({ id: lot.id, numero_lot: lot.numero_lot, quantite: q });
+      }
 
-      const rendement = quantite_matiere_utilisee ? quantite_produite / quantite_matiere_utilisee : null;
-      await pool.query(
-        `INSERT INTO lots_presse
-          (date, produit_id, reception_id, lot_id, quantite_matiere_utilisee, quantite_tourteau,
-           quantite_produite, rendement_reel, numero_lot, notes, employe_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [date, produit_id, reception_id || null, lotId, quantite_matiere_utilisee || null,
-         quantite_tourteau || null, quantite_produite, rendement, numeroLot, notes || null, employe_id || null]
-      );
-
-      const numMvt = await nextNumero(pool, 'mouvement_seq', 'MVT');
-      const groupId = require('crypto').randomUUID();
-      if (lot_source_id) {
-        await consumeLot(pool, {
-          lotSourceId: lot_source_id, lotFilsId: lotId, quantite: quantite_matiere_utilisee,
-          typeMouvement: 'CONSOMMATION', employeId: employe_id, numeroMouvement: `${numMvt}-OUT`,
-          groupId, sourceType: 'lots_presse', sourceId: lotId,
+      // ---- Sorties : une huile en vrac par graine, quantités valides
+      const huiles = [];
+      for (const so of sorties) {
+        const produit = (await pool.query('SELECT id, nom, type_article, format_id FROM produits WHERE id = $1', [so.produit_id])).rows[0];
+        if (!produit) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
+        if (!estHuileVrac(produit)) {
+          return res.status(400).json({ error: `Le produit obtenu d'un pressage doit être une huile en vrac (ex. « Huile de Sésame — Vrac ») : « ${produit.nom} » ne l'est pas.` });
+        }
+        const cle = cleHuileVrac(produit.nom);
+        if (huiles.some(h => h.cle === cle)) return res.status(400).json({ error: `Une seule huile obtenue par graine : « ${produit.nom} » est en double.` });
+        huiles.push({
+          cle, produit,
+          huile: positif(so.quantite_produite, `La quantité de « ${produit.nom} » obtenue`),
+          tourteau: positifOuZero(so.quantite_tourteau, 'La quantité de tourteau'),
         });
       }
-      await recordEntree(pool, {
-        produitId: produit_id, lotId, quantite: quantite_produite, typeMouvement: 'PRODUCTION',
-        employeId: employe_id, numeroMouvement: `${numMvt}-IN`, groupId, sourceType: 'lots_presse', sourceId: lotId,
-      });
 
-      const result = await pool.query('SELECT * FROM lots_presse WHERE lot_id = $1', [lotId]);
-      res.status(201).json(result.rows[0]);
+      // ---- Correspondance graines ↔ huiles et bilan matière
+      if (sources.length) {
+        for (const h of huiles) {
+          if (!graines.has(h.cle)) {
+            return res.status(400).json({ error: `« ${h.produit.nom} » ne correspond à aucun des lots de graines saisis : choisissez l'huile en vrac de la même graine.` });
+          }
+        }
+        for (const [cle, g] of graines) {
+          if (!huiles.some(h => h.cle === cle)) {
+            return res.status(400).json({ error: `Les graines « ${g.nom} » sont consommées sans huile obtenue : ajoutez l'huile en vrac correspondante.` });
+          }
+        }
+      }
+      let totalGraines = 0, totalSorties = 0;
+      for (const h of huiles) {
+        const matiere = sources.length ? graines.get(h.cle).total : matiereSansSource;
+        h.matiere = matiere;
+        if (matiere == null) continue;
+        const sortie = arrondi(h.huile + h.tourteau);
+        if (sortie > arrondi(matiere)) {
+          return res.status(400).json({ error: `Bilan impossible pour « ${h.produit.nom} » : huile (${h.huile}) + tourteau (${h.tourteau}) = ${sortie}, supérieur aux graines utilisées (${arrondi(matiere)}). Les graines doivent être au moins égales à la somme.` });
+        }
+        totalGraines += matiere; totalSorties += sortie;
+      }
+
+      // ---- Écritures (transaction : tout ou rien)
+      const groupId = require('crypto').randomUUID();
+      const crees = [];
+      for (const h of huiles) {
+        const { lotId, numeroLot } = await createLot(pool, {
+          produit_id: h.produit.id, origine: 'PRESSE', quantite: h.huile, employe_id, motif: 'Création via pressage',
+          extra: { champs_perso },
+        });
+        await pool.query(
+          `INSERT INTO lots_presse
+            (date, produit_id, reception_id, lot_id, quantite_matiere_utilisee, quantite_tourteau,
+             quantite_produite, rendement_reel, numero_lot, notes, employe_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+          [date, h.produit.id, reception_id || null, lotId, h.matiere, h.tourteau || null,
+           h.huile, h.matiere ? h.huile / h.matiere : null, numeroLot, notes || null, employe_id || null]
+        );
+        for (const l of (sources.length ? graines.get(h.cle).lots : [])) {
+          await consumeLot(pool, {
+            lotSourceId: l.id, lotFilsId: lotId, quantite: l.quantite,
+            typeMouvement: 'CONSOMMATION', employeId: employe_id, numeroMouvement: await nextNumero(pool, 'mouvement_seq', 'MVT'),
+            groupId, sourceType: 'lots_presse', sourceId: lotId,
+          });
+        }
+        await recordEntree(pool, {
+          produitId: h.produit.id, lotId, quantite: h.huile, typeMouvement: 'PRODUCTION',
+          employeId: employe_id, numeroMouvement: await nextNumero(pool, 'mouvement_seq', 'MVT'),
+          groupId, sourceType: 'lots_presse', sourceId: lotId,
+        });
+        crees.push((await pool.query('SELECT * FROM lots_presse WHERE lot_id = $1', [lotId])).rows[0]);
+      }
+
+      // Compatibilité : la réponse reste la ligne lots_presse (1re huile), avec la liste complète.
+      res.status(201).json({
+        ...crees[0], lots_presse: crees,
+        bilan: { graines: arrondi(totalGraines), huiles_et_tourteau: arrondi(totalSorties), pertes: arrondi(totalGraines - totalSorties) },
+      });
     } catch (err) { next(err); }
   }));
 

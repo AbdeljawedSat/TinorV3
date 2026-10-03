@@ -1,5 +1,6 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
+const { positifOuZero, datesOrdonnees } = require('../services/regles');
 const { nextLotNumber, nextNumero, recordEntree } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -115,6 +116,8 @@ module.exports = function (pool) {
       if (!produit_id || !origine) {
         return res.status(400).json({ error: 'produit_id et origine sont requis.' });
       }
+      positifOuZero(quantite_initiale, 'La quantité initiale du lot');
+      datesOrdonnees(date_production, date_expiration, `Date d'expiration (${date_expiration}) antérieure à la date de production (${date_production}).`);
       const numeroLot = await nextLotNumber(pool, produit_id, origine);
       const insertRes = await pool.query(
         `INSERT INTO lots

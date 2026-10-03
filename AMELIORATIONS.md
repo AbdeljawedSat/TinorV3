@@ -110,3 +110,34 @@ les données de démonstration et les tests de stock passent sur MariaDB 10.11 e
 - **Savon en vrac** : ne passe ni par la presse ni par la filtration ; il entre en stock par
   réception puis est **conditionné directement** depuis son lot.
 - Données de démonstration et fichiers `base/*.sql` régénérés en conséquence.
+
+## Pressage de plusieurs lots de graines en une opération
+
+Une opération de presse peut consommer **plusieurs lots de graines**, de la même graine ou de graines
+différentes, et produit **une huile en vrac par graine** (ex. 2 lots de sésame + 1 lot de nigelle →
+huile de sésame + huile de nigelle). Chaque huile devient un lot de presse relié à ses lots de graines
+(traçabilité, colonne « Graines » de l'écran Lots de presse).
+
+Bilan vérifié **par graine** (et donc au total) : graines utilisées ≥ huile + tourteau. Un excédent
+d'une graine ne peut pas compenser le manque d'une autre. Refusés aussi : graines sans huile obtenue,
+huile sans graines correspondantes, même lot saisi deux fois.
+
+API : `POST /api/presse` avec `sources: [{lot_id, quantite}]` et
+`sorties: [{produit_id, quantite_produite, quantite_tourteau}]` (l'ancien format un lot → une huile reste accepté).
+
+## Contraintes de cohérence ajoutées (audit)
+
+| Opération | Contrainte | Risque évité |
+|---|---|---|
+| Toute consommation de stock | quantité > 0 (contrôle central dans `decrementerLot`) | une quantité négative **ajoutait** du stock |
+| Filtration | huile filtrée + déchet ≤ huile pressée utilisée ; produit obtenu = huile en vrac | huile créée à partir de rien |
+| Conditionnement | source = vrac du produit ; nombre × format ≤ vrac utilisé (ml→L, g→kg) ; quantité entière | flacon de sésame rempli de nigelle, contenu créé à partir de rien |
+| Commandes | quantité > 0, entière pour les produits à l'unité ; prix ≥ 0 | stock augmenté, total négatif |
+| Paiements | montant > 0, ≤ reste à payer, facture non annulée (verrou contre les paiements simultanés) | trop-perçu, paiement sur facture annulée |
+| Remises | pourcentage entre 0 et 100 ; remise « lot » : entiers ≥ 1 | prix négatif |
+| Réceptions / achats | quantité > 0, prix ≥ 0, expiration ≥ date de réception / d'achat | lot reçu déjà périmé |
+| Lots manuels | quantité ≥ 0, expiration ≥ production | dates incohérentes |
+| Ordres de production / recettes | quantités > 0 | consommation négative |
+| Produits | prix, coût, stock minimum ≥ 0 ; TVA entre 0 et 100 | calculs faussés |
+
+Règles communes : `src/services/regles.js`. Tests : `test/stock/contraintes.js` (inclus dans `npm run test:stock`).

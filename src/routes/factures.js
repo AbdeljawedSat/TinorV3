@@ -3,6 +3,7 @@ const express = require('express');
 const { computeFactureTotals, computeFactureTotalsDepuisLignes } = require('../services/pricing');
 const { decrementerLot, LOT_DISPONIBLE } = require('../services/lotService');
 const { StockInsuffisant } = require('../db/transaction');
+const { positif, arrondi } = require('../services/regles');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
@@ -164,11 +165,20 @@ module.exports = function (pool) {
     res.json(result.rows[0]);
   }));
 
-  router.post('/:id/paiements', async (req, res) => {
+  router.post('/:id/paiements', enTransaction(pool, async (req, res, next, pool) => {
     const { date_paiement, montant, mode, reference, notes } = req.body;
     if (!date_paiement || !montant) return res.status(400).json({ error: 'date_paiement et montant sont requis.' });
-    const facRes = await pool.query('SELECT * FROM factures WHERE id = $1', [req.params.id]);
-    if (!facRes.rows[0]) return res.status(404).json({ error: 'Facture introuvable.' });
+    const qMontant = positif(montant, 'Le montant du paiement');
+    // FOR UPDATE : deux paiements simultanés ne peuvent pas dépasser le total.
+    const facRes = await pool.query('SELECT * FROM factures WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const facture = facRes.rows[0];
+    if (!facture) return res.status(404).json({ error: 'Facture introuvable.' });
+    if (facture.statut === 'annulee') return res.status(409).json({ error: `La facture ${facture.numero} est annulée : aucun paiement possible.` });
+    const deja = await pool.query('SELECT COALESCE(SUM(montant), 0) AS total FROM paiements WHERE facture_id = $1', [req.params.id]);
+    const reste = arrondi(Number(facture.total_ttc) - Number(deja.rows[0].total));
+    if (arrondi(qMontant) > reste) {
+      return res.status(400).json({ error: `Le paiement (${arrondi(qMontant)}) dépasse le reste à payer de la facture ${facture.numero} (${reste}).` });
+    }
 
     const insertRes = await pool.query(
       `INSERT INTO paiements (facture_id, date_paiement, montant, mode, reference, notes) VALUES ($1,$2,$3,$4,$5,$6)`,
@@ -176,7 +186,7 @@ module.exports = function (pool) {
     );
     const result = await pool.query('SELECT * FROM paiements WHERE id = $1', [insertRes.insertId]);
     res.status(201).json(result.rows[0]);
-  });
+  }));
 
   return router;
 };
