@@ -679,6 +679,41 @@ CREATE TABLE paiements (
   FOREIGN KEY (facture_id) REFERENCES factures(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Avoirs (factures d'avoir) : une facture émise ne s'annule pas, on la
+-- corrige par un avoir numéroté AV-xxxx, total ou partiel.
+CREATE TABLE avoirs (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20) NOT NULL UNIQUE,
+  facture_id      INT NOT NULL,
+  client_id       INT NULL,
+  client_nom      VARCHAR(150) NULL,
+  date_emission   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  motif           VARCHAR(255) NOT NULL,
+  remise_en_stock TINYINT(1) NOT NULL DEFAULT 1,
+  total_ht        DECIMAL(12,3) NOT NULL DEFAULT 0,
+  fodec_montant   DECIMAL(12,3) NOT NULL DEFAULT 0,
+  montant_tva     DECIMAL(12,3) NOT NULL DEFAULT 0,
+  droit_timbre    DECIMAL(12,3) NOT NULL DEFAULT 0,
+  total_ttc       DECIMAL(12,3) NOT NULL DEFAULT 0,
+  created_by      INT NULL,
+  FOREIGN KEY (facture_id) REFERENCES factures(id),
+  INDEX idx_avoirs_facture (facture_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE avoir_lignes (
+  id                INT AUTO_INCREMENT PRIMARY KEY,
+  avoir_id          INT NOT NULL,
+  commande_ligne_id INT NULL,
+  produit_id        INT NULL,
+  lot_id            INT NULL,
+  designation       VARCHAR(255) NOT NULL,
+  qty               DECIMAL(12,3) NOT NULL,
+  unit_price        DECIMAL(12,3) NOT NULL,
+  total             DECIMAL(12,3) NOT NULL,
+  FOREIGN KEY (avoir_id) REFERENCES avoirs(id) ON DELETE CASCADE,
+  INDEX idx_avoir_lignes_cmd (commande_ligne_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ============================================================================
 -- 8. INVENTAIRE & QUALITÉ
 -- ============================================================================

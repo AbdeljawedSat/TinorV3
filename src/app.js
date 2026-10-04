@@ -40,6 +40,7 @@ function createApp(pool) {
   app.use('/api/settings', requireAuth, require('./routes/settings')(pool));
   app.use('/api/certificats', requireAuth, require('./routes/certificats')(pool));
   app.use('/api/paiements', requireAuth, require('./routes/paiements')(pool));
+  app.use('/api/avoirs', requireAuth, require('./routes/avoirs')(pool));
   app.use('/api/exports', requireAuth, require('./routes/exports')(pool));
   app.use('/api/backup', requireAuth, require('./routes/backup')());
   app.use('/api/stats', requireAuth, require('./routes/stats')(pool));

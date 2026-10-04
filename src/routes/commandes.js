@@ -234,7 +234,8 @@ module.exports = function (pool) {
     // « Payée » suit l'argent réellement reçu : seulement si la facture est soldée.
     if (statut === 'payee') {
       const fac = await pool.query(
-        `SELECT f.numero, f.total_ttc - COALESCE((SELECT SUM(montant) FROM paiements p WHERE p.facture_id = f.id AND p.annule_le IS NULL), 0) AS solde
+        `SELECT f.numero, f.total_ttc - COALESCE((SELECT SUM(montant) FROM paiements p WHERE p.facture_id = f.id AND p.annule_le IS NULL), 0)
+                - COALESCE((SELECT SUM(total_ttc) FROM avoirs a WHERE a.facture_id = f.id), 0) AS solde
          FROM factures f WHERE f.commande_id = $1 AND f.statut = 'emise'`, [req.params.id]);
       if (!fac.rows[0]) return res.status(409).json({ error: `La commande ${commande.numero} n'est pas facturée : elle ne peut pas être « payée ». Émettez la facture puis encaissez-la.` });
       if (Number(fac.rows[0].solde) > 0.0005) return res.status(409).json({ error: `La facture ${fac.rows[0].numero} n'est pas soldée (reste ${Number(fac.rows[0].solde).toFixed(3)} DT) : encaissez-la, la commande passera « payée » d'elle-même.` });
@@ -255,7 +256,7 @@ module.exports = function (pool) {
     if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est déjà annulée.` });
     const facs = await pool.query(`SELECT numero, statut FROM factures WHERE commande_id = $1`, [req.params.id]);
     const emise = facs.rows.find(f => f.statut === 'emise');
-    if (emise) return res.status(409).json({ error: `La commande ${commande.numero} est facturée (${emise.numero}) : annulez d'abord la facture.` });
+    if (emise) return res.status(409).json({ error: `La commande ${commande.numero} est facturée (${emise.numero}) : émettez un avoir sur la facture.` });
 
     // Sans aucune facture, le stock est encore sorti : on le réintègre. Après
     // une facture annulée, il l'a déjà été — ne pas le rendre deux fois.

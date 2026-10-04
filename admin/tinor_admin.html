@@ -604,6 +604,7 @@
         <div class="navChildren">
           <a data-view="commandes"><span>Commandes</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="factures"><span>Factures</span><span class="cnt" style="display:none;"></span></a>
+          <a data-view="avoirs"><span>Avoirs</span></a>
           <a data-view="paiements"><span>Paiements</span></a>
           <a data-view="clients"><span>Clients</span></a>
           <a data-view="remises"><span>Remises</span></a>
@@ -697,7 +698,7 @@
         </div>
 
         <div class="panel">
-          <div class="panelHead"><div><h2>Ventes des 6 derniers mois</h2><div class="sub">Factures émises (TTC), hors factures annulées</div></div></div>
+          <div class="panelHead"><div><h2>Ventes des 6 derniers mois</h2><div class="sub">Factures émises (TTC), avoirs déduits</div></div></div>
           <div class="graphVentes" id="dashboardGraphVentes"></div>
         </div>
 
@@ -801,6 +802,17 @@
           <table>
             <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Statut</th><th class="num">Total</th><th></th></tr></thead>
             <tbody id="commandesBody"><tr><td colspan="6" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== AVOIRS ===== -->
+      <div class="view" id="view-avoirs">
+        <div class="pageHead"><h1>Avoirs</h1><p id="avoirsCount">Une facture émise ne s'annule pas : elle se corrige par un avoir (menu ⋯ d'une facture).</p></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Facture</th><th>Motif</th><th class="num">Montant TTC</th><th></th></tr></thead>
+            <tbody id="avoirsBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2636,6 +2648,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     </div>
   </div>
 </div>
+<div class="modalOverlay" id="avoirOverlay">
+  <div class="modal">
+    <div class="modalHead"><div><h2 id="avoirTitre">Émettre un avoir</h2><div class="sub" id="avoirSous"></div></div>
+      <button class="modalClose" onclick="fermerAvoir()">✕</button></div>
+    <div style="padding:14px 20px; overflow:auto; max-height:62vh;">
+      <div class="structLocked" style="margin-bottom:12px;">Une facture émise ne s'annule pas. L'avoir la corrige : il réduit ce que le client doit (ou lui crée un crédit s'il a déjà payé). Indiquez les quantités reprises.</div>
+      <table><thead><tr><th>Produit</th><th class="num">Facturé</th><th class="num">Déjà repris</th><th class="num" style="width:120px;">À reprendre</th></tr></thead>
+        <tbody id="avoirLignes"></tbody></table>
+      <div style="display:flex; gap:8px; margin:10px 0 14px;">
+        <button type="button" class="btnGhost" onclick="avoirToutReprendre(true)">Tout reprendre</button>
+        <button type="button" class="btnGhost" onclick="avoirToutReprendre(false)">Vider</button>
+      </div>
+      <label style="display:flex; gap:8px; align-items:center; font-size:13px; margin-bottom:12px; cursor:pointer;">
+        <input type="checkbox" id="avoirStock" checked> La marchandise revient en stock (retour client)
+      </label>
+      <label class="formLbl">Motif (obligatoire)</label>
+      <input type="text" class="formInput" id="avoirMotif" placeholder="ex. produit abîmé retourné, erreur de quantité, geste commercial…">
+      <div style="margin-top:14px; font-size:13.5px;">Montant de l'avoir : <b id="avoirEstimation">0,000 DT</b> <span class="rowMeta" style="font-size:11.5px;">(TVA et FODEC recalculées)</span></div>
+      <div id="avoirErreur" style="color:var(--danger); font-size:12px; margin-top:8px; display:none;"></div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid var(--line);">
+      <button class="btnGhost" onclick="fermerAvoir()">Annuler</button>
+      <button class="btnDanger" id="avoirValider">Émettre l'avoir</button>
+    </div>
+  </div>
+</div>
 <div id="ficheFond"></div>
 <aside id="fiche" aria-label="Fiche détaillée">
   <div class="ficheTete"><div class="titre" id="ficheTitre"></div><button class="modalClose" id="ficheFermer" title="Fermer (Échap)">✕</button></div>
@@ -2840,7 +2878,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       ['users', '/users'], ['remises', '/remises'], ['recettes', '/recettes'], ['ordresProduction', '/ordres-production'],
       ['grilles', '/grille-huiles'], ['settings', '/settings'], ['achats', '/achats'], ['receptions', '/receptions'],
       ['stockMouvements', '/stock-mouvements'], ['stockResume', '/stock-mouvements/resume'], ['notifications', '/notifications'],
-      ['paiements', '/paiements'], ['certificats', '/certificats'],
+      ['paiements', '/paiements'], ['avoirs', '/avoirs'], ['certificats', '/certificats'],
     ];
     const results = await Promise.allSettled(endpoints.map(([, path]) => apiFetch(path)));
 
@@ -2865,7 +2903,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       renderGrillePrix, renderRemises, renderAchats, renderReceptions,
       renderStockMatiere, renderStockVrac, renderStockFiltre, renderStockConditionne, renderStockEmballage,
       renderStockConsommables, renderStockRepartitionPivot, renderStockMouvements, renderNotifications,
-      renderPaiements, renderStats, renderCertificats, renderParametres,
+      renderPaiements, renderAvoirs, renderStats, renderCertificats, renderParametres,
       tracPopulateTypes, tracPopulateLots,
     ];
     renders.forEach(fn => { try { fn(); } catch (e) { console.error(`Erreur d'affichage (${fn.name}) :`, e); } });
@@ -2976,7 +3014,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="rowMeta">${c.matricule_fiscal || '—'}</td>
         <td class="rowMeta">${c.remise_nom || '—'}</td>
         <td class="num">${fmtDT(c.total_achete)}</td>
-        <td class="num">${Number(c.solde) > 0.0005 ? `<b style="color:var(--warn);">${fmtDT(c.solde)}</b>` : '<span class="rowMeta">—</span>'}</td>
+        <td class="num">${Number(c.solde) > 0.0005 ? `<b style="color:var(--warn);">${fmtDT(c.solde)}</b>` : Number(c.solde) < -0.0005 ? fmtSolde(c.solde) : '<span class="rowMeta">—</span>'}</td>
         <td class="rowActions">
           <button class="rowActionBtn" onclick="ouvrirReleve(${c.id})">Relevé</button>
           <button class="rowActionBtn" onclick="openClientModal(${c.id})">Modifier</button>
@@ -3003,7 +3041,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const r = await apiFetch(`/clients/${clientId}/releve`);
       RELEVE_COURANT = r;
       document.getElementById('releveTitre').textContent = `Relevé de compte — ${r.client.nom}`;
-      document.getElementById('releveResume').innerHTML = `Facturé <b>${fmtDT(r.total_facture)}</b> · Payé <b>${fmtDT(r.total_paye)}</b> · Reste dû <b style="color:${r.solde > 0.0005 ? 'var(--warn)' : 'var(--good)'};">${fmtDT(r.solde)}</b>`;
+      document.getElementById('releveResume').innerHTML = `Facturé <b>${fmtDT(r.total_facture)}</b> · Payé <b>${fmtDT(r.total_paye)}</b> · ${r.solde < -0.0005 ? `<b>${fmtSolde(r.solde)}</b>` : `Reste dû <b style="color:${r.solde > 0.0005 ? 'var(--warn)' : 'var(--good)'};">${fmtDT(r.solde)}</b>`}`;
       document.getElementById('releveBody').innerHTML = r.operations.length ? r.operations.map(o => `
         <tr><td class="rowMeta num">${fmtDate(o.date)}</td><td>${o.libelle}</td>
           <td class="num">${o.debit ? fmtDT(o.debit) : ''}</td><td class="num">${o.credit ? fmtDT(o.credit) : ''}</td><td class="num"><b>${fmtDT(o.solde)}</b></td></tr>`).join('')
@@ -3031,7 +3069,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <table><thead><tr><th>Date</th><th>Opération</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr></thead><tbody>
       ${r.operations.map(o => `<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${o.debit ? fmtDT(o.debit) : ''}</td><td class="n">${o.credit ? fmtDT(o.credit) : ''}</td><td class="n">${fmtDT(o.solde)}</td></tr>`).join('')}
       </tbody></table>
-      <div class="tot">Total facturé ${fmtDT(r.total_facture)} · Total payé ${fmtDT(r.total_paye)} · <b>Reste dû ${fmtDT(r.solde)}</b></div>
+      <div class="tot">Total débit ${fmtDT(r.total_facture)} · Total crédit ${fmtDT(r.total_paye)} · <b>${r.solde < -0.0005 ? 'Crédit en faveur du client ' + fmtDT(-r.solde) : 'Reste dû ' + fmtDT(r.solde)}</b></div>
       <script>window.onload = () => window.print();<\/script></body></html>`);
     w.document.close();
   }
@@ -4611,10 +4649,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="lotCode">${f.numero}</td>
         <td>${f.client_nom || '—'}</td>
         <td class="rowMeta num">${fmtDate(f.date_emission)}</td>
-        <td>${f.statut === 'annulee' ? '<span class="pill danger">Annulée</span>' : '<span class="pill good">Émise</span>'}</td>
+        <td>${f.statut === 'annulee' ? '<span class="pill danger">Annulée</span>' : '<span class="pill good">Émise</span>'}${pastilleAvoir(f)}</td>
         <td class="num">${fmtDT(f.total_ttc)}</td>
         <td class="num">${fmtDT(f.total_paye)}</td>
-        <td class="num">${fmtDT(f.solde)}</td>
+        <td class="num">${f.statut === 'annulee' ? '<span class="rowMeta">—</span>' : fmtSolde(f.solde)}</td>
         <td class="rowActions">
           ${factureAEncaisser(f)
             ? `<button class="rowActionBtn principal" onclick="openPaiementModal(${f.id})">Encaisser</button>`
@@ -4637,15 +4675,22 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         items.push(null);
         actifs.forEach(p => items.push({ label: `Annuler le paiement du ${fmtDate(p.date_paiement)} (${fmtDT(p.montant)})…`, danger: true, action: () => annulerPaiement(id, p.id) }));
       }
+      // Une facture émise ne s'annule pas : on la corrige par un avoir.
       if (f.statut !== 'annulee') {
-        items.push(null, !isGerant() ? { label: 'Annuler la facture', desactive: 'Réservé au gérant' }
-          : actifs.length ? { label: 'Annuler la facture', desactive: 'Annulez d\'abord ses paiements (remboursement)' }
-          : { label: 'Annuler la facture…', danger: true, action: () => annulerFacture(id, f.numero) });
+        const toutRepris = Number(f.total_avoirs) >= Number(f.total_ttc) - 0.0005;
+        items.push(null, !isGerant() ? { label: '↩ Émettre un avoir', desactive: 'Réservé au gérant' }
+          : toutRepris ? { label: '↩ Émettre un avoir', desactive: 'Toute la facture est déjà reprise en avoir' }
+          : { label: '↩ Émettre un avoir…', danger: true, action: () => ouvrirAvoir(id) });
       }
       return items;
     });
   }
   const factureAEncaisser = (f) => f.statut !== 'annulee' && Number(f.solde) > 0.0005;
+  // Solde négatif : le client a payé plus que ce qu'il doit après avoir → crédit en sa faveur.
+  const fmtSolde = (s) => Number(s) < -0.0005 ? `<span style="color:var(--good);" title="En faveur du client (à rembourser ou à déduire)">Crédit ${fmtDT(-Number(s))}</span>` : fmtDT(Math.max(0, Number(s)));
+  const pastilleAvoir = (f) => !Number(f.total_avoirs) ? '' : Number(f.total_avoirs) >= Number(f.total_ttc) - 0.0005
+    ? ' <span class="pill grey" title="Facture entièrement reprise par avoir">Reprise par avoir</span>'
+    : ` <span class="pill warn" title="Avoir de ${fmtDT(f.total_avoirs)}">Avoir partiel</span>`;
 
   // ---------- Impression / export de facture (DOCX, XLSX, PDF via impression) ----------
   function factureHtmlContent(f) {
@@ -4908,11 +4953,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('paiementModalCloseBtn').addEventListener('click', closePaiementModal);
 
   async function rafraichirVentes() {
-    const cles = [['factures', '/factures'], ['commandes', '/commandes'], ['paiements', '/paiements'], ['clients', '/clients'],
+    const cles = [['factures', '/factures'], ['commandes', '/commandes'], ['paiements', '/paiements'], ['avoirs', '/avoirs'], ['clients', '/clients'],
       ['lots', '/lots'], ['produits', '/produits'], ['notifications', '/notifications']];
     const res = await Promise.all(cles.map(([, u]) => apiFetch(u)));
     cles.forEach(([k], i) => { APP_DATA[k] = res[i]; });
-    [renderFactures, renderCommandes, renderPaiements, renderClients, renderLotsRegistre, renderProduits, renderDashboard]
+    [renderFactures, renderCommandes, renderPaiements, renderAvoirs, renderClients, renderLotsRegistre, renderProduits, renderDashboard]
       .forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
     if (TOKEN) majBadgesMenu();
   }
@@ -4942,16 +4987,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       notifier('Paiement annulé.', 'succes');
     } catch (err) { notifier(err.message, 'erreur'); }
   }
-  async function annulerFacture(factureId, numero) {
-    if (!(await confirmer('Le stock des lots vendus sera réintégré. Cette annulation est tracée.', { titre: `Annuler la facture ${numero} ?`, ok: 'Annuler la facture', non: 'Garder la facture', danger: true }))) return;
-    try {
-      await apiFetch(`/factures/${factureId}/annuler`, { method: 'POST' });
-      const [factures, commandes, lots, produits] = await Promise.all([apiFetch('/factures'), apiFetch('/commandes'), apiFetch('/lots'), apiFetch('/produits')]);
-      APP_DATA.factures = factures; APP_DATA.commandes = commandes; APP_DATA.lots = lots; APP_DATA.produits = produits;
-      renderFactures(); renderCommandes(); renderLotsRegistre(); renderProduits();
-    } catch (err) { notifier(err.message, 'erreur'); }
-  }
-
   // ============================================================================
   // UTILISATEURS
   // ============================================================================
@@ -6125,7 +6160,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function renderStats() {
     if (!document.getElementById('statsCA')) return;
     const facturesEmises = APP_DATA.factures.filter(f => f.statut !== 'annulee');
-    const ca = facturesEmises.reduce((s, f) => s + Number(f.total_ttc || 0), 0);
+    const ca = facturesEmises.reduce((s, f) => s + Number(f.total_ttc || 0) - Number(f.total_avoirs || 0), 0); // net des avoirs
     const encaisse = facturesEmises.reduce((s, f) => s + Number(f.total_paye || 0), 0);
     document.getElementById('statsCA').textContent = fmtDT(ca);
     document.getElementById('statsEncaisse').textContent = fmtDT(encaisse);
@@ -6814,7 +6849,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const fac = APP_DATA.factures.find(f => f.statut === 'emise' && f.commande_id === id);
       items.push(null, !isGerant()
         ? { label: 'Annuler la commande', desactive: 'Réservé au gérant' }
-        : fac ? { label: 'Annuler la commande', desactive: `Facturée (${fac.numero}) : annulez d'abord la facture` }
+        : fac ? { label: 'Annuler la commande', desactive: `Facturée (${fac.numero}) : émettez un avoir sur la facture` }
         : { label: 'Annuler la commande…', danger: true, action: () => annulerCommande(id) });
       return items;
     });
@@ -7873,13 +7908,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:'view-achats', receptions:'view-receptions',
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires',
-    notifications:'view-notifications', paiements:'view-paiements', stats:'view-stats',
+    notifications:'view-notifications', paiements:'view-paiements', avoirs:'view-avoirs', stats:'view-stats',
     certificats:'view-certificats', parametres:'view-parametres'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null],
     commandes:['Commerce','Commandes'], factures:['Commerce','Factures'],
-    paiements:['Commerce','Paiements'], stats:['Commerce','Statistiques'], clients:['Commerce','Clients'],
+    paiements:['Commerce','Paiements'], avoirs:['Commerce','Avoirs'], stats:['Commerce','Statistiques'], clients:['Commerce','Clients'],
     'grille-prix':['Commerce','Grille de prix'], remises:['Commerce','Remises'],
     produits:['Catalogue & Stock','Produits'], recettes:['Catalogue & Stock','Recettes'],
     lots:['Catalogue & Stock','Registre des lots'], tracabilite:['Catalogue & Stock','Traçabilité'],
@@ -8042,6 +8077,117 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   regrouperExports();
   ajouterChipsPeriode();
 
+  // ---------- Avoirs (V3.3) : une facture émise se corrige par un avoir ----------
+  let AVOIR_FACTURE = null;
+  function fermerAvoir() { document.getElementById('avoirOverlay').classList.remove('open'); }
+  function avoirEstimer() {
+    const f = AVOIR_FACTURE; if (!f) return;
+    const fodec = Number(f.total_ht) > 0 ? Number(f.fodec_montant) / Number(f.total_ht) : 0;
+    let total = 0, tout = true;
+    document.querySelectorAll('#avoirLignes input').forEach(inp => {
+      const l = f.lignes_avoirables.find(x => x.commande_ligne_id === Number(inp.dataset.id));
+      const q = Number(inp.value) || 0;
+      total += q * Number(l.unit_price) * (1 + fodec);
+      if (Number(l.deja_avoir) + q < Number(l.qty) - 0.0005) tout = false;
+    });
+    // Dernier avoir qui reprend tout : il prend exactement le reliquat de la facture.
+    if (tout) total = Number(f.total_ttc) - Number(f.total_avoirs);
+    document.getElementById('avoirEstimation').textContent = fmtDT(total);
+  }
+  function avoirToutReprendre(oui) {
+    document.querySelectorAll('#avoirLignes input').forEach(inp => { inp.value = oui ? inp.max : 0; });
+    avoirEstimer();
+  }
+  async function ouvrirAvoir(factureId) {
+    try {
+      const f = await apiFetch(`/factures/${factureId}`);
+      AVOIR_FACTURE = f;
+      document.getElementById('avoirTitre').textContent = `Émettre un avoir — ${f.numero}`;
+      document.getElementById('avoirSous').textContent = `${f.client_nom || ''} · facture de ${fmtDT(f.total_ttc)}${Number(f.total_avoirs) ? ` · déjà ${fmtDT(f.total_avoirs)} en avoir` : ''}`;
+      document.getElementById('avoirLignes').innerHTML = f.lignes_avoirables.map(l => {
+        const reste = Math.round((Number(l.qty) - Number(l.deja_avoir)) * 1000) / 1000;
+        return `<tr><td>${esc(l.produit_nom)}<div class="rowMeta" style="font-size:11px;">${fmtDT(l.unit_price)} l'unité</div></td>
+          <td class="num">${Number(l.qty)}</td><td class="num">${Number(l.deja_avoir) || '—'}</td>
+          <td class="num"><input type="number" class="formInput" style="width:100px; text-align:right;" min="0" max="${reste}" step="any" value="0" data-id="${l.commande_ligne_id}" ${reste <= 0 ? 'disabled' : ''}></td></tr>`;
+      }).join('');
+      document.querySelectorAll('#avoirLignes input').forEach(inp => inp.addEventListener('input', avoirEstimer));
+      document.getElementById('avoirStock').checked = true;
+      document.getElementById('avoirMotif').value = '';
+      document.getElementById('avoirErreur').style.display = 'none';
+      avoirEstimer();
+      document.getElementById('avoirOverlay').classList.add('open');
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  document.getElementById('avoirValider').addEventListener('click', async () => {
+    const err = document.getElementById('avoirErreur');
+    err.style.display = 'none';
+    const lignes = Array.from(document.querySelectorAll('#avoirLignes input')).map(i => ({ commande_ligne_id: Number(i.dataset.id), qty: Number(i.value) || 0 })).filter(l => l.qty > 0);
+    const motif = document.getElementById('avoirMotif').value.trim();
+    if (!lignes.length) { err.textContent = 'Indiquez au moins une quantité à reprendre.'; err.style.display = 'block'; return; }
+    if (!motif) { err.textContent = 'Le motif est obligatoire.'; err.style.display = 'block'; document.getElementById('avoirMotif').focus(); return; }
+    try {
+      const a = await apiFetch(`/factures/${AVOIR_FACTURE.id}/avoirs`, { method: 'POST', body: JSON.stringify({ lignes, motif, remise_en_stock: document.getElementById('avoirStock').checked }) });
+      fermerAvoir();
+      await rafraichirVentes();
+      notifier(`Avoir ${a.numero} émis : ${fmtDT(a.total_ttc)}${a.reste_du < -0.0005 ? ` — crédit de ${fmtDT(-a.reste_du)} en faveur du client` : ''}.`, 'succes');
+    } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
+  });
+  function renderAvoirs() {
+    const body = document.getElementById('avoirsBody');
+    if (!body) return;
+    const avoirs = APP_DATA.avoirs || [];
+    if (!avoirs.length) { body.innerHTML = `<tr><td colspan="7" class="videAction">Aucun avoir : un avoir s'émet depuis une facture (menu ⋯ › Émettre un avoir).</td></tr>`; return; }
+    body.innerHTML = avoirs.map(a => `
+      <tr data-id="${a.id}">
+        <td class="lotCode">${esc(a.numero)}</td>
+        <td>${esc(a.client_nom || '—')}</td>
+        <td class="rowMeta num">${fmtDate(a.date_emission)}</td>
+        <td><span class="ficheLien" onclick="ouvrirFicheFacture(${a.facture_id})">${esc(a.facture_numero)}</span></td>
+        <td class="rowMeta">${esc(a.motif)}${a.remise_en_stock ? '' : ' <span class="pill grey">sans retour</span>'}</td>
+        <td class="num">${fmtDT(a.total_ttc)}</td>
+        <td class="rowActions"><button class="rowActionBtn" onclick="imprimerAvoir(${a.id})">🖨 Imprimer</button></td>
+      </tr>`).join('');
+  }
+  async function imprimerAvoir(id) {
+    try {
+      const a = await apiFetch(`/avoirs/${id}`);
+      const s = APP_DATA.settings || {};
+      const client = APP_DATA.clients.find(c => c.id === a.client_id) || {};
+      const w = window.open('', `avoir_${id}_${Date.now()}`);
+      if (!w) { notifier("Autorisez les pop-ups pour imprimer l'avoir."); return; }
+      w.document.open();
+      w.document.write(`<html><head><meta charset="UTF-8"><title>Avoir ${esc(a.numero)}</title><style>
+        @page { size: A4; margin: 14mm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a1a; }
+        .tete { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+        h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; } .gris { color: #555; }
+        .cadre { border: 1px solid #333; padding: 8px 12px; min-width: 220px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; } th, td { border-bottom: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+        th { background: #eef3ea; font-size: 11px; text-transform: uppercase; } .n { text-align: right; white-space: nowrap; }
+        .tot { margin-left: auto; margin-top: 14px; width: 280px; } .tot div { display: flex; justify-content: space-between; padding: 3px 0; }
+        .tot .fort { font-weight: bold; font-size: 14px; border-top: 1px solid #333; padding-top: 6px; }
+      </style></head><body>
+        <div class="tete">
+          <div><b>${esc(s.entreprise_nom || '')}</b><div class="gris">${esc(s.entreprise_adresse || '')}</div>${s.entreprise_matricule_fiscal ? `<div class="gris">MF ${esc(s.entreprise_matricule_fiscal)}</div>` : ''}${s.entreprise_telephone ? `<div class="gris">Tél. ${esc(s.entreprise_telephone)}</div>` : ''}</div>
+          <div class="cadre"><b>${esc(a.client_nom || '')}</b>${client.matricule_fiscal ? `<div class="gris">MF ${esc(client.matricule_fiscal)}</div>` : ''}${client.ville ? `<div class="gris">${esc(client.ville)}</div>` : ''}</div>
+        </div>
+        <h1>AVOIR N° ${esc(a.numero)}</h1>
+        <div class="gris">Du ${fmtDate(a.date_emission)} — sur la facture ${esc(a.facture_numero)} du ${fmtDate(a.facture_date)}</div>
+        <div style="margin-top:6px;">Motif : ${esc(a.motif)}</div>
+        <table><thead><tr><th>Désignation</th><th class="n">Qté</th><th class="n">Prix TTC</th><th class="n">Total</th></tr></thead><tbody>
+          ${a.lignes.map(l => `<tr><td>${esc(l.designation)}</td><td class="n">${Number(l.qty)}</td><td class="n">${fmtDT(l.unit_price)}</td><td class="n">${fmtDT(l.total)}</td></tr>`).join('')}
+        </tbody></table>
+        <div class="tot">
+          <div><span>Total HT</span><span>${fmtDT(a.total_ht)}</span></div>
+          ${Number(a.fodec_montant) ? `<div><span>FODEC</span><span>${fmtDT(a.fodec_montant)}</span></div>` : ''}
+          <div><span>TVA (${Number(a.tva_rate)} %)</span><span>${fmtDT(a.montant_tva)}</span></div>
+          ${Number(a.droit_timbre) ? `<div><span>Droit de timbre</span><span>${fmtDT(a.droit_timbre)}</span></div>` : ''}
+          <div class="fort"><span>Total de l'avoir TTC</span><span>${fmtDT(a.total_ttc)}</span></div>
+        </div>
+        <script>window.onload = () => window.print();<\/script></body></html>`);
+      w.document.close();
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+
   // ---------- Fiche détaillée commande / facture (V3.3) ----------
   // Un clic sur une ligne ouvre sa fiche : tout le détail et toutes les
   // actions au même endroit (celles du menu « ⋯ »), les impossibles grisées
@@ -8102,8 +8248,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
             ${Number(f.droit_timbre) ? `<span>Droit de timbre</span><span class="num">${fmtDT(f.droit_timbre)}</span>` : ''}
             <span class="fort">Total TTC</span><span class="fort num">${fmtDT(f.total_ttc)}</span>
           </div></div>
+        ${(f.avoirs || []).length ? `<div class="ficheBloc"><h3>Avoirs</h3><table><tbody>${f.avoirs.map(a => `<tr><td><span class="ficheLien" onclick="imprimerAvoir(${a.id})">${esc(a.numero)}</span><div class="rowMeta" style="font-size:11px;">${esc(a.motif)}${a.remise_en_stock ? ' · remis en stock' : ''}</div></td><td class="rowMeta num">${fmtDate(a.date_emission)}</td><td class="num">−${fmtDT(a.total_ttc)}</td></tr>`).join('')}</tbody></table></div>` : ''}
         <div class="ficheBloc"><h3>Paiements</h3>${paiements ? `<table><tbody>${paiements}</tbody></table>` : '<span class="rowMeta">Aucun paiement.</span>'}
-          <div class="ficheTotaux"><span>Payé</span><span class="num">${fmtDT(f.total_paye)}</span><span class="fort">Reste dû</span><span class="fort num" style="color:${f.solde > 0.0005 && f.statut !== 'annulee' ? 'var(--warn)' : 'var(--good)'};">${fmtDT(f.statut === 'annulee' ? 0 : f.solde)}</span></div></div>
+          <div class="ficheTotaux"><span>Payé</span><span class="num">${fmtDT(f.total_paye)}</span>
+            ${Number(f.total_avoirs) ? `<span>Avoirs</span><span class="num">−${fmtDT(f.total_avoirs)}</span>` : ''}
+            <span class="fort">${f.solde < -0.0005 ? 'Crédit client' : 'Reste dû'}</span><span class="fort num" style="color:${f.solde > 0.0005 && f.statut !== 'annulee' ? 'var(--warn)' : 'var(--good)'};">${fmtDT(f.statut === 'annulee' ? 0 : Math.abs(f.solde))}</span></div></div>
         ${f.commande_id ? `<div class="ficheBloc"><h3>Commande</h3><span class="ficheLien" onclick="ouvrirFicheCommande(${f.commande_id})">${esc(f.commande_numero || 'Voir la commande')}</span></div>` : ''}`;
       afficherFiche('Facture', esc(f.numero), `${pastilleVente(f.statut)}<span>${esc(f.client_nom || '—')}</span><span>${fmtDate(f.date_emission)}</span>`, corps, 'facturesBody', id);
     } catch (err) { notifier(err.message, 'erreur'); }
@@ -8249,7 +8398,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const totaux = mois.map(m => {
       const cle = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
       return APP_DATA.factures.filter(f => f.statut !== 'annulee' && String(f.date_emission || '').slice(0, 7) === cle)
-        .reduce((s, f) => s + Number(f.total_ttc || 0), 0);
+        .reduce((s, f) => s + Number(f.total_ttc || 0) - Number(f.total_avoirs || 0), 0);
     });
     const max = Math.max(...totaux, 1);
     const court = (n) => n >= 1000 ? `${(n / 1000).toLocaleString('fr-TN', { maximumFractionDigits: 1 })} k` : Math.round(n).toLocaleString('fr-TN');
@@ -8305,7 +8454,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   const ONGLET_DE_VUE = {
     dashboard: 'dashboard',
-    commandes: 'commandes', factures: 'commandes', paiements: 'commandes', clients: 'commandes', remises: 'commandes', 'grille-prix': 'commandes',
+    commandes: 'commandes', factures: 'commandes', avoirs: 'commandes', paiements: 'commandes', clients: 'commandes', remises: 'commandes', 'grille-prix': 'commandes',
     presse: 'presse', filtration: 'presse', conditionnement: 'presse', recettes: 'presse', 'historique-prod': 'presse',
     lots: 'lots', stock: 'lots', 'stock-mouvements': 'lots', inventaires: 'lots', tracabilite: 'lots', produits: 'lots'
   };

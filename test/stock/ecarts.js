@@ -37,14 +37,15 @@ async function ecart(lotId) {
     console.log('   HTTP', r.status, r.status >= 400 ? JSON.stringify(r.data).slice(0, 100) : '');
     await bilan('A', l.id, r.status < 300 ? 92 : 100); }
 
-  console.log('B. Annulation de facture puis refacturation de la même commande');
+  console.log('B. Avoir total : marchandise retournée, puis tentative de refacturation');
   { const { p, l } = await lotNeuf(100);
     const c = (await api('/commandes', { method: 'POST', body: { client_id: client.id, lignes: [{ produit_id: p.id, qty: 10 }] } })).data;
     const f1 = (await api('/factures', { method: 'POST', body: { commande_id: c.id } })).data;
-    await api(`/factures/${f1.id}/annuler`, { method: 'POST' });
+    const det = (await api(`/factures/${f1.id}`)).data;
+    await api(`/factures/${f1.id}/avoirs`, { method: 'POST', body: { motif: 'Retour', lignes: det.lignes_avoirables.map(x => ({ commande_ligne_id: x.commande_ligne_id, qty: Number(x.qty) })) } });
     const f2 = await api('/factures', { method: 'POST', body: { commande_id: c.id } });
-    console.log('   refacturation HTTP', f2.status, f2.status >= 400 ? f2.data.error : '(10 unités facturées et livrées)');
-    await bilan('B', l.id, f2.status < 300 ? 90 : 100); }
+    check(f2.status === 409, `B — refacturation d'une vente reprise refusée (HTTP ${f2.status})`);
+    await bilan('B', l.id, 100); }
 
   console.log('C. Commande passée au statut « annulee » par l\'API');
   { const { p, l } = await lotNeuf(100);
@@ -74,12 +75,15 @@ async function ecart(lotId) {
     check(ok === 1 && e.q >= 0, `E — stock final ${e.q} (jamais négatif)`);
     await bilan('E', l.id); }
 
-  console.log('F. Double clic sur « Annuler la facture »');
+  console.log('F. Double clic sur « Émettre l\'avoir »');
   { const { p, l } = await lotNeuf(100);
     const c = (await api('/commandes', { method: 'POST', body: { client_id: client.id, lignes: [{ produit_id: p.id, qty: 10 }] } })).data;
     const f = (await api('/factures', { method: 'POST', body: { commande_id: c.id } })).data;
-    const rs = await Promise.all([1, 2].map(() => api(`/factures/${f.id}/annuler`, { method: 'POST' })));
+    const det = (await api(`/factures/${f.id}`)).data;
+    const corps = { motif: 'Retour', lignes: det.lignes_avoirables.map(x => ({ commande_ligne_id: x.commande_ligne_id, qty: Number(x.qty) })) };
+    const rs = await Promise.all([1, 2].map(() => api(`/factures/${f.id}/avoirs`, { method: 'POST', body: corps })));
     console.log('   réponses :', rs.map(r => r.status).join(', '));
+    check(rs.filter(r => r.status === 201).length === 1, 'F — un seul avoir accepté');
     await bilan('F', l.id, 100); }
 
   console.log('G. Deux pressages simultanés sur le même lot de matière première');

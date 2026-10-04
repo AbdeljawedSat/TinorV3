@@ -187,3 +187,24 @@ Chaque rubrique a sa couleur, discrète : Ventes (ocre), Production (olive), Sto
 Achats (terre cuite), Réglages (gris). Elle colore le liseré sous la barre du haut, un léger fond en
 haut de page, le repère « VENTES » au-dessus du titre et le trait sous le titre ; l'écran apparaît
 avec un fondu court (désactivé si le système demande moins d'animations).
+
+## Avoirs : une facture émise ne s'annule plus (V3.3)
+
+Règle comptable retenue : une facture émise ne s'annule jamais ; on la corrige par un **avoir**
+(numéroté AV-0001, AV-0002…), lié à la facture.
+
+- **Émettre un avoir** (menu ⋯ d'une facture, ou sa fiche ; gérant ; motif obligatoire) : on choisit
+  les quantités reprises par ligne (« Tout reprendre » pour un avoir total), et si la marchandise
+  revient en stock (retour client) ou non (geste commercial).
+- TVA et FODEC recalculées sur les lignes reprises ; le dernier avoir qui reprend tout prend
+  exactement le reliquat de la facture (timbre compris), au millime.
+- Effets : reste dû de la facture et solde client diminués ; si le client avait déjà payé, il
+  apparaît un **crédit en sa faveur** ; stock réintégré si retour ; vente entièrement reprise →
+  commande « annulée » ; facture soldée par l'avoir → plus d'encaissement possible.
+- Écran **Ventes › Avoirs** (liste, impression de l'avoir), avoirs dans la fiche facture et au
+  crédit du relevé client ; chiffre d'affaires et graphique des ventes nets des avoirs.
+- « Annuler la facture » est supprimé (l'API répond « émettez un avoir ») ; les factures annulées
+  avant cette version restent affichées comme telles.
+- Base : tables `avoirs` et `avoir_lignes`, créées par `npm run migrate` sur une base existante.
+- Tests : `test/stock/ventes.js` (avoir partiel, avoir sans retour, reliquat exact, crédit client,
+  refus au-delà du facturé) et `test/stock/ecarts.js` (avoir total, double clic).

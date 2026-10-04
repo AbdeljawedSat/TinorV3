@@ -2,9 +2,10 @@ const express = require('express');
 
 // Par client : total des factures émises (hors annulées) et des paiements actifs.
 const SOLDES_FACTURES = `
-  SELECT f.client_id, SUM(f.total_ttc) AS facture, SUM(COALESCE(p.paye, 0)) AS paye
+  SELECT f.client_id, SUM(f.total_ttc) - SUM(COALESCE(a.avoirs, 0)) AS facture, SUM(COALESCE(p.paye, 0)) AS paye
   FROM factures f
   LEFT JOIN (SELECT facture_id, SUM(montant) AS paye FROM paiements WHERE annule_le IS NULL GROUP BY facture_id) p ON p.facture_id = f.id
+  LEFT JOIN (SELECT facture_id, SUM(total_ttc) AS avoirs FROM avoirs GROUP BY facture_id) a ON a.facture_id = f.id
   WHERE f.statut = 'emise'
   GROUP BY f.client_id`;
 
@@ -39,9 +40,13 @@ module.exports = function (pool) {
       `SELECT p.id, p.date_paiement AS date, p.montant, p.mode, p.reference, f.numero AS facture_numero
        FROM paiements p JOIN factures f ON f.id = p.facture_id
        WHERE f.client_id = $1 AND f.statut = 'emise' AND p.annule_le IS NULL`, [req.params.id]);
+    const avoirs = await pool.query(
+      `SELECT a.numero, a.date_emission AS date, a.total_ttc, f.numero AS facture_numero
+       FROM avoirs a JOIN factures f ON f.id = a.facture_id WHERE f.client_id = $1 AND f.statut = 'emise'`, [req.params.id]);
     const iso = (d) => (d instanceof Date ? d.toISOString() : String(d || ''));
     const ops = [
       ...factures.rows.map(f => ({ date: iso(f.date), type: 'facture', libelle: `Facture ${f.numero}`, debit: Number(f.total_ttc), credit: 0 })),
+      ...avoirs.rows.map(a => ({ date: iso(a.date), type: 'avoir', libelle: `Avoir ${a.numero} (sur ${a.facture_numero})`, debit: 0, credit: Number(a.total_ttc) })),
       ...paiements.rows.map(p => ({ date: iso(p.date), type: 'paiement', libelle: `Paiement ${p.facture_numero} (${p.mode}${p.reference ? ' ' + p.reference : ''})`, debit: 0, credit: Number(p.montant) })),
     ].sort((a, b) => a.date.localeCompare(b.date) || (a.type === 'facture' ? -1 : 1));
     let solde = 0;
