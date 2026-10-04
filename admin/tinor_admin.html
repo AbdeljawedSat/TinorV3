@@ -377,6 +377,38 @@
     .content{padding:18px 16px 50px;}
   }
 
+  /* ---------- Fiche détaillée (V3.3) : panneau à droite ---------- */
+  #ficheFond{position:fixed; inset:0; background:rgba(23,35,29,.28); z-index:60; opacity:0; pointer-events:none; transition:opacity .2s;}
+  #ficheFond.open{opacity:1; pointer-events:auto;}
+  #fiche{position:fixed; top:0; right:0; bottom:0; width:min(520px, 100vw); background:var(--paper); z-index:61; display:flex; flex-direction:column;
+    box-shadow:-14px 0 40px rgba(23,35,29,.18); transform:translateX(102%); transition:transform .24s ease; border-left:4px solid var(--accent);}
+  #fiche.open{transform:none;}
+  .ficheTete{padding:18px 22px 14px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:flex-start;}
+  .ficheTete .titre{flex:1; min-width:0;}
+  .ficheTete .type{font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--accent);}
+  .ficheTete h2{font-family:'Fraunces',serif; font-size:21px; margin:2px 0 4px;}
+  .ficheTete .meta{font-size:12.5px; color:var(--text-soft); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  #ficheCorps{flex:1; overflow-y:auto; padding:16px 22px;}
+  .ficheBloc{margin-bottom:20px;} .ficheBloc h3{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft); margin:0 0 8px; font-weight:700;}
+  .ficheBloc table td, .ficheBloc table th{padding:7px 6px; font-size:12.5px;}
+  .ficheTotaux{display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:13px; margin-top:8px;}
+  .ficheTotaux .fort{font-weight:700; font-size:15px; border-top:1px solid var(--line); padding-top:6px;}
+  .ficheLien{color:var(--accent); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+  .ficheNotes{white-space:pre-line; font-size:12.5px; background:var(--sand); border-radius:8px; padding:10px 12px;}
+  #ficheActions{border-top:1px solid var(--line); padding:12px 22px calc(12px + env(safe-area-inset-bottom)); display:flex; flex-wrap:wrap; gap:8px; background:#FCFBF8;}
+  #ficheActions button{font-size:12.5px; padding:8px 12px; border-radius:8px; cursor:pointer; font-family:inherit; border:1px solid var(--line); background:var(--paper); color:var(--text);}
+  #ficheActions button.principal{background:var(--ink); color:#fff; border-color:var(--ink);}
+  #ficheActions button.danger{color:var(--danger); border-color:#E7C4BE;}
+  #ficheActions button:disabled{opacity:.55; cursor:not-allowed;}
+  #ficheActions .raison{flex-basis:100%; font-size:11.5px; color:var(--text-soft); margin-top:-2px;}
+  #commandesBody tr[data-id], #facturesBody tr[data-id]{cursor:pointer;}
+
+  /* ---------- Confort visuel (V3.3) ---------- */
+  .num, td.num{font-variant-numeric:tabular-nums;}
+  .rowActionBtn{padding:6px 11px; font-size:12px; border-radius:7px;}
+  .rowActions{gap:7px;}
+  tbody td{padding-top:11px; padding-bottom:11px;}
+  @media (max-width:700px){ .rowActionBtn, .etapeBtn{min-height:36px; padding:7px 12px;} }
   /* ---------- Repère visuel par rubrique (V3.3) : couleur discrète, en-tête, transition ---------- */
   body{--accent:#17231D; --accent-fond:#EFEDE4; --accent-clair:#C9A662;}
   body[data-rubrique="ventes"]{--accent:#9A6B1F; --accent-fond:#F7EEDC; --accent-clair:#D9B26A;}
@@ -2604,6 +2636,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     </div>
   </div>
 </div>
+<div id="ficheFond"></div>
+<aside id="fiche" aria-label="Fiche détaillée">
+  <div class="ficheTete"><div class="titre" id="ficheTitre"></div><button class="modalClose" id="ficheFermer" title="Fermer (Échap)">✕</button></div>
+  <div id="ficheCorps"></div>
+  <div id="ficheActions"></div>
+</aside>
 <div id="palette" role="dialog" aria-label="Recherche universelle">
   <div class="boite">
     <input id="paletteInput" placeholder="Aller à un écran, créer, chercher un client, un lot, une facture…" autocomplete="off">
@@ -4588,7 +4626,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const f = APP_DATA.factures.find(x => x.id === id);
       if (!f) return [];
       const items = [];
-      if (factureAEncaisser(f)) items.push({ label: '💰 Encaisser un paiement', action: () => openPaiementModal(id) });
+      items.push(factureAEncaisser(f)
+        ? { label: '💰 Encaisser un paiement', action: () => openPaiementModal(id) }
+        : { label: '💰 Encaisser un paiement', desactive: f.statut === 'annulee' ? 'Facture annulée' : 'Facture déjà soldée' });
       items.push({ label: '🖨 Imprimer / PDF', action: () => imprimerFacture(id) });
       items.push({ label: '⬇ Word (.docx)', action: () => exportFactureDocx(id) });
       items.push({ label: '⬇ Excel (.xlsx)', action: () => exportFactureXlsx(id) });
@@ -4597,7 +4637,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         items.push(null);
         actifs.forEach(p => items.push({ label: `Annuler le paiement du ${fmtDate(p.date_paiement)} (${fmtDT(p.montant)})…`, danger: true, action: () => annulerPaiement(id, p.id) }));
       }
-      if (f.statut !== 'annulee' && isGerant()) items.push(null, { label: 'Annuler la facture…', danger: true, action: () => annulerFacture(id, f.numero) });
+      if (f.statut !== 'annulee') {
+        items.push(null, !isGerant() ? { label: 'Annuler la facture', desactive: 'Réservé au gérant' }
+          : actifs.length ? { label: 'Annuler la facture', desactive: 'Annulez d\'abord ses paiements (remboursement)' }
+          : { label: 'Annuler la facture…', danger: true, action: () => annulerFacture(id, f.numero) });
+      }
       return items;
     });
   }
@@ -7997,6 +8041,83 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   regrouperExports();
   ajouterChipsPeriode();
+
+  // ---------- Fiche détaillée commande / facture (V3.3) ----------
+  // Un clic sur une ligne ouvre sa fiche : tout le détail et toutes les
+  // actions au même endroit (celles du menu « ⋯ »), les impossibles grisées
+  // avec leur raison.
+  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function fermerFiche() { document.getElementById('fiche').classList.remove('open'); document.getElementById('ficheFond').classList.remove('open'); }
+  function afficherFiche(type, titre, meta, corps, tbodyId, id) {
+    document.getElementById('ficheTitre').innerHTML = `<div class="type">${type}</div><h2>${titre}</h2><div class="meta">${meta}</div>`;
+    document.getElementById('ficheCorps').innerHTML = corps;
+    const items = (MENUS_LIGNE[tbodyId] ? MENUS_LIGNE[tbodyId](id) : []).filter(Boolean);
+    const zone = document.getElementById('ficheActions');
+    zone.innerHTML = '';
+    const raisons = [];
+    items.forEach((it, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = it.label.replace(/…$/, '…');
+      if (i === 0 && !it.desactive && !it.danger) b.className = 'principal';
+      if (it.danger) b.className = 'danger';
+      if (it.desactive) { b.disabled = true; b.title = it.desactive; raisons.push(`${it.label.replace(/…$/, '')} : ${it.desactive}`); }
+      else b.addEventListener('click', () => { fermerFiche(); it.action(); });
+      zone.appendChild(b);
+    });
+    if (raisons.length) zone.insertAdjacentHTML('beforeend', `<div class="raison">${raisons.map(esc).join(' · ')}</div>`);
+    document.getElementById('fiche').classList.add('open');
+    document.getElementById('ficheFond').classList.add('open');
+    document.getElementById('ficheFermer').focus();
+  }
+  const pastilleVente = (s) => ({ en_attente: '<span class="pill warn">En attente</span>', confirmee: '<span class="pill good">Confirmée</span>',
+    livree: '<span class="pill grey">Livrée</span>', payee: '<span class="pill good">Payée</span>', annulee: '<span class="pill danger">Annulée</span>',
+    emise: '<span class="pill good">Émise</span>' }[s] || esc(s));
+  async function ouvrirFicheCommande(id) {
+    try {
+      const c = await apiFetch(`/commandes/${id}`);
+      const facs = APP_DATA.factures.filter(f => f.commande_id === id);
+      const lignes = (c.lignes || []).map(l => `<tr><td>${esc(l.produit_nom)}${l.free_units ? ` <span class="rowMeta">(+${l.free_units} offert${l.free_units > 1 ? 's' : ''})</span>` : ''}
+        <div class="rowMeta" style="font-size:11px;">${l.numero_lot ? 'Lot ' + esc(l.numero_lot) : '<span style="color:var(--warn);">En attente de conditionnement</span>'}${l.remise_nom ? ' · ' + esc(l.remise_nom) : ''}</div></td>
+        <td class="num">${l.qty}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
+      const corps = `
+        <div class="ficheBloc"><h3>Lignes</h3><table><thead><tr><th>Produit</th><th class="num">Qté</th><th class="num">Prix TTC</th><th class="num">Total</th></tr></thead><tbody>${lignes}</tbody></table>
+          <div class="ficheTotaux"><span class="fort">Total TTC</span><span class="fort num">${fmtDT(c.total)}</span></div></div>
+        <div class="ficheBloc"><h3>Facturation</h3>${facs.length ? facs.map(f => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="ouvrirFicheFacture(${f.id})">${esc(f.numero)}</span> ${pastilleVente(f.statut)} ${f.statut === 'emise' ? `· payé ${fmtDT(f.total_paye)} · reste ${fmtDT(f.solde)}` : ''}</div>`).join('') : '<span class="rowMeta">Pas encore facturée.</span>'}</div>
+        ${c.notes ? `<div class="ficheBloc"><h3>Notes</h3><div class="ficheNotes">${esc(c.notes)}</div></div>` : ''}`;
+      afficherFiche('Commande', esc(c.numero), `${pastilleVente(c.statut)}<span>${esc(c.client_nom || '—')}</span><span>${fmtDate(c.date_iso)}</span>`, corps, 'commandesBody', id);
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function ouvrirFicheFacture(id) {
+    try {
+      const f = await apiFetch(`/factures/${id}`);
+      const lignes = (f.lignes || []).map(l => `<tr><td>${esc(l.designation)}${l.remise_nom ? `<div class="rowMeta" style="font-size:11px;">${esc(l.remise_nom)}</div>` : ''}</td><td class="num">${l.qty}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
+      const paiements = (f.paiements || []).map(p => `<tr${p.annule_le ? ' class="ligneAnnulee"' : ''}><td class="rowMeta num">${fmtDate(p.date_paiement)}</td><td>${esc(MODE_PAIEMENT_LABEL[p.mode] || p.mode)}${p.reference ? ' · ' + esc(p.reference) : ''}${p.annule_le ? `<div style="font-size:11px; color:var(--danger);">Annulé : ${esc(p.annule_motif || '')}</div>` : ''}</td><td class="num"><span class="montant">${fmtDT(p.montant)}</span></td></tr>`).join('');
+      const corps = `
+        <div class="ficheBloc"><h3>Lignes</h3><table><thead><tr><th>Désignation</th><th class="num">Qté</th><th class="num">Prix TTC</th><th class="num">Total</th></tr></thead><tbody>${lignes}</tbody></table>
+          <div class="ficheTotaux">
+            <span>Total HT</span><span class="num">${fmtDT(f.total_ht)}</span>
+            ${Number(f.fodec_montant) ? `<span>FODEC</span><span class="num">${fmtDT(f.fodec_montant)}</span>` : ''}
+            <span>TVA (${Number(f.tva_rate)} %)</span><span class="num">${fmtDT(f.montant_tva)}</span>
+            ${Number(f.droit_timbre) ? `<span>Droit de timbre</span><span class="num">${fmtDT(f.droit_timbre)}</span>` : ''}
+            <span class="fort">Total TTC</span><span class="fort num">${fmtDT(f.total_ttc)}</span>
+          </div></div>
+        <div class="ficheBloc"><h3>Paiements</h3>${paiements ? `<table><tbody>${paiements}</tbody></table>` : '<span class="rowMeta">Aucun paiement.</span>'}
+          <div class="ficheTotaux"><span>Payé</span><span class="num">${fmtDT(f.total_paye)}</span><span class="fort">Reste dû</span><span class="fort num" style="color:${f.solde > 0.0005 && f.statut !== 'annulee' ? 'var(--warn)' : 'var(--good)'};">${fmtDT(f.statut === 'annulee' ? 0 : f.solde)}</span></div></div>
+        ${f.commande_id ? `<div class="ficheBloc"><h3>Commande</h3><span class="ficheLien" onclick="ouvrirFicheCommande(${f.commande_id})">${esc(f.commande_numero || 'Voir la commande')}</span></div>` : ''}`;
+      afficherFiche('Facture', esc(f.numero), `${pastilleVente(f.statut)}<span>${esc(f.client_nom || '—')}</span><span>${fmtDate(f.date_emission)}</span>`, corps, 'facturesBody', id);
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  document.getElementById('ficheFermer').addEventListener('click', fermerFiche);
+  document.getElementById('ficheFond').addEventListener('click', fermerFiche);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('fiche').classList.contains('open')) fermerFiche(); });
+  [['commandesBody', ouvrirFicheCommande], ['facturesBody', ouvrirFicheFacture]].forEach(([tbody, ouvrir]) => {
+    document.getElementById(tbody).addEventListener('click', (e) => {
+      if (e.target.closest('button, a, select, input')) return; // les boutons de la ligne gardent leur rôle
+      const tr = e.target.closest('tr[data-id]');
+      if (tr) ouvrir(Number(tr.dataset.id));
+    });
+  });
 
   // ---------- Repère visuel par rubrique (V3.3) ----------
   // Chaque écran porte le nom et la couleur de sa rubrique (Ventes, Production,
