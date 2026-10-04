@@ -6417,6 +6417,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const menu = document.getElementById('menuContextuel');
     menu.innerHTML = items.map((it, i) => it === null
       ? `<div style="height:1px; background:var(--line); margin:4px 2px;"></div>`
+      : it.desactive
+      ? `<div style="padding:7px 12px; color:var(--text-soft); opacity:.75; cursor:not-allowed;">${it.label}<div style="font-size:11px; margin-top:1px;">${it.desactive}</div></div>`
       : `<div class="menuContextuelItem" data-idx="${i}" style="padding:8px 12px; border-radius:5px; cursor:pointer; color:${it.danger ? 'var(--danger)' : 'inherit'};">${it.label}</div>`
     ).join('');
     menu.querySelectorAll('.menuContextuelItem').forEach(el => {
@@ -6764,7 +6766,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         items.push(null);
         statuts.forEach(([k, libelle]) => items.push({ label: `Statut : ${libelle}`, action: () => changerStatutCommande(id, k) }));
       }
-      if (!dejaFacturee && isGerant()) items.push(null, { label: 'Annuler la commande…', danger: true, action: () => annulerCommande(id) });
+      // Toujours visible : grisée avec la raison quand l'annulation n'est pas possible.
+      const fac = APP_DATA.factures.find(f => f.statut === 'emise' && f.commande_id === id);
+      items.push(null, !isGerant()
+        ? { label: 'Annuler la commande', desactive: 'Réservé au gérant' }
+        : fac ? { label: 'Annuler la commande', desactive: `Facturée (${fac.numero}) : annulez d'abord la facture` }
+        : { label: 'Annuler la commande…', danger: true, action: () => annulerCommande(id) });
       return items;
     });
   }
