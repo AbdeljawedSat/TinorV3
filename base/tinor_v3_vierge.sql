@@ -598,7 +598,7 @@ CREATE TABLE commandes (
   client_id  INT NOT NULL,
   date_iso   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   statut     VARCHAR(15) NOT NULL DEFAULT 'confirmee'
-             CHECK (statut IN ('en_attente','confirmee','livree','payee')),
+             CHECK (statut IN ('en_attente','confirmee','livree','payee','annulee')),
   notes      TEXT,
   total      DECIMAL(12,3) NOT NULL DEFAULT 0,
   created_by INT,
@@ -673,6 +673,9 @@ CREATE TABLE paiements (
   mode          VARCHAR(20) NOT NULL DEFAULT 'especes' CHECK (mode IN ('especes','cheque','virement','carte','autre')),
   reference     VARCHAR(100),
   notes         TEXT,
+  annule_le     DATETIME NULL,
+  annule_motif  VARCHAR(255) NULL,
+  annule_par    INT NULL,
   FOREIGN KEY (facture_id) REFERENCES factures(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

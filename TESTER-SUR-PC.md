@@ -61,6 +61,11 @@ Les fois suivantes : tâche **1** (si Docker a été arrêté) puis tâche **3**
 Depuis un vrai téléphone sur le même Wi-Fi : `http://<adresse IP du PC>:3001/api`
 (adresse IP : commande `ipconfig` sous Windows ; autoriser Node.js dans le pare-feu).
 
+## Mettre à jour vers une nouvelle version
+
+Dans le terminal du projet : `git pull`, puis `npm install` et **`npm run migrate`**
+(met la structure de la base à jour sans toucher aux données), puis relancer `npm run dev`.
+
 ## Effacer tout et recharger les données de démonstration
 
 Tâche **TinOR · Effacer tout et charger les données de démonstration** (⚠ efface tout le contenu

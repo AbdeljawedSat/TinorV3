@@ -5,6 +5,7 @@ require('dotenv').config({ quiet: true });
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
+const { appliquerMisesAJour } = require('./mises-a-jour');
 
 async function main() {
   const cible = process.env.DATABASE_URL ? '(base configurée via DATABASE_URL)'
@@ -28,6 +29,7 @@ async function main() {
       });
   const [tables] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'sequences'");
   if (!tables[0].n) throw new Error('Tables TinOR absentes : lancer d\'abord npm run setup (ou importer base/tinor_v3_demo.sql).');
+  await appliquerMisesAJour(conn);
   console.log(`Remise à zéro de ${cible}…`);
   await conn.query(sql);
   const [[r]] = await conn.query(`SELECT (SELECT COUNT(*) FROM produits) AS produits, (SELECT COUNT(*) FROM lots) AS lots,

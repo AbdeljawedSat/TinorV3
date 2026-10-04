@@ -4,6 +4,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
+const { appliquerMisesAJour } = require('./mises-a-jour');
 
 async function main() {
   const schemaPath = process.env.SCHEMA_PATH || path.join(__dirname, '../tinor_erp_v3_schema.sql');
@@ -24,7 +25,8 @@ async function main() {
     "SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'categories'"
   );
   if (existing[0].n > 0) {
-    console.log('✓ Schéma déjà en place, rien à faire.');
+    console.log('✓ Schéma déjà en place.');
+    await appliquerMisesAJour(conn);
     await conn.end();
     return;
   }
@@ -32,6 +34,7 @@ async function main() {
     process.env.DATABASE_URL ? '(base configurée via DATABASE_URL)' : `${process.env.DB_HOST || '127.0.0.1'}/${process.env.DB_NAME || 'tinor_v3'}...`);
   await conn.query(sql);
   console.log('✓ Schéma appliqué avec succès.');
+  await appliquerMisesAJour(conn);
   await conn.end();
 }
 

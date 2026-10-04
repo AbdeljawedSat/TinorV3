@@ -160,3 +160,30 @@ Aucune modification de l'API ni de la base : tout est dans `admin/tinor_admin.ht
 | 10 | Messages intégrés | Notifications et confirmations dans la page (plus de fenêtres du navigateur) |
 | 11 | « À faire aujourd'hui » | Commandes à confirmer / livrer / facturer, factures à encaisser, lots qui périment ; ventes des 6 derniers mois |
 | 12 | Finitions | États vides avec action, contraste des textes secondaires, contour de focus clavier |
+
+## Ventes, factures et paiements : bugs corrigés et modules ajoutés (V3.3)
+
+| # | Bug constaté | Correction |
+|---|---|---|
+| A | Une commande dont une ligne attend un conditionnement (sans lot) pouvait être facturée : marchandise vendue mais jamais sortie du stock | Facture refusée tant qu'une ligne attend son conditionnement |
+| B | Une commande pouvait être marquée « Payée » sans aucun paiement | « Payée » devient automatique quand la facture est soldée ; refusé à la main sinon. Un paiement annulé la remet « Livrée » |
+| C | Annuler une facture payée laissait l'argent encaissé sur une facture annulée | Annulation refusée tant que des paiements restent : annuler d'abord les paiements (remboursement) |
+| D | Impossible d'annuler une commande non facturée (client qui renonce) : le stock restait sorti | « Annuler la commande » (gérant, motif obligatoire) : stock réintégré, une seule fois même après une facture annulée |
+
+Modules ajoutés :
+- **Annulation d'un paiement** (gérant, motif obligatoire) : le paiement reste visible, barré, avec son motif, et ne compte plus.
+- **Solde client** : colonne « Reste dû » dans Clients, et **relevé de compte** (factures, paiements, solde après chaque opération) imprimable.
+- Statistiques, totaux clients et panier moyen hors commandes annulées.
+
+Mise à jour de la base : `npm run migrate` (ou `npm run reset:demo`) ajoute le statut « annulée » des
+commandes et les colonnes d'annulation des paiements, sans toucher aux données (MariaDB et MySQL 8).
+Tests : `test/stock/ventes.js` (27 vérifications), inclus dans `npm run test:stock`.
+
+Reste à faire : suivi des paiements fournisseurs (achats).
+
+## Repère visuel par rubrique (V3.3)
+
+Chaque rubrique a sa couleur, discrète : Ventes (ocre), Production (olive), Stock (bleu ardoise),
+Achats (terre cuite), Réglages (gris). Elle colore le liseré sous la barre du haut, un léger fond en
+haut de page, le repère « VENTES » au-dessus du titre et le trait sous le titre ; l'écran apparaît
+avec un fondu court (désactivé si le système demande moins d'animations).

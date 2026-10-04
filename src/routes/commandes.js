@@ -13,6 +13,7 @@ async function nextNumero(pool, seqName, prefix) {
 }
 
 const STATUTS_COMMANDE = ['en_attente', 'confirmee', 'livree', 'payee'];
+const { requireRole } = require('../middleware/auth');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -226,11 +227,59 @@ module.exports = function (pool) {
     if (!STATUTS_COMMANDE.includes(statut)) {
       return res.status(400).json({ error: `Statut invalide. Valeurs possibles : ${STATUTS_COMMANDE.join(', ')}. Pour annuler une vente, annulez sa facture (le stock est alors réintégré).` });
     }
-    const updateRes = await pool.query('UPDATE commandes SET statut = $1 WHERE id = $2', [statut, req.params.id]);
-    if (!updateRes.affectedRows) return res.status(404).json({ error: 'Commande introuvable.' });
+    const cmdRes = await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id]);
+    const commande = cmdRes.rows[0];
+    if (!commande) return res.status(404).json({ error: 'Commande introuvable.' });
+    if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est annulée : son statut ne change plus.` });
+    // « Payée » suit l'argent réellement reçu : seulement si la facture est soldée.
+    if (statut === 'payee') {
+      const fac = await pool.query(
+        `SELECT f.numero, f.total_ttc - COALESCE((SELECT SUM(montant) FROM paiements p WHERE p.facture_id = f.id AND p.annule_le IS NULL), 0) AS solde
+         FROM factures f WHERE f.commande_id = $1 AND f.statut = 'emise'`, [req.params.id]);
+      if (!fac.rows[0]) return res.status(409).json({ error: `La commande ${commande.numero} n'est pas facturée : elle ne peut pas être « payée ». Émettez la facture puis encaissez-la.` });
+      if (Number(fac.rows[0].solde) > 0.0005) return res.status(409).json({ error: `La facture ${fac.rows[0].numero} n'est pas soldée (reste ${Number(fac.rows[0].solde).toFixed(3)} DT) : encaissez-la, la commande passera « payée » d'elle-même.` });
+    }
+    await pool.query('UPDATE commandes SET statut = $1 WHERE id = $2', [statut, req.params.id]);
     const result = await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id]);
     res.json(result.rows[0]);
   });
+
+  // Annule une commande non facturée (le client renonce) : le stock sorti à la
+  // commande est réintégré. Une commande facturée s'annule par sa facture.
+  router.post('/:id/annuler', requireRole('gerant'), enTransaction(pool, async (req, res, next, pool) => {
+    const motif = String(req.body?.motif || '').trim();
+    if (!motif) return res.status(400).json({ error: "Le motif de l'annulation est requis." });
+    const cmdRes = await pool.query('SELECT * FROM commandes WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const commande = cmdRes.rows[0];
+    if (!commande) return res.status(404).json({ error: 'Commande introuvable.' });
+    if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est déjà annulée.` });
+    const facs = await pool.query(`SELECT numero, statut FROM factures WHERE commande_id = $1`, [req.params.id]);
+    const emise = facs.rows.find(f => f.statut === 'emise');
+    if (emise) return res.status(409).json({ error: `La commande ${commande.numero} est facturée (${emise.numero}) : annulez d'abord la facture.` });
+
+    // Sans aucune facture, le stock est encore sorti : on le réintègre. Après
+    // une facture annulée, il l'a déjà été — ne pas le rendre deux fois.
+    if (!facs.rows.length) {
+      const lignes = await pool.query('SELECT * FROM commande_lignes WHERE commande_id = $1 AND lot_id IS NOT NULL', [req.params.id]);
+      for (const l of lignes.rows) {
+        const qte = Number(l.qty) + Number(l.free_units || 0);
+        await pool.query('UPDATE lots SET quantite_actuelle = quantite_actuelle + $1 WHERE id = $2', [qte, l.lot_id]);
+        await pool.query(`UPDATE lots SET statut = 'LIBERE' WHERE id = $1 AND statut = 'EPUISE'`, [l.lot_id]);
+        await pool.query(
+          `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
+           VALUES ($1,'RETOUR_CLIENT','ENTREE',$2,$3,$4,'commande',$5,$6)`,
+          [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, qte, req.params.id, `Annulation commande : ${motif}`.slice(0, 255)]
+        );
+      }
+    }
+    await pool.query(`UPDATE notifications SET statut = 'RESOLUE' WHERE commande_id = $1 AND statut = 'EN_ATTENTE'`, [req.params.id]);
+    await pool.query(
+      `UPDATE commandes SET statut = 'annulee', notes = CONCAT(COALESCE(notes, ''), CASE WHEN notes IS NULL OR notes = '' THEN '' ELSE '\n' END, $1) WHERE id = $2`,
+      [`Annulée : ${motif}`, req.params.id]
+    );
+    const result = await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id]);
+    res.json(result.rows[0]);
+  }));
 
   return router;
 };

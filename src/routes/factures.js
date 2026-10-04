@@ -4,6 +4,7 @@ const { computeFactureTotals, computeFactureTotalsDepuisLignes } = require('../s
 const { decrementerLot, LOT_DISPONIBLE } = require('../services/lotService');
 const { StockInsuffisant } = require('../db/transaction');
 const { positif, arrondi } = require('../services/regles');
+const { requireRole } = require('../middleware/auth');
 
 async function nextNumero(pool, seqName, prefix) {
   const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
@@ -22,7 +23,7 @@ module.exports = function (pool) {
       SELECT f.*, COALESCE(p.total_paye, 0) AS total_paye,
         (f.total_ttc - COALESCE(p.total_paye, 0)) AS solde
       FROM factures f
-      LEFT JOIN (SELECT facture_id, SUM(montant) AS total_paye FROM paiements GROUP BY facture_id) p
+      LEFT JOIN (SELECT facture_id, SUM(montant) AS total_paye FROM paiements WHERE annule_le IS NULL GROUP BY facture_id) p
         ON p.facture_id = f.id
       ORDER BY f.date_emission DESC, f.id DESC
     `);
@@ -34,7 +35,8 @@ module.exports = function (pool) {
     if (!facRes.rows[0]) return res.status(404).json({ error: 'Facture introuvable.' });
     const lignesRes = await pool.query('SELECT * FROM facture_lignes WHERE facture_id = $1', [req.params.id]);
     const paiementsRes = await pool.query('SELECT * FROM paiements WHERE facture_id = $1 ORDER BY date_paiement', [req.params.id]);
-    const totalPaye = paiementsRes.rows.reduce((s, p) => s + Number(p.montant), 0);
+    // Les paiements annulés restent visibles (traçabilité) mais ne comptent plus.
+    const totalPaye = paiementsRes.rows.filter(p => !p.annule_le).reduce((s, p) => s + Number(p.montant), 0);
     res.json({
       ...facRes.rows[0], lignes: lignesRes.rows, paiements: paiementsRes.rows,
       total_paye: totalPaye, solde: Number(facRes.rows[0].total_ttc) - totalPaye,
@@ -56,6 +58,7 @@ module.exports = function (pool) {
       );
       const commande = cmdRes.rows[0];
       if (!commande) return res.status(404).json({ error: 'Commande introuvable.' });
+      if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est annulée : rien à facturer.` });
 
       const dejaFacturee = await pool.query(
         `SELECT id FROM factures WHERE commande_id = $1 AND statut = 'emise'`,
@@ -71,6 +74,14 @@ module.exports = function (pool) {
         [commande_id]
       );
       if (!lignesRes.rows.length) return res.status(400).json({ error: 'Commande sans lignes — rien à facturer.' });
+      // Une ligne sans lot attend son conditionnement : la marchandise n'est pas
+      // encore sortie du stock, on ne peut donc pas la facturer.
+      const enAttente = lignesRes.rows.filter(l => !l.lot_id);
+      if (enAttente.length) {
+        return res.status(409).json({
+          error: `Facturation impossible : ${enAttente.map(l => `« ${l.produit_nom} »`).join(', ')} attend${enAttente.length > 1 ? 'ent' : ''} encore un conditionnement. Conditionnez, puis validez la ligne depuis Notifications avant de facturer.`,
+        });
+      }
 
       const settingsRes = await pool.query('SELECT * FROM settings WHERE id = 1');
       const settings = settingsRes.rows[0] || {};
@@ -138,6 +149,12 @@ module.exports = function (pool) {
     const facture = facRes.rows[0];
     if (!facture) return res.status(404).json({ error: 'Facture introuvable.' });
     if (facture.statut === 'annulee') return res.status(409).json({ error: 'Cette facture est déjà annulée.' });
+    // Une facture encaissée ne s'annule pas en silence : l'argent reçu doit
+    // d'abord être rendu (paiement annulé avec son motif).
+    const payes = await pool.query('SELECT COUNT(*) AS n, COALESCE(SUM(montant), 0) AS total FROM paiements WHERE facture_id = $1 AND annule_le IS NULL', [req.params.id]);
+    if (Number(payes.rows[0].n) > 0) {
+      return res.status(409).json({ error: `La facture ${facture.numero} a ${payes.rows[0].n} paiement(s) enregistré(s) (${arrondi(payes.rows[0].total)} DT). Annulez d'abord ces paiements (remboursement au client), puis la facture.` });
+    }
 
     // Condition sur le statut : si deux demandes d'annulation arrivent en même
     // temps (double clic), une seule passe — le stock n'est réintégré qu'une fois.
@@ -174,7 +191,7 @@ module.exports = function (pool) {
     const facture = facRes.rows[0];
     if (!facture) return res.status(404).json({ error: 'Facture introuvable.' });
     if (facture.statut === 'annulee') return res.status(409).json({ error: `La facture ${facture.numero} est annulée : aucun paiement possible.` });
-    const deja = await pool.query('SELECT COALESCE(SUM(montant), 0) AS total FROM paiements WHERE facture_id = $1', [req.params.id]);
+    const deja = await pool.query('SELECT COALESCE(SUM(montant), 0) AS total FROM paiements WHERE facture_id = $1 AND annule_le IS NULL', [req.params.id]);
     const reste = arrondi(Number(facture.total_ttc) - Number(deja.rows[0].total));
     if (arrondi(qMontant) > reste) {
       return res.status(400).json({ error: `Le paiement (${arrondi(qMontant)}) dépasse le reste à payer de la facture ${facture.numero} (${reste}).` });
@@ -184,8 +201,32 @@ module.exports = function (pool) {
       `INSERT INTO paiements (facture_id, date_paiement, montant, mode, reference, notes) VALUES ($1,$2,$3,$4,$5,$6)`,
       [req.params.id, date_paiement, montant, mode || 'especes', reference || null, notes || null]
     );
+    // Facture soldée → la commande passe d'elle-même à « payée ».
+    if (facture.commande_id && arrondi(qMontant) >= reste) {
+      await pool.query(`UPDATE commandes SET statut = 'payee' WHERE id = $1`, [facture.commande_id]);
+    }
     const result = await pool.query('SELECT * FROM paiements WHERE id = $1', [insertRes.insertId]);
     res.status(201).json(result.rows[0]);
+  }));
+
+  // Annule un paiement (erreur de saisie, remboursement). Le paiement reste
+  // visible avec son motif ; il ne compte plus dans le total payé.
+  router.post('/:id/paiements/:paiementId/annuler', requireRole('gerant'), enTransaction(pool, async (req, res, next, pool) => {
+    const motif = String(req.body?.motif || '').trim();
+    if (!motif) return res.status(400).json({ error: "Le motif de l'annulation est requis." });
+    const facRes = await pool.query('SELECT * FROM factures WHERE id = $1 FOR UPDATE', [req.params.id]);
+    const facture = facRes.rows[0];
+    if (!facture) return res.status(404).json({ error: 'Facture introuvable.' });
+    const maj = await pool.query(
+      'UPDATE paiements SET annule_le = NOW(), annule_motif = $1, annule_par = $2 WHERE id = $3 AND facture_id = $4 AND annule_le IS NULL',
+      [motif.slice(0, 255), req.user?.id || null, req.params.paiementId, req.params.id]
+    );
+    if (!maj.affectedRows) return res.status(409).json({ error: 'Paiement introuvable ou déjà annulé.' });
+    if (facture.commande_id) {
+      await pool.query(`UPDATE commandes SET statut = 'livree' WHERE id = $1 AND statut = 'payee'`, [facture.commande_id]);
+    }
+    const result = await pool.query('SELECT * FROM paiements WHERE id = $1', [req.params.paiementId]);
+    res.json(result.rows[0]);
   }));
 
   return router;
