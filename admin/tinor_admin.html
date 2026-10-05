@@ -13,14 +13,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#17231D;
-    --ink-soft:#223129;
-    --ink-nest:#2E4437;
-    --ink-nest-hover:#3C5A46;
-    --ink-line:#324438;
-    --sand:#F5F2EA;
+    --ink:#0E3A4A;
+    --ink-soft:#154656;
+    --ink-nest:#174C5E;
+    --ink-nest-hover:#1F5D70;
+    --ink-line:#1C5062;
+    --sand:#F3F6F6;
     --paper:#FFFFFF;
-    --line:#E3DECD;
+    --line:#DCE5E7;
     --brass:#A97D2F;
     --brass-dim:#C9A662;
     --text:#1A1E1B;
@@ -379,8 +379,8 @@
 
   /* ---------- Identité des rubriques (V3.3, ensemble A) ---------- */
   /* Couleurs claires des rubriques sur le menu sombre */
-  .navGroup[data-rubrique="ventes"]{--r:#D9B26A;} .navGroup[data-rubrique="production"]{--r:#9DBE7F;}
-  .navGroup[data-rubrique="stock"]{--r:#86B3C2;} .navGroup[data-rubrique="achats"]{--r:#D39A7E;} .navGroup[data-rubrique="reglages"]{--r:#B5B7AC;}
+  .navGroup[data-rubrique="ventes"]{--r:#7DB8E0;} .navGroup[data-rubrique="production"]{--r:#A9C77A;}
+  .navGroup[data-rubrique="stock"]{--r:#E2B867;} .navGroup[data-rubrique="achats"]{--r:#E89A7D;} .navGroup[data-rubrique="reglages"]{--r:#AEB8C2;}
   .navGroupBtn .code, .navGroup.open .navGroupBtn .code{width:28px; height:28px; border-radius:8px; display:grid; place-items:center;
     background:color-mix(in srgb, var(--r, #C9A662) 22%, transparent); color:var(--r, #C9A662);}
   .navGroupBtn .code svg{width:16px; height:16px;}
@@ -404,17 +404,45 @@
   .ecranPastille svg{width:19px; height:19px;}
   @media (max-width:700px){
     .view table tbody td.lotCode[data-doc^="doc-"]{justify-self:start; border-radius:6px; padding:3px 9px !important; font-size:12px;}
-    .view table tbody td.lotCode.doc-ventes{background:#F7EEDC !important; color:#7A5414;} .view table tbody td.lotCode.doc-avoir{background:#FBE7E3 !important; color:#8E2F24;}
-    .view table tbody td.lotCode.doc-production{background:#EAF0E1 !important; color:#3E5A2C;} .view table tbody td.lotCode.doc-stock{background:#E3EDF0 !important; color:#244B59;}
-    .view table tbody td.lotCode.doc-achats{background:#F5E6DE !important; color:#743B24;}
+    .view table tbody td.lotCode.doc-ventes{background:#E3F0F9 !important; color:#155884;} .view table tbody td.lotCode.doc-avoir{background:#FBE5E3 !important; color:#8E2F24;}
+    .view table tbody td.lotCode.doc-production{background:#EDF4E0 !important; color:#47651B;} .view table tbody td.lotCode.doc-stock{background:#FAF0DC !important; color:#8A5F14;}
+    .view table tbody td.lotCode.doc-achats{background:#FBE9E2 !important; color:#9A4024;}
     .view table tbody td.lotCode[data-doc^="doc-"]::before{display:none;}
   }
   @media (max-width:700px){ .view .pageHead{padding:14px 14px 12px;} .pageHead .illuRubrique{width:110px; height:86px; right:4px;} .ecranPastille{width:30px; height:30px;} }
   /* Numéros de document colorés selon leur rubrique */
-  .lotCode.doc-ventes{background:#F7EEDC; color:#7A5414;} .lotCode.doc-avoir{background:#FBE7E3; color:#8E2F24;}
-  .lotCode.doc-production{background:#EAF0E1; color:#3E5A2C;} .lotCode.doc-stock{background:#E3EDF0; color:#244B59;}
-  .lotCode.doc-achats{background:#F5E6DE; color:#743B24;}
+  .lotCode.doc-ventes{background:#E3F0F9; color:#155884;} .lotCode.doc-avoir{background:#FBE5E3; color:#8E2F24;}
+  .lotCode.doc-production{background:#EDF4E0; color:#47651B;} .lotCode.doc-stock{background:#FAF0DC; color:#8A5F14;}
+  .lotCode.doc-achats{background:#FBE9E2; color:#9A4024;}
   #paletteListe .item .ecranIc{width:15px; height:15px; vertical-align:-2px; margin-right:8px; color:var(--text-soft);}
+  /* ---------- Recherche : barre compacte + vues rapides (V3.3) ---------- */
+  .barreCompacte{flex-wrap:nowrap !important; align-items:center !important; gap:8px !important;}
+  .barreCompacte > div > label{display:none !important;}
+  .barreCompacte > div{min-width:0 !important;}
+  .barreCompacte .barreTexte{flex:1 1 auto !important;}
+  .periodeWrap{position:relative; flex:none;}
+  .periodeBtn{white-space:nowrap;} .periodeBtn.actif{border-color:var(--accent); color:var(--accent); background:var(--accent-fond);}
+  .periodeMenu{position:absolute; top:calc(100% + 6px); right:0; z-index:30; background:var(--paper); border:1px solid var(--line); border-radius:11px;
+    box-shadow:0 12px 30px rgba(14,58,74,.16); padding:6px; min-width:230px; display:flex; flex-direction:column; gap:2px;}
+  .periodeMenu[hidden], .periodeDates[hidden]{display:none !important;}
+  .periodeMenu > button{text-align:left; background:none; border:0; padding:8px 10px; border-radius:7px; font:inherit; font-size:13px; cursor:pointer; color:var(--text);}
+  .periodeMenu > button:hover, .periodeMenu > button.choisi{background:var(--accent-fond);}
+  .periodeDates{display:flex; gap:8px; padding:6px; flex-wrap:wrap;}
+  .periodeDates > div{flex:1 1 100px; min-width:0 !important;}
+  .periodeDates label{display:block !important; font-size:11px; color:var(--text-soft); margin-bottom:3px;}
+  .jetonsFiltres{display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:0 18px 10px;}
+  .jetonsFiltres:empty{display:none;}
+  .jetonFiltre{display:inline-flex; align-items:center; gap:4px; background:var(--accent-fond); color:var(--accent); border-radius:20px; padding:3px 4px 3px 11px; font-size:12px; font-weight:600;}
+  .jetonFiltre button{border:0; background:none; color:inherit; font-size:15px; line-height:1; padding:0 5px; border-radius:20px; cursor:pointer;}
+  .lienEffacer{border:0; background:none; color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; padding:3px 6px;}
+  .vuesRapides{display:flex; gap:2px; overflow-x:auto; border-bottom:1px solid var(--line); padding:0 12px; scrollbar-width:thin;}
+  .vueRapide{background:none; border:0; border-bottom:2px solid transparent; padding:11px 12px 9px; font:inherit; font-size:13px; font-weight:600; color:var(--text-soft);
+    cursor:pointer; white-space:nowrap; display:inline-flex; gap:7px; align-items:center;}
+  .vueRapide .nbVue{font-size:11px; background:var(--sand); border-radius:20px; padding:0 7px; min-width:20px; text-align:center; font-variant-numeric:tabular-nums;}
+  .vueRapide[aria-selected="true"]{color:var(--text); border-bottom-color:var(--accent);}
+  .vueRapide[aria-selected="true"] .nbVue{background:var(--accent-fond); color:var(--accent);}
+  .vueRapide:hover{color:var(--text);}
+  @media (max-width:700px){ .barreCompacte{flex-wrap:wrap !important;} .barreCompacte .barreTexte{flex:1 1 100% !important;} .vuesRapides{padding:0 6px;} .vueRapide{padding:10px 9px 8px;} .periodeMenu{right:auto; left:0;} .jetonsFiltres{padding:0 12px 8px;} }
   /* ---------- Fiche détaillée (V3.3) : panneau à droite ---------- */
   #ficheFond{position:fixed; inset:0; background:rgba(23,35,29,.28); z-index:60; opacity:0; pointer-events:none; transition:opacity .2s;}
   #ficheFond.open{opacity:1; pointer-events:auto;}
@@ -448,12 +476,13 @@
   tbody td{padding-top:11px; padding-bottom:11px;}
   @media (max-width:700px){ .rowActionBtn, .etapeBtn{min-height:36px; padding:7px 12px;} }
   /* ---------- Repère visuel par rubrique (V3.3) : couleur discrète, en-tête, transition ---------- */
-  body{--accent:#17231D; --accent-fond:#EFEDE4; --accent-clair:#C9A662;}
-  body[data-rubrique="ventes"]{--accent:#9A6B1F; --accent-fond:#F7EEDC; --accent-clair:#D9B26A;}
-  body[data-rubrique="production"]{--accent:#4F6E3A; --accent-fond:#EAF0E1; --accent-clair:#9DBE7F;}
-  body[data-rubrique="stock"]{--accent:#2F5F70; --accent-fond:#E3EDF0; --accent-clair:#86B3C2;}
-  body[data-rubrique="achats"]{--accent:#8C4A2F; --accent-fond:#F5E6DE; --accent-clair:#D39A7E;}
-  body[data-rubrique="reglages"]{--accent:#55574F; --accent-fond:#ECECE8; --accent-clair:#B5B7AC;}
+  /* Palette Méditerranée : mer (Ventes), olivier (Production), sable (Stock), poterie (Achats), ardoise (Réglages) */
+  body{--accent:#0E3A4A; --accent-fond:#E6EEF0; --accent-clair:#C9A662;}
+  body[data-rubrique="ventes"]{--accent:#1C6FA6; --accent-fond:#E3F0F9; --accent-clair:#7DB8E0;}
+  body[data-rubrique="production"]{--accent:#5B7F23; --accent-fond:#EDF4E0; --accent-clair:#A9C77A;}
+  body[data-rubrique="stock"]{--accent:#B07A1E; --accent-fond:#FAF0DC; --accent-clair:#E2B867;}
+  body[data-rubrique="achats"]{--accent:#BF532F; --accent-fond:#FBE9E2; --accent-clair:#E89A7D;}
+  body[data-rubrique="reglages"]{--accent:#5A6773; --accent-fond:#EBEEF1; --accent-clair:#AEB8C2;}
   .topbar{box-shadow:inset 0 -3px 0 var(--accent); transition:box-shadow .25s ease;}
   .content{background:linear-gradient(180deg, var(--accent-fond) 0, rgba(245,242,234,0) 190px), var(--sand); transition:background .25s ease;}
   .rubriqueRepere{display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); margin:0 0 6px;}
@@ -3081,7 +3110,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const body = document.getElementById('clientsBody');
     document.getElementById('clientsCount').textContent = `${APP_DATA.clients.length} fiche${APP_DATA.clients.length > 1 ? 's' : ''} client`;
     if (!APP_DATA.clients.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucun client — cliquez sur «＋ Nouveau».</td></tr>`; return; }
-    body.innerHTML = APP_DATA.clients.map(c => `
+    const clientsVus = filtreVue('clients', APP_DATA.clients);
+    if (!clientsVus.length) { body.innerHTML = `<tr><td colspan="8" class="videAction">Aucun client dans cette vue.</td></tr>`; return; }
+    body.innerHTML = clientsVus.map(c => `
       <tr data-id="${c.id}">
         <td>${c.nom}</td>
         <td class="rowMeta">${c.type}</td>
@@ -4712,7 +4743,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // ============================================================================
   function renderFactures() {
     const body = document.getElementById('facturesBody');
-    const rows = filtrerParTexteEtDate(APP_DATA.factures, 'factures', f => `${f.client_nom || ''} ${f.numero}`, f => f.date_emission);
+    const rows = filtreVue('factures', filtrerParTexteEtDate(APP_DATA.factures, 'factures', f => `${f.client_nom || ''} ${f.numero}`, f => f.date_emission));
     document.getElementById('facturesCount').textContent = `${rows.length} facture${rows.length > 1 ? 's' : ''}`;
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="8" class="videAction">${APP_DATA.factures.length ? 'Aucune facture pour ce filtre.' : 'Aucune facture pour le moment : une facture s\'émet depuis une commande.'}<br>
@@ -6215,7 +6246,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const body = document.getElementById('paiementsBody');
     if (!body) return;
     if (!APP_DATA.paiements.length) { body.innerHTML = `<tr><td colspan="7" class="videAction">Aucun paiement enregistré : un paiement s'enregistre depuis une facture (Encaisser).</td></tr>`; return; }
-    body.innerHTML = APP_DATA.paiements.map(p => `
+    const paiementsVus = filtreVue('paiements', APP_DATA.paiements);
+    if (!paiementsVus.length) { body.innerHTML = `<tr><td colspan="7" class="videAction">Aucun paiement dans cette vue.</td></tr>`; return; }
+    body.innerHTML = paiementsVus.map(p => `
       <tr data-id="${p.id}"${p.annule_le ? ' class="ligneAnnulee"' : ''}>
         <td class="rowMeta num">${fmtDate(p.date_paiement)}</td>
         <td class="lotCode">${p.facture_numero || '—'}</td>
@@ -6877,11 +6910,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const fin = document.getElementById('commandesFilterDateFin')?.value;
     if (debut) rows = rows.filter(c => (c.date_iso || '').slice(0, 10) >= debut);
     if (fin) rows = rows.filter(c => (c.date_iso || '').slice(0, 10) <= fin);
+    rows = filtreVue('commandes', rows);
 
     document.getElementById('commandesCount').textContent = `${rows.length} commande${rows.length > 1 ? 's' : ''}`;
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="6" class="videAction">${APP_DATA.commandes.length ? 'Aucune commande pour ce filtre.' : 'Aucune commande pour le moment.'}<br>
-        ${APP_DATA.commandes.length ? `<button class="btnGhost" onclick="document.getElementById('commandesFilterResetBtn').click(); document.querySelector('#commandesFilterRow .chip').click();">Effacer les filtres</button>` : ''}
+        ${APP_DATA.commandes.length ? `<button class="btnGhost" onclick="document.getElementById('commandesFilterResetBtn').click(); choisirVue('commandes', 'toutes');">Effacer les filtres</button>` : ''}
         <button class="btnPrimary" onclick="NOUVEAU_HANDLERS.commandes()">＋ Nouvelle commande</button></td></tr>`;
       return;
     }
@@ -7007,7 +7041,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   function renderLotsRegistre() {
     const body = document.getElementById('lotsBody');
-    const rows = filtrerParTexteEtDate(APP_DATA.lots, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at);
+    const rows = filtreVue('lots', filtrerParTexteEtDate(APP_DATA.lots, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at));
     if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucun lot pour ce filtre.</td></tr>`; return; }
     const bioLabel = { BIO: '<span class="pill good">Bio</span>', NON_BIO: '<span class="pill grey">Non bio</span>', EN_CONVERSION: '<span class="pill warn">Conversion</span>', A_VERIFIER: '<span class="pill grey">À vérifier</span>', BLOQUE: '<span class="pill danger">Bloqué</span>' };
     body.innerHTML = rows.map(l => `
@@ -8113,44 +8147,137 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Les champs Du / Au restent la source du filtre ; ils ne s'affichent que pour
   // « Autre période ».
   function isoLocal(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+  // Barre de recherche compacte (V3.3, proposition 1) : recherche, « Période ▾ »
+  // et étiquettes des filtres actifs, retirables d'un clic. Les champs Du / Au
+  // et le bouton Réinitialiser d'origine restent la source du filtre (cachés).
+  const PERIODES_LIB = { tout: 'Toutes les dates', jour: "Aujourd'hui", '7j': '7 derniers jours', mois: 'Ce mois', autre: 'Autre période…' };
   function ajouterChipsPeriode() {
     document.querySelectorAll('input[type="date"][id$="FilterDateDebut"]').forEach(du => {
       const au = document.getElementById(du.id.replace('Debut', 'Fin'));
       if (!au || du.dataset.periode) return;
-      du.dataset.periode = '1';
-      const blocs = [du.parentElement, au.parentElement];
-      const chips = document.createElement('div');
-      chips.className = 'periodeChips';
-      const choix = [['tout', 'Tout'], ['jour', "Aujourd'hui"], ['7j', '7 jours'], ['mois', 'Ce mois'], ['autre', 'Autre période…']];
-      chips.innerHTML = choix.map(([k, l]) => `<span class="chip${k === 'tout' ? ' active' : ''}" data-periode="${k}">${l}</span>`).join('');
-      const marquer = (k) => chips.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.periode === k));
-      const montrerDates = (oui) => blocs.forEach(b => b.classList.toggle('periodeCachee', !oui));
+      du.dataset.periode = 'tout';
+      const prefixe = du.id.replace('FilterDateDebut', '');
+      const blocDu = du.parentElement, blocAu = au.parentElement, ligne = blocDu.parentElement;
+      const texte = document.getElementById(`${prefixe}FilterTexte`) || (prefixe === 'stock' ? document.getElementById('stockSearch') : null);
+      const reset = document.getElementById(`${prefixe}FilterResetBtn`);
+      ligne.classList.add('barreCompacte');
+      if (texte) { texte.closest('.barreCompacte > div')?.classList.add('barreTexte'); texte.setAttribute('aria-label', texte.placeholder || 'Rechercher'); }
+      const wrap = document.createElement('div');
+      wrap.className = 'periodeWrap';
+      wrap.innerHTML = `<button type="button" class="btnGhost periodeBtn" aria-haspopup="true" aria-expanded="false">Période ▾</button>
+        <div class="periodeMenu" hidden>${Object.entries(PERIODES_LIB).map(([k, l]) => `<button type="button" data-periode="${k}">${l}</button>`).join('')}<div class="periodeDates" hidden></div></div>`;
+      ligne.insertBefore(wrap, blocDu);
+      const bouton = wrap.querySelector('.periodeBtn'), menu = wrap.querySelector('.periodeMenu'), dates = wrap.querySelector('.periodeDates');
+      dates.append(blocDu, blocAu);
+      if (reset) reset.classList.add('periodeCachee');
+      const jetons = document.createElement('div');
+      jetons.className = 'jetonsFiltres';
+      ligne.insertAdjacentElement('afterend', jetons);
       const appliquer = (debut, fin) => {
         du.value = debut; au.value = fin;
         du.dispatchEvent(new Event('input', { bubbles: true }));
         au.dispatchEvent(new Event('input', { bubbles: true }));
       };
-      chips.addEventListener('click', (e) => {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
-        const k = chip.dataset.periode, auj = new Date();
-        marquer(k);
-        montrerDates(k === 'autre');
+      const fermer = () => { menu.hidden = true; bouton.setAttribute('aria-expanded', 'false'); };
+      const majJetons = () => {
+        const k = du.dataset.periode;
+        const actifPeriode = !!(du.value || au.value);
+        const libPeriode = k && k !== 'autre' && k !== 'tout' ? PERIODES_LIB[k] : `${du.value ? 'Du ' + fmtDate(du.value) : ''}${au.value ? ' au ' + fmtDate(au.value) : ''}`.trim();
+        bouton.classList.toggle('actif', actifPeriode);
+        bouton.textContent = actifPeriode ? `${libPeriode} ▾` : 'Période ▾';
+        const liste = [];
+        if (actifPeriode) liste.push(['periode', libPeriode]);
+        if (texte && texte.value.trim()) liste.push(['texte', `« ${texte.value.trim()} »`]);
+        jetons.innerHTML = liste.map(([t, l]) => `<span class="jetonFiltre">${l.replace(/[<>&]/g, '')}<button type="button" data-retirer="${t}" aria-label="Retirer ce filtre">×</button></span>`).join('')
+          + (liste.length ? '<button type="button" class="lienEffacer" data-retirer="tout">Tout effacer</button>' : '');
+      };
+      bouton.addEventListener('click', (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; bouton.setAttribute('aria-expanded', String(!menu.hidden)); });
+      menu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const b = e.target.closest('[data-periode]');
+        if (!b) return;
+        const k = b.dataset.periode, auj = new Date();
+        du.dataset.periode = k;
+        menu.querySelectorAll('[data-periode]').forEach(x => x.classList.toggle('choisi', x === b));
+        dates.hidden = k !== 'autre';
         if (k === 'tout') appliquer('', '');
         if (k === 'jour') appliquer(isoLocal(auj), isoLocal(auj));
         if (k === '7j') appliquer(isoLocal(new Date(auj.getFullYear(), auj.getMonth(), auj.getDate() - 6)), isoLocal(auj));
         if (k === 'mois') appliquer(isoLocal(new Date(auj.getFullYear(), auj.getMonth(), 1)), isoLocal(auj));
-        if (k === 'autre') du.focus();
+        if (k === 'autre') du.focus(); else fermer();
+        majJetons();
       });
-      blocs[0].parentElement.insertBefore(chips, blocs[0]);
-      montrerDates(false);
-      // Le bouton « Réinitialiser » de l'écran remet aussi la période sur « Tout ».
-      const reset = document.getElementById(du.id.replace('FilterDateDebut', 'FilterResetBtn'));
-      if (reset) reset.addEventListener('click', () => { marquer('tout'); montrerDates(false); });
+      document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) fermer(); });
+      [du, au, texte].filter(Boolean).forEach(el => el.addEventListener('input', () => { if (el !== texte) du.dataset.periode = du.dataset.periode === 'tout' && (du.value || au.value) ? 'autre' : du.dataset.periode; majJetons(); }));
+      jetons.addEventListener('click', (e) => {
+        const t = e.target.closest('[data-retirer]')?.dataset.retirer;
+        if (!t) return;
+        if (t === 'tout') { if (reset) reset.click(); else { if (texte) { texte.value = ''; texte.dispatchEvent(new Event('input', { bubbles: true })); } appliquer('', ''); } du.dataset.periode = 'tout'; }
+        if (t === 'periode') { du.dataset.periode = 'tout'; appliquer('', ''); }
+        if (t === 'texte' && texte) { texte.value = ''; texte.dispatchEvent(new Event('input', { bubbles: true })); }
+        majJetons();
+      });
+      if (reset) reset.addEventListener('click', () => { du.dataset.periode = 'tout'; setTimeout(majJetons, 0); });
+      majJetons();
     });
   }
   regrouperExports();
   ajouterChipsPeriode();
+  // ---------- Vues rapides en onglets (V3.3, proposition 5) ----------
+  // Les recherches de tous les jours en un clic, avec leur nombre (calculé sur
+  // la recherche et la période en cours). La barre compacte affine dessous.
+  const VUES = {};
+  function definirVues(cle, conteneur, liste, rendre) {
+    if (!conteneur || VUES[cle]) return;
+    VUES[cle] = { liste, actif: liste[0][0], rendre };
+    const barre = document.createElement('div');
+    barre.className = 'vuesRapides'; barre.setAttribute('role', 'tablist'); barre.id = `vues-${cle}`;
+    barre.innerHTML = liste.map(([k, l]) => `<button type="button" role="tab" class="vueRapide" data-vue="${k}" aria-selected="${k === liste[0][0]}">${l}<span class="nbVue"></span></button>`).join('');
+    barre.addEventListener('click', (e) => { const b = e.target.closest('[data-vue]'); if (b) choisirVue(cle, b.dataset.vue); });
+    conteneur.insertBefore(barre, conteneur.firstChild);
+  }
+  function choisirVue(cle, k) {
+    const v = VUES[cle]; if (!v || !v.liste.some(x => x[0] === k)) return;
+    v.actif = k;
+    document.querySelectorAll(`#vues-${cle} .vueRapide`).forEach(b => b.setAttribute('aria-selected', String(b.dataset.vue === k)));
+    v.rendre();
+  }
+  // Applique la vue active à des lignes déjà filtrées (texte, période) et met les compteurs à jour.
+  function filtreVue(cle, rows) {
+    const v = VUES[cle]; if (!v) return rows;
+    v.liste.forEach(([k, , pred]) => {
+      const n = pred ? rows.filter(pred).length : rows.length;
+      const el = document.querySelector(`#vues-${cle} [data-vue="${k}"] .nbVue`);
+      if (el) el.textContent = n;
+    });
+    const pred = v.liste.find(x => x[0] === v.actif)?.[2];
+    return pred ? rows.filter(pred) : rows;
+  }
+  const ceMois = (d) => String(d || '').slice(0, 7) === isoLocal(new Date()).slice(0, 7);
+  const dans30j = (l) => l.date_expiration && Number(l.quantite_actuelle) > 0 && l.statut !== 'EXPIRE' && l.statut !== 'EPUISE'
+    && String(l.date_expiration).slice(0, 10) <= isoLocal(new Date(Date.now() + 30 * 86400000));
+  const premierPanel = (vue) => document.querySelector(`#view-${vue} .panel`);
+  definirVues('commandes', premierPanel('commandes'), [
+    ['toutes', 'Toutes'], ['confirmer', 'À confirmer', c => c.statut === 'en_attente'], ['livrer', 'À livrer', c => c.statut === 'confirmee'],
+    ['facturer', 'À facturer', c => (c.statut === 'confirmee' || c.statut === 'livree') && !APP_DATA.factures.some(f => f.statut === 'emise' && f.commande_id === c.id)],
+    ['payees', 'Payées', c => c.statut === 'payee'], ['annulees', 'Annulées', c => c.statut === 'annulee'],
+  ], renderCommandes);
+  document.getElementById('commandesFilterRow')?.closest('.panelHead')?.classList.add('periodeCachee');
+  definirVues('factures', premierPanel('factures'), [
+    ['toutes', 'Toutes'], ['encaisser', 'À encaisser', f => factureAEncaisser(f)], ['mois', 'Ce mois', f => ceMois(f.date_emission)],
+    ['payees', 'Payées', f => f.statut !== 'annulee' && Number(f.total_paye) > 0 && Number(f.solde) <= 0.0005], ['avoir', 'Avec avoir', f => Number(f.total_avoirs) > 0],
+  ], renderFactures);
+  definirVues('lots', premierPanel('lots'), [
+    ['tous', 'Tous'], ['liberes', 'Libérés', l => l.statut === 'LIBERE'], ['peremption', 'Périment sous 30 jours', dans30j],
+    ['epuises', 'Épuisés', l => l.statut === 'EPUISE'], ['bloques', 'Bloqués / périmés', l => ['BLOQUE', 'QUARANTAINE', 'EXPIRE'].includes(l.statut)],
+  ], renderLotsRegistre);
+  definirVues('clients', premierPanel('clients'), [
+    ['tous', 'Tous'], ['du', 'Avec reste dû', c => Number(c.solde) > 0.0005], ['credit', 'Avec crédit', c => Number(c.solde) < -0.0005],
+  ], renderClients);
+  definirVues('paiements', premierPanel('paiements'), [
+    ['tous', 'Tous'], ['mois', 'Ce mois', p => ceMois(p.date_paiement)], ['annules', 'Annulés', p => !!p.annule_le],
+  ], renderPaiements);
+
 
   // ---------- Avoirs (V3.3) : une facture émise se corrige par un avoir ----------
   let AVOIR_FACTURE = null;
@@ -8483,7 +8610,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (apres) setTimeout(apres, 120);
   }
   function filtrerCommandes(statut) {
-    document.querySelector(`#commandesFilterRow .chip[data-filter="${statut}"]`)?.click();
+    choisirVue('commandes', { en_attente: 'confirmer', confirmee: 'livrer' }[statut] || 'toutes');
   }
   function renderAFaire() {
     const box = document.getElementById('dashboardAFaire');
@@ -8498,9 +8625,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const taches = [
       { nb: APP_DATA.commandes.filter(c => c.statut === 'en_attente').length, titre: 'Commandes à confirmer', detail: 'En attente de validation', go: () => allerVers('commandes', () => filtrerCommandes('en_attente')) },
       { nb: APP_DATA.commandes.filter(c => c.statut === 'confirmee').length, titre: 'Commandes à livrer', detail: 'Confirmées, pas encore livrées', go: () => allerVers('commandes', () => filtrerCommandes('confirmee')) },
-      { nb: APP_DATA.commandes.filter(c => (c.statut === 'livree' || c.statut === 'confirmee') && !facturees.has(c.id)).length, titre: 'Commandes à facturer', detail: 'Confirmées ou livrées sans facture', go: () => allerVers('commandes') },
-      { nb: aEncaisser.length, titre: 'Factures à encaisser', detail: aEncaisser.length ? `Reste dû : ${fmtDT(resteDu)}` : 'Tout est encaissé', go: () => allerVers('factures') },
-      { nb: perimes.length, titre: 'Lots qui périment sous 30 jours', detail: perimes.some(l => String(l.date_expiration).slice(0, 10) < auj) ? 'Dont des lots déjà périmés' : 'À écouler en priorité (FEFO)', go: () => allerVers('lots') },
+      { nb: APP_DATA.commandes.filter(c => (c.statut === 'livree' || c.statut === 'confirmee') && !facturees.has(c.id)).length, titre: 'Commandes à facturer', detail: 'Confirmées ou livrées sans facture', go: () => allerVers('commandes', () => choisirVue('commandes', 'facturer')) },
+      { nb: aEncaisser.length, titre: 'Factures à encaisser', detail: aEncaisser.length ? `Reste dû : ${fmtDT(resteDu)}` : 'Tout est encaissé', go: () => allerVers('factures', () => choisirVue('factures', 'encaisser')) },
+      { nb: perimes.length, titre: 'Lots qui périment sous 30 jours', detail: perimes.some(l => String(l.date_expiration).slice(0, 10) < auj) ? 'Dont des lots déjà périmés' : 'À écouler en priorité (FEFO)', go: () => allerVers('lots', () => choisirVue('lots', 'peremption')) },
     ];
     box.innerHTML = taches.map((t, i) => `
       <button type="button" class="aFaire" data-idx="${i}">

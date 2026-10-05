@@ -208,3 +208,19 @@ Règle comptable retenue : une facture émise ne s'annule jamais ; on la corrige
 - Base : tables `avoirs` et `avoir_lignes`, créées par `npm run migrate` sur une base existante.
 - Tests : `test/stock/ventes.js` (avoir partiel, avoir sans retour, reliquat exact, crédit client,
   refus au-delà du facturé) et `test/stock/ecarts.js` (avoir total, double clic).
+
+## Palette Méditerranée et nouvelle recherche (V3.3)
+
+Choix faits sur les pages de propositions (maquettes interactives) :
+
+- **Palette Méditerranée** : menu bleu nuit ; Ventes bleu de la mer, Production vert de l'olivier,
+  Stock sable doré, Achats terre cuite, Réglages ardoise. Les numéros de document, bandeaux,
+  onglets et boutons suivent ces couleurs.
+- **Recherche 1 + 5** dans chaque liste :
+  - *Vues rapides en onglets*, avec leur nombre : Commandes (À confirmer, À livrer, À facturer,
+    Payées, Annulées), Factures (À encaisser, Ce mois, Payées, Avec avoir), Lots (Libérés,
+    Périment sous 30 jours, Épuisés, Bloqués / périmés), Clients (Avec reste dû, Avec crédit),
+    Paiements (Ce mois, Annulés). Les liens « À faire aujourd'hui » ouvrent la bonne vue.
+  - *Barre compacte* sur tous les écrans à filtres : recherche + « Période ▾ » (Aujourd'hui,
+    7 jours, Ce mois, Autre période avec dates) ; les filtres actifs deviennent des étiquettes
+    retirables (×) avec « Tout effacer ». Gain d'environ 120 px de hauteur.
