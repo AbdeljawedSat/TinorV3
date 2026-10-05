@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TinOR — Console d'administration</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#17231D">
+<meta name="theme-color" content="#0E3A4A">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -609,6 +609,92 @@
   #confirmOverlay .msg{font-size:13.5px; color:var(--text-soft); white-space:pre-line; max-height:45vh; overflow:auto;}
   #confirmOverlay .pied{display:flex; justify-content:flex-end; gap:8px; margin-top:6px; flex-wrap:wrap;}
   .btnDanger{background:var(--danger); color:#fff; border:1px solid var(--danger); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-family:inherit;}
+
+  /* ---------- Style Rivage (V3.3) : menu blanc en accordéon, bandeaux mer, cartes flottantes ---------- */
+  body{--accent-fonce:#0E3A4A; --accent-vif:#5FA9D6; --sand:#F3F6F6;}
+  body[data-rubrique="ventes"]{--accent-fonce:#0F3A4A; --accent-vif:#5FA9D6;}
+  body[data-rubrique="production"]{--accent-fonce:#2F4A12; --accent-vif:#9CC46A;}
+  body[data-rubrique="stock"]{--accent-fonce:#7A5414; --accent-vif:#E9C27A;}
+  body[data-rubrique="achats"]{--accent-fonce:#7A2E14; --accent-vif:#E89A7D;}
+  body[data-rubrique="reglages"]{--accent-fonce:#2E3740; --accent-vif:#AEB8C2;}
+  /* Menu : colonne blanche, une rubrique dépliée sous son icône */
+  .sidebar{width:236px; background:#fff; color:var(--text); border-right:1px solid var(--line);}
+  .brand{border-bottom:0; padding:20px 18px 12px;}
+  .brand .name{color:#0E3A4A; font-size:19px;} .brand .tag{color:#5F7780; font-weight:600;}
+  .navScroll{padding:6px 12px 20px;}
+  .navGroup[data-rubrique="ventes"]{--r:#1C6FA6;} .navGroup[data-rubrique="production"]{--r:#5B7F23;}
+  .navGroup[data-rubrique="stock"]{--r:#C8902E;} .navGroup[data-rubrique="achats"]{--r:#C4572F;} .navGroup[data-rubrique="reglages"]{--r:#5A6773;}
+  .navGroup, .navGroup.rubriqueActive{box-shadow:none !important; border-radius:0; margin-bottom:1px;}
+  .navGroupBtn, .navSingle{color:#0F2F3A; font-size:13.5px; font-weight:700; padding:6px 8px; border-radius:12px; gap:11px;}
+  .navGroupBtn:hover, .navSingle:hover{background:#F2F7F8;}
+  .navGroup.open .navGroupBtn, .navGroup.rubriqueActive .navGroupBtn{background:none; color:#0F2F3A;}
+  .navGroup.open .navGroupBtn:hover{background:#F2F7F8;}
+  .navGroup.rubriqueActive .navGroupBtn .lbl{color:#0F2F3A;}
+  .navGroupBtn .code, .navGroup.open .navGroupBtn .code, .navSingle .code{width:34px; height:34px; border-radius:11px; display:grid; place-items:center;
+    background:color-mix(in srgb, var(--r, #0E3A4A) 12%, transparent); color:var(--r, #0E3A4A); font-size:15px;}
+  .navGroupBtn .code svg, .navSingle .code svg{width:18px; height:18px;}
+  .navGroup.rubriqueActive .navGroupBtn .code{background:var(--r); color:#fff; box-shadow:0 6px 14px color-mix(in srgb, var(--r) 40%, transparent);}
+  .navGroupBtn .chev, .navGroup.open .navGroupBtn .chev{color:#5F7780; font-size:12px;}
+  .navSingle.active{background:none; color:#0F2F3A;}
+  .navSingle.active .code{background:#0E3A4A; color:#fff; box-shadow:0 6px 14px rgba(14,58,74,.3);}
+  .navChildren{background:none; border-radius:0; margin:0 0 0 24px; border-left:2px solid color-mix(in srgb, var(--r, #0E3A4A) 30%, transparent);}
+  .navGroup.open .navChildren{padding:3px 0 8px; margin-bottom:4px;}
+  .navChildren a{color:#5F7780; font-weight:600; font-size:13px; padding:7px 10px; margin:1px 0 1px 10px; border-radius:9px; gap:9px;}
+  .navChildren a .ecranIc{color:var(--r); opacity:1;}
+  .navChildren a:hover{background:color-mix(in srgb, var(--r, #0E3A4A) 8%, transparent); color:#0F2F3A;}
+  .navGroup .navChildren a.active{background:var(--r); color:#fff; font-weight:700;}
+  .navChildren a.active .ecranIc{color:#fff;}
+  .navChildren a .cnt{background:color-mix(in srgb, var(--r, #0E3A4A) 13%, transparent); color:var(--r, #0E3A4A); font-weight:700;}
+  .navChildren a.active .cnt{background:rgba(255,255,255,.25); color:#fff;}
+  .sidebarFoot{border-top:1px solid var(--line);}
+  .sidebarFoot .who{color:#0F2F3A;} .sidebarFoot .role{color:#5F7780;}
+  .avatar{background:#E6EEF0; color:#0E3A4A; border-color:var(--line);}
+  .topbar{box-shadow:none; border-bottom:1px solid var(--line);}
+  /* Bandeau en dégradé de la rubrique, terminé par une vague, sur toute la largeur */
+  .content{background:var(--sand);}
+  .view .pageHead{margin:-26px -30px 18px; border:0; border-radius:0; padding:24px 30px 60px; color:#fff;
+    background:linear-gradient(115deg, var(--accent-fonce) 0%, var(--accent) 68%, var(--accent-vif) 100%);}
+  .view .pageHead::after{content:''; position:absolute; left:0; right:0; bottom:-1px; height:40px; z-index:-1; pointer-events:none;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1100 40' preserveAspectRatio='none'%3E%3Cpath d='M0,22 C180,4 320,40 520,24 C720,8 880,36 1100,16 L1100,40 L0,40 Z' fill='%23F3F6F6'/%3E%3Cpath d='M0,30 C200,16 360,40 560,30 C760,18 900,40 1100,26' fill='none' stroke='rgba(255,255,255,.35)' stroke-width='2'/%3E%3C/svg%3E") bottom/100% 100% no-repeat;}
+  .view .pageHead h1{color:#fff; font-size:27px;}
+  .view .pageHead p{color:rgba(255,255,255,.86);}
+  .view .pageHead .rubriqueRepere{color:rgba(255,255,255,.88);}
+  .view .pageHead .ecranPastille{background:rgba(255,255,255,.18); color:#fff; box-shadow:0 0 0 1px rgba(255,255,255,.3);}
+  .view .pageHead .illuRubrique{color:#fff; opacity:.22; bottom:14px; right:24px;}
+  .view .pageHead .btnGhost{background:rgba(255,255,255,.14); color:#fff; border-color:rgba(255,255,255,.35);}
+  .view .pageHead .btnGhost:hover{background:rgba(255,255,255,.24); color:#fff; border-color:#fff;}
+  .view .pageHead .btnPrimary{background:#fff; color:var(--accent-fonce); border-color:#fff; box-shadow:0 8px 20px rgba(0,0,0,.15);}
+  .view .pageHead .btnPrimary:hover{background:#fff; opacity:.92;}
+  .view .pageHead select, .view .pageHead input{color:var(--text);}
+  .view > .pageHead + .panel, .view > .pageHead + .kpiRow{margin-top:-50px; position:relative; z-index:1;}
+  .view .pageHead[style*="flex"] .illuRubrique{right:250px;}
+  .view > .panel[style*="margin-bottom:0"] + .panel{margin-top:14px;}
+  /* Cartes blanches flottantes */
+  .panel, .kpiCard{border:0; border-radius:16px; box-shadow:0 10px 30px rgba(15,47,58,.07);}
+  .kpiCard{border-top:0;}
+  .kpiCard .val{font-family:'Inter',sans-serif; font-weight:800; font-size:26px; letter-spacing:-.02em;}
+  .kpiCard .lbl{text-transform:none; letter-spacing:0; font-size:12.5px; font-weight:700;}
+  /* Accueil : grand bandeau mer avec branche d'olivier */
+  #view-dashboard .pageHead{padding:30px 30px 96px; background:linear-gradient(115deg,#0F3A4A 0%,#1C6FA6 55%,#5FA9D6 100%);}
+  #view-dashboard .pageHead h1{font-size:34px;}
+  #view-dashboard .pageHead::after{height:64px;}
+  #view-dashboard .pageHead .illuRubrique{display:none;}
+  #view-dashboard .pageHead .branche{position:absolute; right:40px; top:14px; width:230px; height:150px; color:#fff; opacity:.28; z-index:-1; pointer-events:none;}
+  #view-dashboard > .pageHead + .kpiRow{margin-top:-76px; margin-bottom:18px;}
+  #view-dashboard .kpiCard:nth-child(1){--k:#5B7F23;} #view-dashboard .kpiCard:nth-child(2){--k:#1C6FA6;}
+  #view-dashboard .kpiCard:nth-child(3){--k:#C4572F;} #view-dashboard .kpiCard:nth-child(4){--k:#C8902E;}
+  #view-dashboard .kpiCard{box-shadow:0 10px 30px rgba(15,47,58,.1), inset 0 3px 0 var(--k);}
+  #view-dashboard .kpiCard .val{color:var(--k);}
+  #view-dashboard .panel{margin-bottom:16px;}
+  @media (max-width:880px){ .view .pageHead{margin:-18px -16px 16px; padding:20px 16px 54px;} #view-dashboard .pageHead .branche{width:150px; height:100px; right:10px;} }
+  @media (max-width:700px){
+    .view .pageHead{margin:-14px -12px 14px; padding:16px 14px 50px;}
+    .view .pageHead h1{font-size:22px;} #view-dashboard .pageHead h1{font-size:26px;}
+    .view > .pageHead + .panel{margin-top:-40px;}
+    #view-dashboard .pageHead{padding:22px 14px 84px;} #view-dashboard > .pageHead + .kpiRow{margin-top:-66px;}
+    #view-dashboard .pageHead .branche{opacity:.18;}
+    .view .pageHead .illuRubrique{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -757,6 +843,13 @@
         <div class="pageHead">
           <h1>Tableau de bord</h1>
           <p id="dashboardDateSub">Vue d'ensemble de l'activité</p>
+          <svg class="branche" aria-hidden="true"><use href="#s-branche"/></svg>
+        </div>
+        <div class="kpiRow">
+          <div class="kpiCard"><div class="lbl">Produits au catalogue</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Commandes en attente</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Lots bloqués/quarantaine</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Commandes au total</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
         </div>
 
         <div class="panel" id="dashboardAFairePanel">
@@ -785,12 +878,6 @@
           </div>
         </div>
 
-        <div class="kpiRow">
-          <div class="kpiCard"><div class="lbl">Produits au catalogue</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
-          <div class="kpiCard"><div class="lbl">Commandes en attente</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
-          <div class="kpiCard"><div class="lbl">Lots bloqués/quarantaine</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
-          <div class="kpiCard"><div class="lbl">Commandes au total</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
-        </div>
 
         <div class="panel">
           <div class="panelHead"><div><h2>Stock par famille</h2><div class="sub">Répartition du stock disponible, par catégorie</div></div></div>
@@ -2743,6 +2830,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   <symbol id="e-employe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c.8-3.5 3.5-5 7-5s6.2 1.5 7 5M16 4a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.4 2.2 4 5"/></symbol>
   <symbol id="e-utilisateur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="e-parametre" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="s-branche" viewBox="0 0 230 150" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 140C70 110 140 70 222 12"/><path d="M42 122c-6-18 3-32 21-35-2 18-9 29-21 35zM74 103c0-19 11-30 28-29-4 17-14 26-28 29zM108 80c3-17 16-27 32-22-6 16-17 22-32 22zM146 56c4-14 17-21 30-15-6 13-17 17-30 15z"/><path d="M58 130c14 6 29 3 37-9-14-4-28-1-37 9zM92 108c14 4 27 0 34-11-14-3-27 1-34 11zM128 83c13 3 24-2 30-13-13-1-24 3-30 13z"/><ellipse cx="30" cy="140" rx="6" ry="9"/><ellipse cx="196" cy="40" rx="6" ry="9"/></symbol>
   <symbol id="e-accueil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></symbol>
   <symbol id="e-cloche" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
   <symbol id="illu-accueil" viewBox="0 0 150 118" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 100C50 80 90 50 140 20"/><path d="M40 86c-4-12 2-22 14-24-1 12-6 20-14 24zM62 72c0-13 8-21 20-20-3 12-10 18-20 20zM86 56c2-12 11-19 22-16-4 11-12 16-22 16zM110 40c3-10 12-15 21-11-4 9-12 12-21 11z"/><path d="M52 92c10 4 20 2 26-6-10-3-20-1-26 6zM76 76c10 3 19 0 24-8-10-2-19 1-24 8zM100 58c9 2 17-1 21-9-9-1-17 2-21 9z"/><ellipse cx="34" cy="104" rx="5" ry="7"/><ellipse cx="128" cy="44" rx="4.5" ry="6.5"/></symbol>
@@ -8104,7 +8192,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
 
   document.querySelectorAll('.navGroupBtn').forEach(btn=>{
-    btn.addEventListener('click', ()=> btn.closest('.navGroup').classList.toggle('open'));
+    // Une seule rubrique dépliée : en ouvrir une referme la précédente.
+    btn.addEventListener('click', ()=> {
+      const groupe = btn.closest('.navGroup'), ouvrir = !groupe.classList.contains('open');
+      document.querySelectorAll('#navScroll .navGroup.open').forEach(g => g.classList.remove('open'));
+      groupe.classList.toggle('open', ouvrir);
+    });
   });
 
   // ---------- Rapidité (V3.3) ----------
@@ -8484,7 +8577,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const r = rubriqueDe(vue);
     document.body.dataset.rubrique = r.cle;
     // Seule la rubrique de l'écran affiché reste dépliée : le menu reste court et lisible.
-    document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.classList.toggle('rubriqueActive', g === r.groupe); if (r.groupe && g !== r.groupe) g.classList.remove('open'); });
+    document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.classList.toggle('rubriqueActive', g === r.groupe); if (g !== r.groupe) g.classList.remove('open'); });
   }
   // Repère « VENTES › » au-dessus du titre de chaque écran.
   document.querySelectorAll('#navScroll a[data-view]').forEach(a => {

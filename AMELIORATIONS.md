@@ -224,3 +224,16 @@ Choix faits sur les pages de propositions (maquettes interactives) :
   - *Barre compacte* sur tous les écrans à filtres : recherche + « Période ▾ » (Aujourd'hui,
     7 jours, Ce mois, Autre période avec dates) ; les filtres actifs deviennent des étiquettes
     retirables (×) avec « Tout effacer ». Gain d'environ 120 px de hauteur.
+
+## Style « Rivage » (V3.3)
+
+Style A choisi sur la page des trois styles, appliqué à toute la console :
+
+- **Menu blanc en accordéon** : chaque rubrique a son icône de couleur ; un clic déplie ses écrans
+  juste en dessous, et ouvrir une autre rubrique referme la précédente (une seule liste ouverte).
+  L'écran actif est rempli de la couleur de sa rubrique.
+- **Bandeau en dégradé** de la rubrique en tête de chaque écran, terminé par une vague, avec
+  l'illustration de la rubrique ; la carte de la liste « flotte » sur la vague.
+- **Accueil** : grand bandeau mer avec branche d'olivier, les quatre indicateurs en cartes
+  blanches posées sur la vague, chacun dans sa couleur.
+- Cartes et panneaux arrondis avec ombre douce ; téléphone : même bandeau, onglets en bas inchangés.

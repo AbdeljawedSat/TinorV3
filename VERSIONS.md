@@ -20,4 +20,6 @@ Les 12 propositions de la page « Refonte de l'interface TinOR », toutes livré
 2. **Rapidité** : saisie de commande en une étape (3), une action par ligne + menu « ⋯ » (4), bouton Exporter et filtres de période (5), statuts par bouton (6).
 3. **Repères et finitions** : menu par activité (7), recherche universelle Ctrl+K (8), connexion simplifiée (9), « À faire aujourd'hui » (11), finitions visuelles (12).
 
+Style « Rivage » ensuite appliqué à toute la console : menu blanc en accordéon (une seule rubrique dépliée), bandeaux en dégradé avec vague, accueil mer et olivier, cartes flottantes.
+
 Aucune modification de la base de données : les fichiers `base/*.sql` restent valables.
