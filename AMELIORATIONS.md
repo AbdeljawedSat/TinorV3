@@ -237,3 +237,6 @@ Style A choisi sur la page des trois styles, appliqué à toute la console :
 - **Accueil** : grand bandeau mer avec branche d'olivier, les quatre indicateurs en cartes
   blanches posées sur la vague, chacun dans sa couleur.
 - Cartes et panneaux arrondis avec ombre douce ; téléphone : même bandeau, onglets en bas inchangés.
+- **Bandeau compact** (après comparatif ancien / nouveau) : dégradé foncé sans le bout clair (moins
+  lumineux), environ deux fois moins haut, titre plus petit, vague fine, illustration retirée ;
+  l'accueil garde une petite branche d'olivier discrète.
