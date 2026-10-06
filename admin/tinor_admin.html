@@ -610,6 +610,13 @@
   #confirmOverlay .pied{display:flex; justify-content:flex-end; gap:8px; margin-top:6px; flex-wrap:wrap;}
   .btnDanger{background:var(--danger); color:#fff; border:1px solid var(--danger); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; font-family:inherit;}
 
+  /* ---------- Filtration : mélange d'huiles (V3.3) ---------- */
+  .melangeCase{margin-top:12px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--sand);}
+  .melangeCase:has(input:checked){background:#E3F0F9; border-color:#9CC3E0;}
+  .srcPart{font-size:12px; font-weight:800; color:var(--accent); text-align:right;}
+  #filtrationComposition{margin-top:8px;} #filtrationComposition .barreCompo{display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--line);}
+  #filtrationComposition .barreCompo i{display:block;} #filtrationComposition .txt{font-size:11.5px; color:var(--text-soft); margin-top:3px;}
+  .compoListe{font-size:11px; color:var(--text-soft);}
   /* ---------- Style Rivage (V3.3) : menu blanc en accordéon, bandeaux mer, cartes flottantes ---------- */
   body{--accent-fonce:#0E3A4A; --accent-vif:#5FA9D6; --sand:#F3F6F6;}
   body[data-rubrique="ventes"]{--accent-fonce:#0F3A4A; --accent-vif:#5FA9D6;}
@@ -2158,14 +2165,16 @@
       <input type="hidden" id="filtrationModalId">
       <label class="formLbl">Date</label>
       <input type="date" id="filtrationDate" class="formInput">
-      <label class="formLbl">Produit obtenu</label>
-      <select id="filtrationProduit" class="formInput"></select>
-      <label class="formLbl">Filtre utilisé (optionnel)</label>
-      <input type="text" id="filtrationFiltre" class="formInput">
-      <label class="formLbl" style="margin-top:16px; font-weight:600;">Lots de presse source</label>
-      <label class="chkLbl" style="margin-bottom:8px;"><input type="checkbox" id="filtrationMultiMatiere"> Autoriser plusieurs types de matière (mélange)</label>
+      <label class="chkLbl melangeCase"><input type="checkbox" id="filtrationMultiMatiere"> <b>Mélange de plusieurs huiles</b> <span class="rowMeta">(sésame + nigelle…)</span></label>
+      <label class="formLbl" style="margin-top:14px; font-weight:600;">Lots de presse source</label>
       <div id="filtrationSourcesRows"></div>
       <button class="btnGhost" id="filtrationAddSourceBtn" style="margin-top:6px;">＋ Ajouter une source</button>
+      <div id="filtrationComposition" style="display:none;"></div>
+      <label class="formLbl">Produit obtenu</label>
+      <select id="filtrationProduit" class="formInput"></select>
+      <button type="button" class="lienEffacer" id="filtrationCreerMelange" style="display:none; padding:6px 0;">＋ Créer un autre produit mélange</button>
+      <label class="formLbl">Filtre utilisé (optionnel)</label>
+      <input type="text" id="filtrationFiltre" class="formInput">
       <label class="formLbl">Quantité déchet (optionnel)</label>
       <input type="number" step="0.001" id="filtrationQteDechet" class="formInput">
       <label class="formLbl">Quantité produite (huile filtrée)</label>
@@ -3779,8 +3788,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   const nomFiltre = nom => /\bfiltre(e|es|s)?\b/.test(normaliserNomGraine(nom));
   const huileSansFormat = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && !!cleHuileVrac(p.nom);
   const estHuileVrac = p => huileSansFormat(p) && !nomFiltre(p.nom);
-  const estHuileFiltree = p => huileSansFormat(p) && nomFiltre(p.nom);
-  const estHuileConditionnee = p => !!p && !!p.format_id && !!cleHuileVrac(p.nom) && !['MATIERE_PREMIERE', 'EMBALLAGE', 'CONSOMMABLE'].includes(p.type_article);
+  const estHuileFiltree = p => huileSansFormat(p) && nomFiltre(p.nom) && !/\bmelange\b/.test(normaliserNomGraine(p.nom));
+  const estNomMelange = nom => /^huiles?\b/.test(normaliserNomGraine(nom)) && /\bmelange\b/.test(normaliserNomGraine(nom));
+  const estHuileMelangeFiltree = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && estNomMelange(p.nom) && nomFiltre(p.nom);
+  const estHuileConditionnee = p => !!p && !!p.format_id && (!!cleHuileVrac(p.nom) || estNomMelange(p.nom)) && !['MATIERE_PREMIERE', 'EMBALLAGE', 'CONSOMMABLE'].includes(p.type_article);
   // Liste d'un formulaire : les produits de l'étape, plus celui de la fiche ouverte (ancienne saisie).
   const produitsEtape = (filtre, idCourant) => APP_DATA.produits.filter(p => filtre(p) || p.id === idCourant);
 
@@ -4006,7 +4017,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     body.innerHTML = rows.map(f => `
       <tr>
         <td class="lotCode">${f.numero_lot}</td>
-        <td>${f.produit_nom || '—'}</td>
+        <td>${f.produit_nom || '—'}${(f.composition || []).length > 1 ? `<div class="compoListe">${f.composition.map(c => `${nomCourtHuile(c.huile)} ${c.pourcentage} %`).join(' · ')}</div>` : ''}</td>
         <td class="rowMeta num">${fmtDate(f.date)}</td>
         <td class="rowMeta">${f.filtre_utilise || '—'}</td>
         <td class="num">${f.quantite_dechet ?? '—'}</td>
@@ -4037,12 +4048,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       : '';
     const row = document.createElement('div');
     row.className = 'structRow';
-    row.style.gridTemplateColumns = '1fr 110px 32px';
+    row.style.gridTemplateColumns = '1fr 110px 46px 32px';
     row.innerHTML = `
       <select class="srcLotPresse formInput">${options || '<option value="">— Aucun lot de cette matière —</option>'}</select>
       <input type="number" step="0.001" class="srcQte formInput" placeholder="Qté">
+      <span class="srcPart"></span>
       <button class="delField" type="button">✕</button>`;
-    row.querySelector('.delField').addEventListener('click', () => row.remove());
+    row.querySelector('.delField').addEventListener('click', () => { row.remove(); majCompositionFiltration(); });
+    row.querySelector('.srcQte').addEventListener('input', majCompositionFiltration);
+    row.querySelector('.srcLotPresse').addEventListener('change', majCompositionFiltration);
     return row;
   }
   // Reconstruit les lignes source depuis zéro (évite de gérer un
@@ -4051,11 +4065,75 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const rowsWrap = document.getElementById('filtrationSourcesRows');
     rowsWrap.innerHTML = '';
     if (getFiltrationLotsDisponibles().length) rowsWrap.appendChild(filtrationSourceRow());
+    majCompositionFiltration();
   }
+  // Mélange : part de chaque huile (d'après les quantités saisies) + nom proposé pour le produit.
+  const nomCourtHuile = nom => (String(nom || '').match(/^huiles?\s*(?:de\s+|d')(.+?)(?:\s+[-–—]\s+.*|\s*\(.*)?$/i) || [])[1] || nom;
+  function compositionFiltration() {
+    const parHuile = new Map();
+    document.querySelectorAll('#filtrationSourcesRows .structRow').forEach(row => {
+      const lot = APP_DATA.lotsPresse.find(l => String(l.id) === row.querySelector('.srcLotPresse')?.value);
+      const q = Number(row.querySelector('.srcQte')?.value) || 0;
+      if (!lot) return;
+      const huile = nomCourtHuile(lot.produit_nom);
+      parHuile.set(huile, (parHuile.get(huile) || 0) + q);
+    });
+    const total = [...parHuile.values()].reduce((a, b) => a + b, 0);
+    return { total, huiles: [...parHuile].map(([huile, q]) => ({ huile, q, pct: total ? Math.round(q / total * 1000) / 10 : 0 })) };
+  }
+  const COULEURS_COMPO = ['#C8902E', '#3B4A3F', '#1C6FA6', '#5B7F23', '#BF532F', '#5A6773'];
+  function majCompositionFiltration() {
+    const melange = document.getElementById('filtrationMultiMatiere').checked;
+    const { total, huiles } = compositionFiltration();
+    document.querySelectorAll('#filtrationSourcesRows .structRow').forEach(row => {
+      const q = Number(row.querySelector('.srcQte')?.value) || 0;
+      const part = row.querySelector('.srcPart');
+      if (part) part.textContent = melange && total && q ? `${Math.round(q / total * 1000) / 10} %` : '';
+    });
+    const el = document.getElementById('filtrationComposition');
+    el.style.display = melange && total ? 'block' : 'none';
+    if (melange && total) el.innerHTML = `<div class="barreCompo">${huiles.map((h, i) => `<i style="width:${h.pct}%; background:${COULEURS_COMPO[i % COULEURS_COMPO.length]}"></i>`).join('')}</div>
+      <div class="txt">Composition : ${huiles.map(h => `${h.huile} ${h.pct} %`).join(' · ')} — enregistrée avec le lot (traçabilité)</div>`;
+  }
+  // Liste « Produit obtenu » : huiles filtrées d'une graine, ou huiles mélange si la case est cochée.
+  function remplirProduitsFiltration(idCourant, idASelectionner) {
+    const melange = document.getElementById('filtrationMultiMatiere').checked;
+    const liste = produitsEtape(melange ? estHuileMelangeFiltree : estHuileFiltree, idCourant);
+    const vide = melange ? '— Aucune huile mélange : cliquez « Créer un autre produit mélange » —' : '— Aucune huile filtrée : créez « Huile de … — Filtrée » dans Produits —';
+    const sel = document.getElementById('filtrationProduit');
+    populateSelect(sel, liste, 'id', 'nom', liste.length ? null : vide);
+    if (idASelectionner && liste.some(p => p.id === idASelectionner)) sel.value = idASelectionner;
+    document.getElementById('filtrationCreerMelange').style.display = melange && !document.getElementById('filtrationModalId').value ? 'inline-block' : 'none';
+  }
+  document.getElementById('filtrationCreerMelange').addEventListener('click', async () => {
+    const { huiles } = compositionFiltration();
+    const noms = huiles.map(h => h.huile);
+    const propose = `Huile Mélange ${noms.length ? noms.join('-') : 'Sésame-Nigelle'} — Filtrée`;
+    const attente = confirmer(`Catégorie et unité reprises de l'huile en vrac. Le prix de vente se règle ensuite dans Produits.`,
+      { titre: 'Nouveau produit mélange', ok: 'Créer et choisir', saisie: { label: 'Nom du produit (modifiable)', placeholder: propose } });
+    const champ = document.getElementById('confirmSaisie');
+    champ.value = propose; document.getElementById('confirmOui').disabled = false;
+    let nom = await attente;
+    if (!nom) return;
+    if (!/m[ée]lange/i.test(nom)) nom = `Huile Mélange ${nom}`;
+    if (!/filtr[ée]/i.test(nom)) nom += ' — Filtrée';
+    const premierLot = APP_DATA.lotsPresse.find(l => String(l.id) === document.querySelector('#filtrationSourcesRows .srcLotPresse')?.value);
+    const modele = APP_DATA.produits.find(p => p.id === premierLot?.produit_id) || APP_DATA.produits.find(estHuileVrac);
+    if (!modele) { notifier('Aucune huile en vrac de référence pour la catégorie et l\'unité.', 'erreur'); return; }
+    try {
+      const cree = await apiFetch('/produits', { method: 'POST', body: JSON.stringify({
+        nom, categorie_id: modele.categorie_id, unite_id: modele.unite_id, type_article: 'PRODUIT_FABRIQUE',
+        fabriquable: true, stockable: true, vendable: !!modele.vendable, tva: modele.tva, bio_eligible: !!modele.bio_eligible }) });
+      APP_DATA.produits = await apiFetch('/produits');
+      remplirProduitsFiltration(null, cree.id);
+      notifier(`Produit « ${nom} » créé et choisi.`, 'succes');
+    } catch (err) { notifier(err.message, 'erreur'); }
+  });
   document.getElementById('filtrationProduit').addEventListener('change', () => {
     if (!document.getElementById('filtrationModalId').value) resetFiltrationSourcesRows(); // pas en mode édition
   });
   document.getElementById('filtrationMultiMatiere').addEventListener('change', () => {
+    remplirProduitsFiltration();
     if (!document.getElementById('filtrationModalId').value) resetFiltrationSourcesRows();
   });
 
@@ -4064,9 +4142,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     APP_DATA.lotsPresse = await apiFetch('/presse'); // liste la plus fraîche des lots pressés disponibles
 
     const f = id ? APP_DATA.lotsFiltration.find(x => x.id === id) : null;
-    const filtrees = produitsEtape(estHuileFiltree, f?.produit_id);
-    populateSelect(document.getElementById('filtrationProduit'), filtrees, 'id', 'nom', filtrees.length ? null : '— Aucune huile filtrée : créez « Huile de … — Filtrée » dans Produits —');
     document.getElementById('filtrationModalId').value = f ? f.id : '';
+    document.getElementById('filtrationMultiMatiere').checked = false;
+    remplirProduitsFiltration(f?.produit_id);
     document.querySelector('#filtrationModalOverlay .modalHead h2').textContent = f ? `Modifier — ${f.numero_lot}` : 'Nouvelle filtration';
     document.getElementById('filtrationDate').value = f ? f.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
     document.getElementById('filtrationProduit').value = f ? f.produit_id : document.getElementById('filtrationProduit').value;
@@ -4082,6 +4160,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('filtrationLockedNote').style.display = f ? 'block' : 'none';
     document.getElementById('filtrationAddSourceBtn').style.display = f ? 'none' : 'inline-flex';
     document.getElementById('filtrationMultiMatiere').closest('label').style.display = f ? 'none' : 'flex';
+    document.getElementById('filtrationComposition').style.display = 'none';
 
     const rowsWrap = document.getElementById('filtrationSourcesRows');
     rowsWrap.innerHTML = '';
@@ -4096,6 +4175,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function closeFiltrationModal() { document.getElementById('filtrationModalOverlay').classList.remove('open'); }
   document.getElementById('filtrationAddSourceBtn').addEventListener('click', () => {
     document.getElementById('filtrationSourcesRows').appendChild(filtrationSourceRow());
+    majCompositionFiltration();
   });
 
   async function saveFiltration() {

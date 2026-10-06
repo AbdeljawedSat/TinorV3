@@ -1,7 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { positif, positifOuZero, arrondi } = require('../services/regles');
-const { estHuileFiltree, cleHuileVrac } = require('../services/graines');
+const { estHuileFiltree, estHuileMelangeFiltree, cleHuileVrac } = require('../services/graines');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -17,7 +17,24 @@ module.exports = function (pool) {
       LEFT JOIN lots l ON l.id = lf.lot_id
       ORDER BY lf.date DESC, lf.id DESC
     `);
-    res.json(result.rows);
+    // Composition (huile par huile) d'après les lots de presse utilisés : utile surtout pour un mélange.
+    const compo = await pool.query(`
+      SELECT lfs.lot_filtration_id, p.nom, SUM(lfs.quantite_utilisee) AS quantite
+      FROM lots_filtration_sources lfs
+      JOIN lots_presse lp ON lp.id = lfs.lot_presse_id
+      JOIN produits p ON p.id = lp.produit_id
+      GROUP BY lfs.lot_filtration_id, p.nom`);
+    const parFiltration = new Map();
+    for (const c of compo.rows) {
+      if (!parFiltration.has(c.lot_filtration_id)) parFiltration.set(c.lot_filtration_id, []);
+      parFiltration.get(c.lot_filtration_id).push({ huile: c.nom, quantite: Number(c.quantite) });
+    }
+    res.json(result.rows.map(f => {
+      const composition = parFiltration.get(f.id) || [];
+      const total = composition.reduce((t, c) => t + c.quantite, 0);
+      composition.forEach(c => { c.pourcentage = total ? Math.round((c.quantite / total) * 1000) / 10 : null; });
+      return { ...f, composition };
+    }));
   });
 
   router.get('/:id', async (req, res) => {
@@ -48,9 +65,13 @@ module.exports = function (pool) {
       const qDechet = positifOuZero(quantite_dechet, 'La quantité de déchet');
       const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
       if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
-      if (!estHuileFiltree(produitObtenu)) {
+      if (melange && !estHuileMelangeFiltree(produitObtenu)) {
+        return res.status(400).json({ error: `Pour un mélange, le produit obtenu doit être une huile mélange filtrée (ex. « Huile Mélange Sésame-Nigelle — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
+      }
+      if (!melange && !estHuileFiltree(produitObtenu)) {
         return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile filtrée (ex. « Huile de Sésame — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
       }
+      const huilesSources = new Set();
       let totalUtilise = 0;
       for (const s of sources) {
         if (!s.lot_presse_id || !s.quantite_utilisee) {
@@ -64,11 +85,16 @@ module.exports = function (pool) {
         if (!melange && cleHuileVrac(presseRes.rows[0].nom) !== cleHuileVrac(produitObtenu.nom)) {
           return res.status(400).json({ error: `« ${produitObtenu.nom} » se filtre à partir de la même huile : le lot ${presseRes.rows[0].numero_lot} est « ${presseRes.rows[0].nom} ».` });
         }
+        huilesSources.add(cleHuileVrac(presseRes.rows[0].nom) || presseRes.rows[0].nom);
         const lotRes = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [presseRes.rows[0].lot_id]);
         if (Number(lotRes.rows[0].quantite_actuelle) < Number(s.quantite_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot de presse ${s.lot_presse_id} (disponible ${lotRes.rows[0].quantite_actuelle}, demandé ${s.quantite_utilisee}).` });
         }
         totalUtilise += Number(s.quantite_utilisee);
+      }
+
+      if (melange && huilesSources.size < 2) {
+        return res.status(400).json({ error: 'Un mélange demande au moins deux huiles différentes (ex. un lot de sésame et un lot de nigelle).' });
       }
 
       // Bilan : l'huile filtrée et le déchet viennent de l'huile pressée utilisée.

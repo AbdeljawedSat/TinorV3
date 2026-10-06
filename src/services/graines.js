@@ -39,7 +39,12 @@ function estHuileVrac(produit) {
   return huileSansFormat(produit) && !nomFiltre(produit.nom);
 }
 function estHuileFiltree(produit) {
-  return huileSansFormat(produit) && nomFiltre(produit.nom);
+  return huileSansFormat(produit) && nomFiltre(produit.nom) && !estNomMelange(produit.nom);
+}
+// Mélange de plusieurs huiles filtrées ensemble : « Huile Mélange Sésame-Nigelle — Filtrée ».
+const estNomMelange = (nom) => /^huiles?\b/.test(normaliser(nom)) && /\bmelange\b/.test(normaliser(nom));
+function estHuileMelangeFiltree(produit) {
+  return !!produit && produit.type_article !== 'MATIERE_PREMIERE' && !produit.format_id && estNomMelange(produit.nom) && nomFiltre(produit.nom);
 }
 
-module.exports = { normaliser, cleGraine, cleHuileVrac, estGraine, estHuileVrac, estHuileFiltree };
+module.exports = { normaliser, cleGraine, cleHuileVrac, estGraine, estHuileVrac, estHuileFiltree, estHuileMelangeFiltree };

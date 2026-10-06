@@ -39,6 +39,20 @@ const { api, login, check } = require('./api');
   await refus(filtrer(10, 9, 0, filtreeN.id), 'huile de nigelle filtrée à partir d\'huile de sésame pressée');
   const filt = await ok(filtrer(20, 18, 2), 'filtré 18 + déchet 2 = 20 utilisés');
 
+  console.log('L2. Filtration d\'un mélange de plusieurs huiles');
+  const lotPresseN = op.data.lots_presse.find(l => l.produit_id === huileN.id);
+  const melange = (produit, sources, q) => post('/filtration', { date: '2026-10-03', produit_id: produit, quantite_produite: q, melange: true, sources });
+  const deuxHuiles = [{ lot_presse_id: lotPresseS.id, quantite_utilisee: 3 }, { lot_presse_id: lotPresseN.id, quantite_utilisee: 2 }];
+  await refus(melange(filtreeS.id, deuxHuiles, 5), 'mélange déclaré en « Huile de Sésame — Filtrée »');
+  const prodMelange = (await post('/produits', { nom: 'Huile Mélange Sésame-Nigelle — Filtrée', categorie_id: huileS.categorie_id, unite_id: huileS.unite_id, type_article: 'PRODUIT_FABRIQUE', fabriquable: true, stockable: true })).data;
+  await refus(melange(prodMelange.id, [{ lot_presse_id: lotPresseS.id, quantite_utilisee: 3 }], 3), 'mélange avec une seule huile');
+  await refus(filtrer(5, 5, 0, prodMelange.id), 'produit mélange sans cocher « mélange »');
+  const filtM = await ok(melange(prodMelange.id, deuxHuiles, 5), 'sésame 3 L + nigelle 2 L → 5 L de mélange filtré');
+  const compo = (await api('/filtration')).data.find(f => f.id === filtM.data.id).composition;
+  check(compo.length === 2 && compo.some(c => c.pourcentage === 60) && compo.some(c => c.pourcentage === 40), `composition enregistrée : ${compo.map(c => c.huile + ' ' + c.pourcentage + ' %').join(', ')}`);
+  const flaconM = (await post('/produits', { nom: 'Huile Mélange Sésame-Nigelle — Flacon 30ml', categorie_id: huileS.categorie_id, unite_id: P('Huile de Sésame — Flacon 30ml').unite_id, format_id: P('Huile de Sésame — Flacon 30ml').format_id, produit_source_id: prodMelange.id, type_article: 'PRODUIT_FABRIQUE', vendable: true, stockable: true })).data;
+  await ok(post('/conditionnement', { date: '2026-10-03', produit_id: flaconM.id, qty: 100, sources: [{ lot_filtration_id: filtM.data.id, quantite_utilisee: 3 }] }), 'flacons de mélange remplis avec le mélange filtré');
+
   console.log('M. Conditionnement : vrac du produit, contenu ≤ vrac utilisé, quantité entière');
   const flaconS = P('Huile de Sésame — Flacon 30ml'), flaconN = P('Huile de Nigelle — Flacon 30ml');
   const conditionner = (produit, qty, q) => post('/conditionnement', { date: '2026-10-03', produit_id: produit.id, qty, sources: [{ lot_filtration_id: filt.data.id, quantite_utilisee: q }] });

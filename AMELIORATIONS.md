@@ -262,3 +262,16 @@ Chaque étape ne propose que le produit qui lui correspond :
   enregistrées gardent leur produit d'origine.
 - Pour vendre en 100 ml ou 1 L : créer le produit (ex. « Huile de Sésame — Flacon 100ml », format
   100 ml, source « Huile de Sésame — Vrac ») dans Produits ; il apparaît alors au conditionnement.
+
+### Mélange de plusieurs huiles à la filtration
+
+- Case **« Mélange de plusieurs huiles »** en tête du formulaire : tous les lots de presse sont
+  proposés, chacun avec sa part en % ; une barre montre la composition (ex. Sésame 60 % · Nigelle 40 %).
+- **Produit obtenu** : seulement les huiles « Mélange … — Filtrée » quand la case est cochée.
+  **« ＋ Créer un autre produit mélange »** crée la fiche sans quitter la filtration (nom proposé
+  d'après les huiles choisies, modifiable ; catégorie, unité et TVA reprises du vrac) et la sélectionne.
+- API : un mélange exige au moins deux huiles différentes et un produit mélange ; un produit mélange
+  est refusé si la case n'est pas cochée. La composition (huile, quantité, %) est renvoyée par
+  `GET /api/filtration` et affichée sous le produit dans la liste des filtrations.
+- Conditionnement : un flacon de mélange (« Huile Mélange Sésame-Nigelle — Flacon 30ml », source =
+  le mélange filtré) apparaît dans la liste et se remplit avec ce mélange.
