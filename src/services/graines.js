@@ -28,9 +28,18 @@ function estGraine(produit) {
   return !!produit && produit.type_article === 'MATIERE_PREMIERE' && !!cleGraine(produit.nom);
 }
 
-// Huile en vrac : une huile fabriquée, sans format de conditionnement.
+// Les trois étapes de l'huile, chacune son produit :
+//   presse          → « Huile de Sésame — Vrac »      (huile sans format)
+//   filtration      → « Huile de Sésame — Filtrée »   (huile sans format, nom « filtrée »)
+//   conditionnement → « Huile de Sésame — Flacon 30ml » (huile avec un format)
+const nomFiltre = (nom) => /\bfiltre(e|es|s)?\b/.test(normaliser(nom));
+const huileSansFormat = (p) => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && !!cleHuileVrac(p.nom);
+
 function estHuileVrac(produit) {
-  return !!produit && produit.type_article !== 'MATIERE_PREMIERE' && !produit.format_id && !!cleHuileVrac(produit.nom);
+  return huileSansFormat(produit) && !nomFiltre(produit.nom);
+}
+function estHuileFiltree(produit) {
+  return huileSansFormat(produit) && nomFiltre(produit.nom);
 }
 
-module.exports = { normaliser, cleGraine, cleHuileVrac, estGraine, estHuileVrac };
+module.exports = { normaliser, cleGraine, cleHuileVrac, estGraine, estHuileVrac, estHuileFiltree };

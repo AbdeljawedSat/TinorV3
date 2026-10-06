@@ -22,6 +22,7 @@ const { api, login, check } = require('./api');
     'nigelle : 15 + 16 > 30 graines (même si le total 81 ≤ 90)');
   await refus(presse([{ lot_id: s1, quantite: 60 }, { lot_id: n1, quantite: 30 }], [{ produit_id: huileS.id, quantite_produite: 30 }]), 'graines de nigelle sans huile obtenue');
   await refus(presse([{ lot_id: s1, quantite: 10 }, { lot_id: s1, quantite: 10 }], [{ produit_id: huileS.id, quantite_produite: 5 }]), 'même lot saisi deux fois');
+  await refus(presse([{ lot_id: s1, quantite: 5 }], [{ produit_id: P('Huile de Sésame — Filtrée').id, quantite_produite: 1 }]), 'pressage qui donnerait une huile filtrée');
   const op = await ok(presse([{ lot_id: s1, quantite: 60 }, { lot_id: s2, quantite: 40 }, { lot_id: n1, quantite: 30 }],
     [{ produit_id: huileS.id, quantite_produite: 35, quantite_tourteau: 60 }, { produit_id: huileN.id, quantite_produite: 9, quantite_tourteau: 20 }]),
     '2 lots de sésame + 1 de nigelle → 2 huiles');
@@ -29,10 +30,13 @@ const { api, login, check } = require('./api');
   const lotPresseS = op.data.lots_presse.find(l => l.produit_id === huileS.id);
 
   console.log('L. Filtration : huile filtrée + déchet ≤ huile pressée utilisée');
-  const filtrer = (q, filtre, dechet, produit = huileS.id) => post('/filtration', { date: '2026-10-03', produit_id: produit, quantite_produite: filtre, quantite_dechet: dechet, sources: [{ lot_presse_id: lotPresseS.id, quantite_utilisee: q }] });
+  const filtreeS = P('Huile de Sésame — Filtrée'), filtreeN = P('Huile de Nigelle — Filtrée');
+  const filtrer = (q, filtre, dechet, produit = filtreeS.id) => post('/filtration', { date: '2026-10-03', produit_id: produit, quantite_produite: filtre, quantite_dechet: dechet, sources: [{ lot_presse_id: lotPresseS.id, quantite_utilisee: q }] });
   await refus(filtrer(20, 19, 2), 'filtré 19 + déchet 2 > 20 utilisés');
   await refus(filtrer(-5, 1, 0), 'quantité utilisée négative');
-  await refus(filtrer(10, 9, 0, P('Huile de Sésame — Flacon 30ml').id), 'produit obtenu qui n\'est pas une huile en vrac');
+  await refus(filtrer(10, 9, 0, P('Huile de Sésame — Flacon 30ml').id), 'produit obtenu qui n\'est pas une huile filtrée (flacon)');
+  await refus(filtrer(10, 9, 0, huileS.id), 'produit obtenu = huile vrac de presse (doit être « Filtrée »)');
+  await refus(filtrer(10, 9, 0, filtreeN.id), 'huile de nigelle filtrée à partir d\'huile de sésame pressée');
   const filt = await ok(filtrer(20, 18, 2), 'filtré 18 + déchet 2 = 20 utilisés');
 
   console.log('M. Conditionnement : vrac du produit, contenu ≤ vrac utilisé, quantité entière');
@@ -41,6 +45,7 @@ const { api, login, check } = require('./api');
   await refus(conditionner(flaconN, 100, 3), 'flacon de nigelle rempli avec de l\'huile de sésame');
   await refus(conditionner(flaconS, 200, 5), '200 × 30 ml = 6 L avec seulement 5 L de vrac');
   await refus(conditionner(flaconS, 10.5, 1), 'quantité de flacons non entière');
+  await refus(conditionner(huileS, 1, 1), 'conditionnement en huile vrac (sans flacon)');
   await ok(conditionner(flaconS, 100, 3), '100 × 30 ml = 3 L avec 3 L de vrac');
 
   console.log('N. Commandes, paiements, remises');

@@ -150,6 +150,15 @@ async function main() {
     nom: 'Étiquette adhésive', categorie_id: catId('CONS'), unite_id: uniteId('unite'),
     type_article: 'CONSOMMABLE', achetable: true, stockable: true,
   });
+  // Filtration : produit distinct du vrac de presse (créés en dernier pour garder les codes existants).
+  const filtreeSesame = await post('/produits', {
+    nom: 'Huile de Sésame — Filtrée', categorie_id: catId('HUILE'), unite_id: uniteId('litre'),
+    type_article: 'PRODUIT_FABRIQUE', produit_source_id: vracSesame.id, stockable: true, fabriquable: true,
+  });
+  await post('/produits', {
+    nom: 'Huile de Nigelle — Filtrée', categorie_id: catId('HUILE'), unite_id: uniteId('litre'),
+    type_article: 'PRODUIT_FABRIQUE', produit_source_id: vracNigelle.id, stockable: true, fabriquable: true,
+  });
 
   console.log('\n=== Remises ===');
   const remiseGros = await post('/remises', { nom: 'Gros volume', type: 'pourcentage', pourcentage: 10, categorie: 'client' });
@@ -206,7 +215,7 @@ async function main() {
 
   console.log('\n=== Filtration ===');
   const fSesame = await post('/filtration', {
-    date: '2026-08-06', produit_id: vracSesame.id,
+    date: '2026-08-06', produit_id: filtreeSesame.id,
     sources: [{ lot_presse_id: pSesame.id, quantite_utilisee: 60 }],
     quantite_produite: 55, employe_id: emp1.id,
   });

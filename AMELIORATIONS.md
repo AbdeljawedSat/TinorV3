@@ -240,3 +240,25 @@ Style A choisi sur la page des trois styles, appliqué à toute la console :
 - **Bandeau compact** (après comparatif ancien / nouveau) : dégradé foncé sans le bout clair (moins
   lumineux), environ deux fois moins haut, titre plus petit, vague fine, illustration retirée ;
   l'accueil garde une petite branche d'olivier discrète.
+
+## Un produit par étape de l'huile (V3.3)
+
+Chaque étape ne propose que le produit qui lui correspond :
+
+| Étape | Produit obtenu | Exemple |
+|---|---|---|
+| Presse | huile en vrac | « Huile de Sésame — Vrac » |
+| Filtration | huile filtrée | « Huile de Sésame — Filtrée » |
+| Conditionnement | huile en flacon (10 ml, 30 ml, 100 ml, 250 ml, 1 L) | « Huile de Sésame — Flacon 30ml » |
+
+- **Filtration** : la liste « Produit obtenu » ne montre que les huiles filtrées ; les lots de presse
+  proposés sont ceux de la même huile (sauf « mélange » coché). L'API refuse une huile vrac ou un
+  flacon en sortie, et une huile de nigelle filtrée à partir d'huile de sésame.
+- **Conditionnement** : la liste ne montre que les huiles en flacon ; formats en volume seulement
+  (du plus petit au plus grand). La source peut être le vrac de presse ou l'huile filtrée de la même
+  huile (l'huile filtrée est proposée en premier). L'API refuse un produit sans format.
+- **Mise à jour** : `npm run migrate` crée la fiche « Huile de … — Filtrée » de chaque huile en vrac
+  qui n'en a pas (même catégorie, unité, prix et TVA ; source = le vrac). Les filtrations déjà
+  enregistrées gardent leur produit d'origine.
+- Pour vendre en 100 ml ou 1 L : créer le produit (ex. « Huile de Sésame — Flacon 100ml », format
+  100 ml, source « Huile de Sésame — Vrac ») dans Produits ; il apparaît alors au conditionnement.

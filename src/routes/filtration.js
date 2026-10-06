@@ -1,7 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { positif, positifOuZero, arrondi } = require('../services/regles');
-const { estHuileVrac } = require('../services/graines');
+const { estHuileFiltree, cleHuileVrac } = require('../services/graines');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -37,7 +37,7 @@ module.exports = function (pool) {
   // pressages (ex: fusion de deux petits lots avant filtration).
   router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const { date, produit_id, filtre_utilise, quantite_dechet, quantite_produite, notes, employe_id, sources, champs_perso } = req.body;
+      const { date, produit_id, filtre_utilise, quantite_dechet, quantite_produite, notes, employe_id, sources, champs_perso, melange } = req.body;
       if (!date || !produit_id || !quantite_produite) {
         return res.status(400).json({ error: 'date, produit_id et quantite_produite sont requis.' });
       }
@@ -48,8 +48,8 @@ module.exports = function (pool) {
       const qDechet = positifOuZero(quantite_dechet, 'La quantité de déchet');
       const produitObtenu = (await pool.query('SELECT nom, type_article, format_id FROM produits WHERE id = $1', [produit_id])).rows[0];
       if (!produitObtenu) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
-      if (!estHuileVrac(produitObtenu)) {
-        return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile en vrac : « ${produitObtenu.nom} » ne l'est pas.` });
+      if (!estHuileFiltree(produitObtenu)) {
+        return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile filtrée (ex. « Huile de Sésame — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
       }
       let totalUtilise = 0;
       for (const s of sources) {
@@ -57,8 +57,13 @@ module.exports = function (pool) {
           return res.status(400).json({ error: 'Chaque source nécessite lot_presse_id et quantite_utilisee.' });
         }
         positif(s.quantite_utilisee, 'La quantité utilisée de chaque lot de presse');
-        const presseRes = await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id]);
+        const presseRes = await pool.query(
+          'SELECT lp.lot_id, lp.numero_lot, p.nom FROM lots_presse lp LEFT JOIN produits p ON p.id = lp.produit_id WHERE lp.id = $1', [s.lot_presse_id]);
         if (!presseRes.rows[0]) return res.status(400).json({ error: `Lot de presse ${s.lot_presse_id} introuvable.` });
+        // Huile de sésame filtrée = huile de sésame pressée (sauf mélange coché).
+        if (!melange && cleHuileVrac(presseRes.rows[0].nom) !== cleHuileVrac(produitObtenu.nom)) {
+          return res.status(400).json({ error: `« ${produitObtenu.nom} » se filtre à partir de la même huile : le lot ${presseRes.rows[0].numero_lot} est « ${presseRes.rows[0].nom} ».` });
+        }
         const lotRes = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [presseRes.rows[0].lot_id]);
         if (Number(lotRes.rows[0].quantite_actuelle) < Number(s.quantite_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot de presse ${s.lot_presse_id} (disponible ${lotRes.rows[0].quantite_actuelle}, demandé ${s.quantite_utilisee}).` });

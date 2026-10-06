@@ -76,6 +76,9 @@ module.exports = function (pool) {
          WHERE p.id = $1`, [produit_id, format_id || null]);
       const produit = produitRes.rows[0];
       if (!produit) return res.status(400).json({ error: 'Produit conditionné introuvable.' });
+      if (!produit.format_id && !format_id) {
+        return res.status(400).json({ error: `Le conditionnement donne un produit en flacon (10 ml, 30 ml, 100 ml, 1 L…) : « ${produit.nom} » n'a pas de format.` });
+      }
       const qty_ = positif(qty, 'La quantité conditionnée');
       entierSiUnite(qty_, produit.unite, 'La quantité conditionnée');
 
@@ -111,9 +114,10 @@ module.exports = function (pool) {
             ? (await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id])).rows[0].lot_id
             : (await pool.query('SELECT lot_id FROM lots_filtration WHERE id = $1', [s.lot_filtration_id])).rows[0].lot_id);
           const src = (await pool.query(
-            'SELECT l.numero_lot, l.produit_id, p.nom FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1', [lotSourceId])).rows[0];
-          if (src.produit_id !== produit.produit_source_id) {
-            return res.status(400).json({ error: `« ${produit.nom} » se conditionne à partir de « ${produit.vrac_nom} » : le lot ${src.numero_lot} est « ${src.nom} ».` });
+            'SELECT l.numero_lot, l.produit_id, p.nom, p.produit_source_id FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1', [lotSourceId])).rows[0];
+          // Le vrac lui-même, ou sa version filtrée (« Huile de Sésame — Filtrée » a pour source le vrac).
+          if (src.produit_id !== produit.produit_source_id && src.produit_source_id !== produit.produit_source_id) {
+            return res.status(400).json({ error: `« ${produit.nom} » se conditionne à partir de « ${produit.vrac_nom} » (ou de sa version filtrée) : le lot ${src.numero_lot} est « ${src.nom} ».` });
           }
         }
         if (Number(quantiteDisponible) < Number(s.quantite_utilisee)) {

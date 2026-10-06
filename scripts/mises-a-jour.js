@@ -47,6 +47,28 @@ async function appliquerMisesAJour(conn, journal = console.log) {
       journal(`✓ Mise à jour : paiements.${col} ajoutée.`);
     }
   }
+
+  // V3.3 — la filtration donne une huile filtrée, distincte du vrac de presse :
+  // « Huile de Sésame — Vrac » reçoit sa fiche « Huile de Sésame — Filtrée ».
+  const { estHuileVrac, estHuileFiltree, cleHuileVrac } = require('../src/services/graines');
+  const [produits] = await conn.query('SELECT * FROM produits');
+  const filtrees = new Set(produits.filter(estHuileFiltree).map(p => cleHuileVrac(p.nom)));
+  for (const vrac of produits.filter(p => estHuileVrac(p) && !p.produit_source_id)) {
+    if (filtrees.has(cleHuileVrac(vrac.nom))) continue;
+    const nom = vrac.nom.replace(/\s*([-–—]\s*vrac|\(vrac\))\s*$/i, '') + ' — Filtrée';
+    const codes = new Set(produits.map(p => String(p.code)));
+    let n = Math.max(0, ...produits.map(p => Number(p.code) || 0)) + 1;
+    while (codes.has(String(n).padStart(2, '0'))) n++;
+    const code = String(n).padStart(2, '0');
+    await conn.query(
+      `INSERT INTO produits (code, nom, categorie_id, unite_id, type_article, produit_source_id, vendable, achetable, fabriquable, stockable, actif, bio_eligible, prix_vente, tva)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, 1, 1, ?, ?, ?)`,
+      [code, nom, vrac.categorie_id, vrac.unite_id, vrac.type_article, vrac.id, vrac.vendable, vrac.bio_eligible, vrac.prix_vente, vrac.tva]);
+    await conn.query("UPDATE sequences SET `last_value` = GREATEST(`last_value`, ?) WHERE name = 'produit_code_seq'", [n]);
+    produits.push({ code, nom });
+    filtrees.add(cleHuileVrac(vrac.nom));
+    journal(`✓ Mise à jour : produit « ${nom} » (code ${code}) créé pour la filtration.`);
+  }
 }
 
 const SQL_AVOIRS = `-- Avoirs (factures d'avoir) : une facture émise ne s'annule pas, on la

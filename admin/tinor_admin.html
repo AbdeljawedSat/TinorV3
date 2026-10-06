@@ -3774,7 +3774,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
   }
   const estGraine = p => !!p && p.type_article === 'MATIERE_PREMIERE' && !!cleGraine(p.nom);
-  const estHuileVrac = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && !!cleHuileVrac(p.nom);
+  // Trois étapes, trois produits : presse → « … — Vrac », filtration → « … — Filtrée »,
+  // conditionnement → huile en flacon (10 ml, 30 ml, 100 ml, 1 L…). Même règle que src/services/graines.js.
+  const nomFiltre = nom => /\bfiltre(e|es|s)?\b/.test(normaliserNomGraine(nom));
+  const huileSansFormat = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && !!cleHuileVrac(p.nom);
+  const estHuileVrac = p => huileSansFormat(p) && !nomFiltre(p.nom);
+  const estHuileFiltree = p => huileSansFormat(p) && nomFiltre(p.nom);
+  const estHuileConditionnee = p => !!p && !!p.format_id && !!cleHuileVrac(p.nom) && !['MATIERE_PREMIERE', 'EMBALLAGE', 'CONSOMMABLE'].includes(p.type_article);
+  // Liste d'un formulaire : les produits de l'étape, plus celui de la fiche ouverte (ancienne saisie).
+  const produitsEtape = (filtre, idCourant) => APP_DATA.produits.filter(p => filtre(p) || p.id === idCourant);
 
   // ---------- Pressage : plusieurs lots de graines → une huile en vrac par graine ----------
   const arrondiQte = x => Math.round(Number(x) * 1000) / 1000;
@@ -4016,9 +4024,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const disponible = l => Number(l.quantite_actuelle) > 0 && l.lot_statut === 'LIBERE';
     const multiMatiere = document.getElementById('filtrationMultiMatiere').checked;
     if (multiMatiere) return APP_DATA.lotsPresse.filter(disponible);
-    const produitId = Number(document.getElementById('filtrationProduit').value) || null;
-    if (!produitId) return APP_DATA.lotsPresse.filter(disponible);
-    return APP_DATA.lotsPresse.filter(p => p.produit_id === produitId && disponible(p));
+    const produit = APP_DATA.produits.find(p => p.id === Number(document.getElementById('filtrationProduit').value));
+    if (!produit) return APP_DATA.lotsPresse.filter(disponible);
+    // Huile de sésame filtrée ← lots pressés d'huile de sésame.
+    const cle = cleHuileVrac(produit.nom);
+    return APP_DATA.lotsPresse.filter(p => cleHuileVrac(p.produit_nom) === cle && disponible(p));
   }
   function filtrationSourceRow() {
     const lots = getFiltrationLotsDisponibles();
@@ -4051,10 +4061,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   async function openFiltrationModal(id) {
     document.getElementById('filtrationFormError').style.display = 'none';
-    populateSelect(document.getElementById('filtrationProduit'), APP_DATA.produits, 'id', 'nom');
     APP_DATA.lotsPresse = await apiFetch('/presse'); // liste la plus fraîche des lots pressés disponibles
 
     const f = id ? APP_DATA.lotsFiltration.find(x => x.id === id) : null;
+    const filtrees = produitsEtape(estHuileFiltree, f?.produit_id);
+    populateSelect(document.getElementById('filtrationProduit'), filtrees, 'id', 'nom', filtrees.length ? null : '— Aucune huile filtrée : créez « Huile de … — Filtrée » dans Produits —');
     document.getElementById('filtrationModalId').value = f ? f.id : '';
     document.querySelector('#filtrationModalOverlay .modalHead h2').textContent = f ? `Modifier — ${f.numero_lot}` : 'Nouvelle filtration';
     document.getElementById('filtrationDate').value = f ? f.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -4126,6 +4137,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null,
       sources,
       champs_perso: champsPerso,
+      melange: document.getElementById('filtrationMultiMatiere').checked,
     };
     if (!payload.date || !payload.produit_id || !payload.quantite_produite || !sources.length) {
       errEl.textContent = 'Date, produit, quantité produite et au moins une source valide sont requis.'; errEl.style.display = 'block'; return;
@@ -4284,7 +4296,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
     const produitFiniId = Number(document.getElementById('conditionnementProduit').value) || null;
     const produitFini = produitFiniId ? APP_DATA.produits.find(p => p.id === produitFiniId) : null;
-    const vracPreselectionne = produitFini ? (produitFini.produit_source_id || produitFini.id) : null;
+    // Huile filtrée de préférence (si elle a du stock), sinon le vrac de presse.
+    const vracId = produitFini ? (produitFini.produit_source_id || produitFini.id) : null;
+    const filtreeDispo = produitsDisponibles.find(p => p.produit_source_id === vracId && estHuileFiltree(p));
+    const vracPreselectionne = filtreeDispo ? filtreeDispo.id : vracId;
 
     const row = document.createElement('div');
     row.className = 'structRow';
@@ -4383,15 +4398,19 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   async function openConditionnementModal(id) {
     document.getElementById('conditionnementFormError').style.display = 'none';
-    populateSelect(document.getElementById('conditionnementProduit'), APP_DATA.produits, 'id', 'nom');
     [APP_DATA.lotsPresse, APP_DATA.lotsFiltration] = await Promise.all([apiFetch('/presse'), apiFetch('/filtration')]);
 
     const c = id ? APP_DATA.conditionnements.find(x => x.id === id) : null;
+    const conditionnees = produitsEtape(estHuileConditionnee, c?.produit_id);
+    populateSelect(document.getElementById('conditionnementProduit'), conditionnees, 'id', 'nom', conditionnees.length ? null : '— Aucune huile en flacon : créez-la dans Produits —');
     document.getElementById('conditionnementModalId').value = c ? c.id : '';
     document.querySelector('#conditionnementModalOverlay .modalHead h2').textContent = c ? `Modifier — ${c.numero_lot}` : 'Nouveau conditionnement';
     document.getElementById('conditionnementDate').value = c ? c.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
     document.getElementById('conditionnementProduit').value = c ? c.produit_id : document.getElementById('conditionnementProduit').value;
-    populateSelect(document.getElementById('conditionnementFormat'), REF_DATA.formats, 'id', 'nom', '— Vrac (sans format) —');
+    // Huile en flacon : formats en volume uniquement, du plus petit au plus grand (1000 ml affiché « 1 L »).
+    const formatsHuile = REF_DATA.formats.filter(f => Number(f.volume) > 0).sort((x, y) => x.volume - y.volume)
+      .map(f => ({ id: f.id, nom: Number(f.volume) >= 1000 ? `${Number(f.volume) / 1000} L` : f.nom }));
+    populateSelect(document.getElementById('conditionnementFormat'), formatsHuile, 'id', 'nom', '— Format du produit —');
     const produitCourant = APP_DATA.produits.find(p => p.id === Number(document.getElementById('conditionnementProduit').value));
     document.getElementById('conditionnementFormat').value = c ? (c.format_id || '') : (produitCourant?.format_id || '');
     document.getElementById('conditionnementFormat').disabled = !!c;

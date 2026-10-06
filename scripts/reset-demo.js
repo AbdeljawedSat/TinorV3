@@ -32,6 +32,7 @@ async function main() {
   await appliquerMisesAJour(conn);
   console.log(`Remise à zéro de ${cible}…`);
   await conn.query(sql);
+  await appliquerMisesAJour(conn); // une 2e fois : les mises à jour de données (ex. huiles filtrées) portent sur les données chargées
   const [[r]] = await conn.query(`SELECT (SELECT COUNT(*) FROM produits) AS produits, (SELECT COUNT(*) FROM lots) AS lots,
     (SELECT COUNT(*) FROM commandes) AS commandes, (SELECT COUNT(*) FROM factures) AS factures`);
   console.log(`✓ Données de démonstration chargées : ${r.produits} produits, ${r.lots} lots, ${r.commandes} commandes, ${r.factures} factures.`);
