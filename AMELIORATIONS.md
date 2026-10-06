@@ -301,3 +301,7 @@ insuffisant, sources inférieures au besoin, ou plusieurs huiles sans « Mélang
   une source déjà mélange se conditionne directement en flacon mélange.
 - Règle commune côté API : la « clé d'huile » (`cleHuile`) relie vrac, filtrée et flacon d'une même
   huile, mélanges compris.
+- **Filtration — produit obtenu par défaut** : il suit la source disponible (lot pressé le plus récent
+  avec du stock) au lieu du premier produit de la liste ; changer la 1re source fait suivre le
+  produit, et s'il manque la fiche « Huile de … — Filtrée », un lien « ＋ Créer » la crée (catégorie,
+  unité, prix, TVA et source repris du vrac) et la sélectionne.

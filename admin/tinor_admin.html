@@ -2186,6 +2186,7 @@
       <label class="formLbl">Produit obtenu</label>
       <select id="filtrationProduit" class="formInput"></select>
       <button type="button" class="lienEffacer" id="filtrationCreerMelange" style="display:none; padding:6px 0;">＋ Créer un autre produit mélange</button>
+      <button type="button" class="lienEffacer" id="filtrationCreerFiltree" style="display:none; padding:6px 0;"></button>
       <label class="formLbl">Filtre utilisé (optionnel)</label>
       <input type="text" id="filtrationFiltre" class="formInput">
       <label class="formLbl">Quantité déchet (optionnel)</label>
@@ -4077,7 +4078,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const multiMatiere = document.getElementById('filtrationMultiMatiere').checked;
     if (multiMatiere) return APP_DATA.lotsPresse.filter(disponible);
     const produit = APP_DATA.produits.find(p => p.id === Number(document.getElementById('filtrationProduit').value));
-    if (!produit) return APP_DATA.lotsPresse.filter(disponible);
+    if (!produit) return APP_DATA.lotsPresse.filter(disponible); // pas encore de produit : tous les lots, le produit suivra
     // Huile de sésame filtrée ← lots pressés d'huile de sésame ; huile mélange filtrée ← huile mélange pressée.
     const cle = cleHuileGen(produit.nom);
     return APP_DATA.lotsPresse.filter(p => cleHuileGen(p.produit_nom) === cle && disponible(p));
@@ -4097,7 +4098,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <button class="delField" type="button">✕</button>`;
     row.querySelector('.delField').addEventListener('click', () => { row.remove(); majCompositionFiltration(); });
     row.querySelector('.srcQte').addEventListener('input', majCompositionFiltration);
-    row.querySelector('.srcLotPresse').addEventListener('change', majCompositionFiltration);
+    row.querySelector('.srcLotPresse').addEventListener('change', () => {
+      if (row === document.querySelector('#filtrationSourcesRows .structRow')) synchroniserProduitFiltration();
+      majCompositionFiltration();
+    });
     return row;
   }
   // Reconstruit les lignes source depuis zéro (évite de gérer un
@@ -4136,6 +4140,41 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (melange && total) el.innerHTML = `<div class="barreCompo">${huiles.map((h, i) => `<i style="width:${h.pct}%; background:${COULEURS_COMPO[i % COULEURS_COMPO.length]}"></i>`).join('')}</div>
       <div class="txt">Composition : ${huiles.map(h => `${h.huile} ${h.pct} %`).join(' · ')} — enregistrée avec le lot (traçabilité)</div>`;
   }
+  // Le produit obtenu suit la source : lot pressé d'huile de sésame → « Huile de Sésame — Filtrée ».
+  const lotsPresseDisponibles = () => APP_DATA.lotsPresse.filter(l => Number(l.quantite_actuelle) > 0 && l.lot_statut === 'LIBERE');
+  const filtreeDe = cle => APP_DATA.produits.find(p => (estHuileFiltree(p) || estHuileMelangeFiltree(p)) && cleHuileGen(p.nom) === cle);
+  function synchroniserProduitFiltration() {
+    if (document.getElementById('filtrationModalId').value || document.getElementById('filtrationMultiMatiere').checked) return;
+    const lot = APP_DATA.lotsPresse.find(l => String(l.id) === document.querySelector('#filtrationSourcesRows .srcLotPresse')?.value);
+    const sel = document.getElementById('filtrationProduit');
+    const lien = document.getElementById('filtrationCreerFiltree');
+    lien.style.display = 'none';
+    if (!lot) return;
+    const produit = filtreeDe(cleHuileGen(lot.produit_nom));
+    if (produit) { sel.value = String(produit.id); return; }
+    // Pas encore de fiche « … — Filtrée » pour cette huile : on propose de la créer.
+    if (![...sel.options].some(o => o.value === '')) sel.insertAdjacentHTML('afterbegin', '<option value="">— Choisir —</option>');
+    sel.value = '';
+    lien.textContent = `＋ Créer « ${baseNomHuile(lot.produit_nom)} — Filtrée »`;
+    lien.dataset.lot = lot.id;
+    lien.style.display = 'inline-block';
+  }
+  document.getElementById('filtrationCreerFiltree').addEventListener('click', async () => {
+    const lot = APP_DATA.lotsPresse.find(l => String(l.id) === document.getElementById('filtrationCreerFiltree').dataset.lot);
+    const vrac = APP_DATA.produits.find(p => p.id === lot?.produit_id);
+    if (!vrac) return;
+    const nom = `${baseNomHuile(vrac.nom)} — Filtrée`;
+    if (!(await confirmer(`Créer le produit « ${nom} » ? Catégorie, unité, prix et TVA repris de « ${vrac.nom} ».`, { titre: 'Nouvelle huile filtrée', ok: 'Créer et choisir' }))) return;
+    try {
+      const cree = await apiFetch('/produits', { method: 'POST', body: JSON.stringify({
+        nom, categorie_id: vrac.categorie_id, unite_id: vrac.unite_id, type_article: 'PRODUIT_FABRIQUE', produit_source_id: vrac.id,
+        fabriquable: true, stockable: true, vendable: !!vrac.vendable, prix_vente: vrac.prix_vente, tva: vrac.tva, bio_eligible: !!vrac.bio_eligible }) });
+      APP_DATA.produits = await apiFetch('/produits');
+      remplirProduitsFiltration(null, cree.id);
+      synchroniserProduitFiltration();
+      notifier(`Produit « ${nom} » créé et choisi.`, 'succes');
+    } catch (err) { notifier(err.message, 'erreur'); }
+  });
   // Liste « Produit obtenu » : huiles filtrées d'une graine, ou huiles mélange si la case est cochée.
   function remplirProduitsFiltration(idCourant, idASelectionner) {
     const melange = document.getElementById('filtrationMultiMatiere').checked;
@@ -4144,6 +4183,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const sel = document.getElementById('filtrationProduit');
     populateSelect(sel, liste, 'id', 'nom', liste.length ? null : vide);
     if (idASelectionner && liste.some(p => p.id === idASelectionner)) sel.value = idASelectionner;
+    else if (!idCourant && !melange) {
+      // Par défaut : l'huile filtrée qui a des lots pressés disponibles (le plus récent d'abord).
+      const avecStock = lotsPresseDisponibles().map(l => filtreeDe(cleHuileGen(l.produit_nom))).find(Boolean);
+      if (avecStock) sel.value = String(avecStock.id);
+      else if (lotsPresseDisponibles().length) {
+        // Des lots pressés existent mais sans fiche « … — Filtrée » : on part de la source (lien de création proposé).
+        if (![...sel.options].some(o => o.value === '')) sel.insertAdjacentHTML('afterbegin', '<option value="">— Choisir —</option>');
+        sel.value = '';
+      }
+    }
     document.getElementById('filtrationCreerMelange').style.display = melange && !document.getElementById('filtrationModalId').value ? 'inline-block' : 'none';
   }
   // Création rapide d'un produit « Huile Mélange … » (presse : — Vrac, filtration : — Filtrée).
@@ -4177,7 +4226,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
   document.getElementById('filtrationMultiMatiere').addEventListener('change', () => {
     remplirProduitsFiltration();
-    if (!document.getElementById('filtrationModalId').value) resetFiltrationSourcesRows();
+    document.getElementById('filtrationCreerFiltree').style.display = 'none';
+    if (!document.getElementById('filtrationModalId').value) { resetFiltrationSourcesRows(); synchroniserProduitFiltration(); }
   });
 
   async function openFiltrationModal(id) {
@@ -4211,7 +4261,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       rowsWrap.innerHTML = `<div class="rowMeta" style="padding:6px 0;">Sources déjà consommées — non modifiables (voir le Registre des lots pour le détail de traçabilité).</div>`;
     } else {
       resetFiltrationSourcesRows();
+      synchroniserProduitFiltration();
     }
+    document.getElementById('filtrationCreerFiltree').style.display = f ? 'none' : document.getElementById('filtrationCreerFiltree').style.display;
     await afficherChampsPerso('filtrationChampsPerso', 'FILTRATION', f && f.champs_perso ? f.champs_perso : {});
     document.getElementById('filtrationModalOverlay').classList.add('open');
   }
