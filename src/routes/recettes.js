@@ -1,5 +1,16 @@
 const express = require('express');
 const { positif } = require('../services/regles');
+const { enTransaction } = require('../db/transaction');
+const { creerProduitFini } = require('../services/produitCode');
+
+// Nouveau produit fini saisi dans le formulaire de recette : { nom, categorie_id, unite_id, format_id?, prix_vente? }
+async function produitDeLaRecette(pool, body) {
+  const np = body.nouveau_produit;
+  if (!np || !np.nom) return body.produit_id || null;
+  if (!np.categorie_id || !np.unite_id) { const e = new Error('Catégorie et unité du nouveau produit sont requises.'); e.status = 400; throw e; }
+  if (np.prix_vente != null && np.prix_vente !== '') positif(np.prix_vente, 'Le prix de vente');
+  return creerProduitFini(pool, np);
+}
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -33,9 +44,13 @@ module.exports = function (pool) {
     res.json({ ...recRes.rows[0], ingredients: ingRes.rows });
   });
 
-  router.post('/', async (req, res, next) => {
+  router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const { produit_id, notes, ingredients } = req.body;
+      const { notes, ingredients } = req.body;
+      if (!Array.isArray(ingredients) || !ingredients.some(i => i && i.ingredient_id && i.quantite_par_unite)) {
+        return res.status(400).json({ error: 'Au moins un ingrédient est requis.' });
+      }
+      const produit_id = await produitDeLaRecette(pool, req.body);
       if (!produit_id) return res.status(400).json({ error: 'produit_id est requis.' });
       if (!Array.isArray(ingredients) || !ingredients.length) {
         return res.status(400).json({ error: 'Au moins un ingrédient est requis.' });
@@ -55,16 +70,28 @@ module.exports = function (pool) {
       }
       const result = await pool.query('SELECT * FROM recettes WHERE id = $1', [recetteId]);
       res.status(201).json(result.rows[0]);
-    } catch (err) { next(err); }
-  });
+    } catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); next(err); }
+  }));
 
   // Remplace entièrement la liste d'ingrédients (pas d'impact stock — une
   // recette est une définition, seul un ordre de production consomme du stock).
-  router.put('/:id', async (req, res, next) => {
+  router.put('/:id', enTransaction(pool, async (req, res, next, pool) => {
     try {
       const { notes, ingredients } = req.body;
-      const recRes = await pool.query('SELECT id FROM recettes WHERE id = $1', [req.params.id]);
+      const recRes = await pool.query('SELECT id, produit_id FROM recettes WHERE id = $1', [req.params.id]);
       if (!recRes.rows[0]) return res.status(404).json({ error: 'Recette introuvable.' });
+      // Changer le produit fini de la recette (produit existant ou nouveau produit).
+      const nouveauProduit = (req.body.nouveau_produit && req.body.nouveau_produit.nom) || (req.body.produit_id && Number(req.body.produit_id) !== recRes.rows[0].produit_id);
+      if (nouveauProduit) {
+        const utilise = await pool.query('SELECT COUNT(*) AS n FROM ordres_production WHERE recette_id = $1', [req.params.id]);
+        if (Number(utilise.rows[0].n) > 0) {
+          return res.status(409).json({ error: 'Cette recette a déjà servi à des productions : son produit fini ne change pas. Créez une nouvelle recette pour l\'autre produit.' });
+        }
+        const produitId = await produitDeLaRecette(pool, req.body);
+        const deja = await pool.query('SELECT id FROM recettes WHERE produit_id = $1 AND id <> $2', [produitId, req.params.id]);
+        if (deja.rows.length) return res.status(409).json({ error: 'Ce produit a déjà une recette — modifiez-la plutôt.' });
+        await pool.query('UPDATE recettes SET produit_id = $1 WHERE id = $2', [produitId, req.params.id]);
+      }
 
       await pool.query('UPDATE recettes SET notes = $1 WHERE id = $2', [notes || null, req.params.id]);
       if (Array.isArray(ingredients)) {
@@ -80,8 +107,8 @@ module.exports = function (pool) {
       }
       const result = await pool.query('SELECT * FROM recettes WHERE id = $1', [req.params.id]);
       res.json(result.rows[0]);
-    } catch (err) { next(err); }
-  });
+    } catch (err) { if (err.status) return res.status(err.status).json({ error: err.message }); next(err); }
+  }));
 
   router.delete('/:id', async (req, res) => {
     const used = await pool.query('SELECT COUNT(*) AS n FROM ordres_production WHERE recette_id = $1', [req.params.id]);

@@ -91,6 +91,20 @@ const { api, login, check } = require('./api');
     await refus(condM({ nouveau_produit: { nom: 'Huile de Sésame — Flacon 100ml' }, format_id: format100.id, qty: 1, sources: [{ lot_filtration_id: filt.data.id, quantite_utilisee: 0.1 }] }), 'nouveau produit au nom déjà existant');
   } else check(false, 'format 100 ml introuvable via /formats');
 
+  console.log('M3. Recette : nouveau produit fini et changement de produit');
+  const etiq = P('Étiquette adhésive'), catSavon = P('Savon Olive').categorie_id, uniteU = P('Savon Olive').unite_id;
+  const rec = await ok(post('/recettes', { nouveau_produit: { nom: 'Savon Test Recette — 100g', categorie_id: catSavon, unite_id: uniteU, prix_vente: 7.5 }, ingredients: [{ ingredient_id: etiq.id, quantite_par_unite: 1 }] }), 'recette créée avec un nouveau produit fini');
+  const prodRec = (await api('/produits')).data.find(p => p.id === rec.data.produit_id);
+  check(prodRec && prodRec.nom === 'Savon Test Recette — 100g' && Number(prodRec.prix_vente) === 7.5, `produit créé avec la recette : ${prodRec && prodRec.nom}`);
+  await refus(post('/recettes', { nouveau_produit: { nom: 'Savon Test Recette — 100g', categorie_id: catSavon, unite_id: uniteU }, ingredients: [{ ingredient_id: etiq.id, quantite_par_unite: 1 }] }), 'nouveau produit au nom déjà existant');
+  const nbAvant = (await api('/produits')).data.length;
+  await refus(post('/recettes', { nouveau_produit: { nom: 'Savon Sans Ingrédient', categorie_id: catSavon, unite_id: uniteU }, ingredients: [] }), 'recette sans ingrédient');
+  check((await api('/produits')).data.length === nbAvant, 'recette refusée : aucun produit créé');
+  const put = (body) => api(`/recettes/${rec.data.id}`, { method: 'PUT', body });
+  await ok(put({ nouveau_produit: { nom: 'Savon Test Recette — 150g', categorie_id: catSavon, unite_id: uniteU }, ingredients: [{ ingredient_id: etiq.id, quantite_par_unite: 1 }] }), 'produit de la recette changé pour un nouveau produit');
+  await ok(post('/ordres-production', { recette_id: rec.data.id, date: '2026-10-03', qty_produite: 2 }), 'production avec la recette');
+  await refus(put({ produit_id: prodRec.id, ingredients: [{ ingredient_id: etiq.id, quantite_par_unite: 1 }] }), 'changer le produit d\'une recette déjà utilisée');
+
   console.log('N. Commandes, paiements, remises');
   await refus(post('/commandes', { client_id: client.id, lignes: [{ produit_id: flaconS.id, qty: -5 }] }), 'quantité commandée négative (ferait entrer du stock)');
   await refus(post('/commandes', { client_id: client.id, lignes: [{ produit_id: flaconS.id, qty: 1.5 }] }), 'demi-flacon commandé');

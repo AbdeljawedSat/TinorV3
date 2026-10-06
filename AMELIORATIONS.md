@@ -305,3 +305,15 @@ insuffisant, sources inférieures au besoin, ou plusieurs huiles sans « Mélang
   avec du stock) au lieu du premier produit de la liste ; changer la 1re source fait suivre le
   produit, et s'il manque la fiche « Huile de … — Filtrée », un lien « ＋ Créer » la crée (catégorie,
   unité, prix, TVA et source repris du vrac) et la sélectionne.
+
+## Recettes : nouveau produit fini et changement de produit (V3.3)
+
+- Case **« Nouveau produit fini »** dans le formulaire de recette : nom, catégorie, unité, format
+  (optionnel), prix TTC (optionnel). Le produit est créé par l'API **avec** la recette, dans la même
+  transaction (rien n'est créé si la recette est refusée ; nom déjà existant refusé).
+- La liste « Produit fini » ne propose plus les matières premières, emballages, consommables ni les
+  produits qui ont déjà une recette.
+- **Changer le produit d'une recette** (produit existant ou nouveau) est possible tant qu'elle n'a
+  servi à aucune production ; ensuite le choix est verrouillé avec l'explication.
+- Fonction commune `creerProduitFini` (`src/services/produitCode.js`), aussi utilisée par le
+  conditionnement.

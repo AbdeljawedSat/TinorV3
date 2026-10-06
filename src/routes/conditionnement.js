@@ -3,6 +3,7 @@ const express = require('express');
 const { positif, entierSiUnite, arrondi, facteurConversion } = require('../services/regles');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 const { cleHuile, estNomMelange } = require('../services/graines');
+const { creerProduitFini } = require('../services/produitCode');
 
 // Lot générique (table lots) d'une source de conditionnement, avec son produit.
 async function lotDeSource(pool, s) {
@@ -15,17 +16,6 @@ async function lotDeSource(pool, s) {
      FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1`, [lotId])).rows[0] || null;
 }
 
-// Code produit à 2 chiffres suivant (même séquence que la création de produit).
-async function codeProduitSuivant(pool) {
-  const seq = await pool.query("UPDATE sequences SET `last_value` = `last_value` + 1 WHERE name = 'produit_code_seq'");
-  if (!seq.affectedRows) await pool.query("INSERT INTO sequences (name, `last_value`) VALUES ('produit_code_seq', 1)");
-  for (;;) {
-    const cur = (await pool.query("SELECT `last_value` AS v FROM sequences WHERE name = 'produit_code_seq'")).rows[0].v;
-    const code = String(cur).padStart(2, '0');
-    if (!(await pool.query('SELECT 1 FROM produits WHERE code = $1', [code])).rows.length) return code;
-    await pool.query("UPDATE sequences SET `last_value` = `last_value` + 1 WHERE name = 'produit_code_seq'");
-  }
-}
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -93,20 +83,14 @@ module.exports = function (pool) {
       if (produit_id === 'nouveau') {
         const nom = String(nouveau_produit.nom).trim();
         if (!format_id) return res.status(400).json({ error: 'Choisissez le format du nouveau produit fini.' });
-        if ((await pool.query('SELECT 1 FROM produits WHERE nom = $1', [nom])).rows.length) {
-          return res.status(400).json({ error: `Le produit « ${nom} » existe déjà : choisissez-le dans la liste.` });
-        }
         const src = await lotDeSource(pool, sources[0] || {});
         if (!src) return res.status(400).json({ error: 'Choisissez d\'abord la source (lot vrac ou filtré).' });
         if (melange && !estNomMelange(nom)) return res.status(400).json({ error: `Un produit de mélange se nomme « Huile Mélange … » : « ${nom} ».` });
         const unite = (await pool.query("SELECT id FROM unites WHERE code = 'unite'")).rows[0];
-        const sourceId = src.produit_source_id || src.produit_id; // une huile filtrée renvoie vers son vrac
-        const code = await codeProduitSuivant(pool);
-        const ins = await pool.query(
-          `INSERT INTO produits (code, nom, categorie_id, unite_id, format_id, type_article, produit_source_id, vendable, stockable, actif, bio_eligible, tva)
-           VALUES ($1,$2,$3,$4,$5,'PRODUIT_FABRIQUE',$6,TRUE,TRUE,TRUE,$7,$8)`,
-          [code, nom, src.categorie_id, unite ? unite.id : null, format_id, sourceId, !!src.bio_eligible, src.tva ?? 19]);
-        produit_id = ins.insertId;
+        try {
+          produit_id = await creerProduitFini(pool, { nom, categorie_id: src.categorie_id, unite_id: unite ? unite.id : null, format_id,
+            produit_source_id: src.produit_source_id || src.produit_id, tva: src.tva, bio_eligible: src.bio_eligible });
+        } catch (e) { if (e.status) return res.status(e.status).json({ error: e.message }); throw e; }
       }
       // Produit conditionné : unité, format et vrac d'origine attendus.
       const produitRes = await pool.query(
