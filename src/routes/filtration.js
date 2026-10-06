@@ -1,7 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { positif, positifOuZero, arrondi } = require('../services/regles');
-const { estHuileFiltree, estHuileMelangeFiltree, cleHuileVrac } = require('../services/graines');
+const { estHuileFiltree, estHuileMelangeFiltree, cleHuile } = require('../services/graines');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
 
 module.exports = function (pool) {
@@ -68,7 +68,7 @@ module.exports = function (pool) {
       if (melange && !estHuileMelangeFiltree(produitObtenu)) {
         return res.status(400).json({ error: `Pour un mélange, le produit obtenu doit être une huile mélange filtrée (ex. « Huile Mélange Sésame-Nigelle — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
       }
-      if (!melange && !estHuileFiltree(produitObtenu)) {
+      if (!melange && !estHuileFiltree(produitObtenu) && !estHuileMelangeFiltree(produitObtenu)) {
         return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile filtrée (ex. « Huile de Sésame — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
       }
       const huilesSources = new Set();
@@ -82,10 +82,11 @@ module.exports = function (pool) {
           'SELECT lp.lot_id, lp.numero_lot, p.nom FROM lots_presse lp LEFT JOIN produits p ON p.id = lp.produit_id WHERE lp.id = $1', [s.lot_presse_id]);
         if (!presseRes.rows[0]) return res.status(400).json({ error: `Lot de presse ${s.lot_presse_id} introuvable.` });
         // Huile de sésame filtrée = huile de sésame pressée (sauf mélange coché).
-        if (!melange && cleHuileVrac(presseRes.rows[0].nom) !== cleHuileVrac(produitObtenu.nom)) {
+        // (une huile mélange en vrac de presse donne la même huile mélange filtrée)
+        if (!melange && cleHuile(presseRes.rows[0].nom) !== cleHuile(produitObtenu.nom)) {
           return res.status(400).json({ error: `« ${produitObtenu.nom} » se filtre à partir de la même huile : le lot ${presseRes.rows[0].numero_lot} est « ${presseRes.rows[0].nom} ».` });
         }
-        huilesSources.add(cleHuileVrac(presseRes.rows[0].nom) || presseRes.rows[0].nom);
+        huilesSources.add(cleHuile(presseRes.rows[0].nom) || presseRes.rows[0].nom);
         const lotRes = await pool.query('SELECT quantite_actuelle FROM lots WHERE id = $1', [presseRes.rows[0].lot_id]);
         if (Number(lotRes.rows[0].quantite_actuelle) < Number(s.quantite_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot de presse ${s.lot_presse_id} (disponible ${lotRes.rows[0].quantite_actuelle}, demandé ${s.quantite_utilisee}).` });

@@ -47,4 +47,15 @@ function estHuileMelangeFiltree(produit) {
   return !!produit && produit.type_article !== 'MATIERE_PREMIERE' && !produit.format_id && estNomMelange(produit.nom) && nomFiltre(produit.nom);
 }
 
-module.exports = { normaliser, cleGraine, cleHuileVrac, estGraine, estHuileVrac, estHuileFiltree, estHuileMelangeFiltree };
+function estHuileMelangeVrac(produit) {
+  return !!produit && produit.type_article !== 'MATIERE_PREMIERE' && !produit.format_id && estNomMelange(produit.nom) && !nomFiltre(produit.nom);
+}
+// Clé d'une huile, quelle que soit l'étape (vrac, filtrée, flacon) :
+//   « Huile de Sésame — Flacon 30ml » → « sesame »
+//   « Huile Mélange Sésame-Nigelle — Vrac » → « melange sesame-nigelle »
+function cleHuile(nom) {
+  const m = normaliser(nom).match(/^huiles?\s*(?:de\s+|d')?(.+)$/);
+  return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+}
+
+module.exports = { normaliser, cleGraine, cleHuileVrac, cleHuile, estGraine, estHuileVrac, estHuileFiltree, estHuileMelangeFiltree, estHuileMelangeVrac, estNomMelange };

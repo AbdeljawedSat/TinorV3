@@ -275,3 +275,29 @@ Chaque étape ne propose que le produit qui lui correspond :
   `GET /api/filtration` et affichée sous le produit dans la liste des filtrations.
 - Conditionnement : un flacon de mélange (« Huile Mélange Sésame-Nigelle — Flacon 30ml », source =
   le mélange filtré) apparaît dans la liste et se remplit avec ce mélange.
+
+## Conditionnement repensé et mélange dans les 3 étapes (V3.3)
+
+**Formulaire de conditionnement en 4 étapes**, dans l'ordre du travail :
+1. **Source utilisée** : un seul choix « lot », groupé en *Huile filtrée* / *Huile en vrac* / *Vrac
+   acheté*, avec le stock disponible sous la ligne.
+2. **Format et quantité** : le format donne la contenance d'une unité (10 ml … 1 L, ou g) ; l'ancien
+   champ « volume/poids par unité » (doublon) est supprimé. L'huile nécessaire (unités × contenance)
+   est toujours calculée et reportée dans la source s'il n'y en a qu'une.
+3. **Produit fini** : liste filtrée sur la même huile et le même format ; case « Afficher tous les
+   produits finis » ; case « Nouveau produit fini » avec nom proposé (ex. « Huile de Sésame — Flacon
+   100ml »), créé par l'API dans la même transaction (format, unité pièce, source = le vrac, TVA et
+   catégorie reprises ; refusé si le nom existe déjà).
+4. **Consommables** proposés : flacon du même format + étiquette, quantité = nombre d'unités
+   (modifiables ; une modification manuelle n'est plus écrasée).
+Bilan en direct (pris sur chaque lot, reste, unités créées) ; enregistrement bloqué si stock
+insuffisant, sources inférieures au besoin, ou plusieurs huiles sans « Mélange ».
+
+**Case « Mélange » à chaque étape** (au moins deux huiles / graines différentes, composition en %) :
+- **Presse** : « Mélange de graines » → une seule huile « Huile Mélange … — Vrac » (création rapide du
+  produit) ; composition renvoyée par `GET /api/presse` (d'après les lots consommés).
+- **Filtration** : un vrac mélange se filtre aussi sans cocher, vers la même huile mélange filtrée.
+- **Conditionnement** : sources de plusieurs huiles (vrac ou filtrées) → « Huile Mélange … — Flacon » ;
+  une source déjà mélange se conditionne directement en flacon mélange.
+- Règle commune côté API : la « clé d'huile » (`cleHuile`) relie vrac, filtrée et flacon d'une même
+  huile, mélanges compris.

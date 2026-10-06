@@ -2,6 +2,30 @@ const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { positif, entierSiUnite, arrondi, facteurConversion } = require('../services/regles');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
+const { cleHuile, estNomMelange } = require('../services/graines');
+
+// Lot générique (table lots) d'une source de conditionnement, avec son produit.
+async function lotDeSource(pool, s) {
+  const lotId = s.lot_id || (s.lot_presse_id
+    ? (await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id])).rows[0]?.lot_id
+    : (await pool.query('SELECT lot_id FROM lots_filtration WHERE id = $1', [s.lot_filtration_id])).rows[0]?.lot_id);
+  if (!lotId) return null;
+  return (await pool.query(
+    `SELECT l.id, l.numero_lot, l.produit_id, p.nom, p.produit_source_id, p.categorie_id, p.tva, p.bio_eligible
+     FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1`, [lotId])).rows[0] || null;
+}
+
+// Code produit à 2 chiffres suivant (même séquence que la création de produit).
+async function codeProduitSuivant(pool) {
+  const seq = await pool.query("UPDATE sequences SET `last_value` = `last_value` + 1 WHERE name = 'produit_code_seq'");
+  if (!seq.affectedRows) await pool.query("INSERT INTO sequences (name, `last_value`) VALUES ('produit_code_seq', 1)");
+  for (;;) {
+    const cur = (await pool.query("SELECT `last_value` AS v FROM sequences WHERE name = 'produit_code_seq'")).rows[0].v;
+    const code = String(cur).padStart(2, '0');
+    if (!(await pool.query('SELECT 1 FROM produits WHERE code = $1', [code])).rows.length) return code;
+    await pool.query("UPDATE sequences SET `last_value` = `last_value` + 1 WHERE name = 'produit_code_seq'");
+  }
+}
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -56,12 +80,33 @@ module.exports = function (pool) {
   // traçabilité que le vrac (lot_origines + stock_mouvements).
   router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const { date, produit_id, format_id, qty, note, employe_id, sources, consommables, champs_perso } = req.body;
+      const { date, format_id, qty, note, employe_id, sources, consommables, champs_perso, melange, nouveau_produit } = req.body;
+      let { produit_id } = req.body;
+      if (nouveau_produit && nouveau_produit.nom && !produit_id) produit_id = 'nouveau';
       if (!date || !produit_id || !qty) {
         return res.status(400).json({ error: 'date, produit_id et qty sont requis.' });
       }
       if (!Array.isArray(sources) || !sources.length) {
         return res.status(400).json({ error: 'Au moins une source (lot_presse_id, lot_filtration_id ou lot_id + quantite_utilisee) est requise.' });
+      }
+      // Nouveau produit fini créé ici (dans la même transaction : rien n'est créé si l'opération échoue).
+      if (produit_id === 'nouveau') {
+        const nom = String(nouveau_produit.nom).trim();
+        if (!format_id) return res.status(400).json({ error: 'Choisissez le format du nouveau produit fini.' });
+        if ((await pool.query('SELECT 1 FROM produits WHERE nom = $1', [nom])).rows.length) {
+          return res.status(400).json({ error: `Le produit « ${nom} » existe déjà : choisissez-le dans la liste.` });
+        }
+        const src = await lotDeSource(pool, sources[0] || {});
+        if (!src) return res.status(400).json({ error: 'Choisissez d\'abord la source (lot vrac ou filtré).' });
+        if (melange && !estNomMelange(nom)) return res.status(400).json({ error: `Un produit de mélange se nomme « Huile Mélange … » : « ${nom} ».` });
+        const unite = (await pool.query("SELECT id FROM unites WHERE code = 'unite'")).rows[0];
+        const sourceId = src.produit_source_id || src.produit_id; // une huile filtrée renvoie vers son vrac
+        const code = await codeProduitSuivant(pool);
+        const ins = await pool.query(
+          `INSERT INTO produits (code, nom, categorie_id, unite_id, format_id, type_article, produit_source_id, vendable, stockable, actif, bio_eligible, tva)
+           VALUES ($1,$2,$3,$4,$5,'PRODUIT_FABRIQUE',$6,TRUE,TRUE,TRUE,$7,$8)`,
+          [code, nom, src.categorie_id, unite ? unite.id : null, format_id, sourceId, !!src.bio_eligible, src.tva ?? 19]);
+        produit_id = ins.insertId;
       }
       // Produit conditionné : unité, format et vrac d'origine attendus.
       const produitRes = await pool.query(
@@ -76,6 +121,9 @@ module.exports = function (pool) {
          WHERE p.id = $1`, [produit_id, format_id || null]);
       const produit = produitRes.rows[0];
       if (!produit) return res.status(400).json({ error: 'Produit conditionné introuvable.' });
+      if (melange && !estNomMelange(produit.nom)) {
+        return res.status(400).json({ error: `Pour un mélange, le produit fini doit être une huile mélange (ex. « Huile Mélange Sésame-Nigelle — Flacon 30ml ») : « ${produit.nom} » ne l'est pas.` });
+      }
       if (!produit.format_id && !format_id) {
         return res.status(400).json({ error: `Le conditionnement donne un produit en flacon (10 ml, 30 ml, 100 ml, 1 L…) : « ${produit.nom} » n'a pas de format.` });
       }
@@ -83,6 +131,7 @@ module.exports = function (pool) {
       entierSiUnite(qty_, produit.unite, 'La quantité conditionnée');
 
       let quantiteSourceTotale = 0;
+      const clesSources = new Set();
       for (const s of sources) {
         const types = [s.lot_presse_id, s.lot_filtration_id, s.lot_id].filter(Boolean);
         if (types.length !== 1) {
@@ -108,22 +157,24 @@ module.exports = function (pool) {
           if (!lotRes.rows[0]) return res.status(400).json({ error: `Lot ${s.lot_id} introuvable.` });
           quantiteDisponible = lotRes.rows[0].quantite_actuelle;
         }
-        // La source doit être le vrac de CE produit (pas de flacon de sésame rempli de nigelle).
-        if (produit.produit_source_id) {
-          const lotSourceId = s.lot_id || (s.lot_presse_id
-            ? (await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id])).rows[0].lot_id
-            : (await pool.query('SELECT lot_id FROM lots_filtration WHERE id = $1', [s.lot_filtration_id])).rows[0].lot_id);
-          const src = (await pool.query(
-            'SELECT l.numero_lot, l.produit_id, p.nom, p.produit_source_id FROM lots l JOIN produits p ON p.id = l.produit_id WHERE l.id = $1', [lotSourceId])).rows[0];
-          // Le vrac lui-même, ou sa version filtrée (« Huile de Sésame — Filtrée » a pour source le vrac).
-          if (src.produit_id !== produit.produit_source_id && src.produit_source_id !== produit.produit_source_id) {
-            return res.status(400).json({ error: `« ${produit.nom} » se conditionne à partir de « ${produit.vrac_nom} » (ou de sa version filtrée) : le lot ${src.numero_lot} est « ${src.nom} ».` });
-          }
+        // La source doit être l'huile de CE produit, en vrac ou filtrée (pas de flacon de sésame
+        // rempli de nigelle) ; en mélange, plusieurs huiles différentes sont attendues.
+        const src = await lotDeSource(pool, s);
+        if (!src) return res.status(400).json({ error: 'Lot source introuvable.' });
+        clesSources.add(cleHuile(src.nom) || `#${src.produit_id}`);
+        const memeHuile = src.produit_id === produit.produit_source_id || (produit.produit_source_id && src.produit_source_id === produit.produit_source_id)
+          || (!!cleHuile(src.nom) && cleHuile(src.nom) === cleHuile(produit.nom));
+        if (!melange && (produit.produit_source_id || cleHuile(produit.nom)) && !memeHuile) {
+          return res.status(400).json({ error: `« ${produit.nom} » se conditionne à partir de « ${produit.vrac_nom || 'la même huile'} » (ou de sa version filtrée) : le lot ${src.numero_lot} est « ${src.nom} ».` });
         }
         if (Number(quantiteDisponible) < Number(s.quantite_utilisee)) {
           return res.status(409).json({ error: `Stock insuffisant sur cette source (disponible ${quantiteDisponible}, demandé ${s.quantite_utilisee}).` });
         }
         quantiteSourceTotale += Number(s.quantite_utilisee);
+      }
+
+      if (melange && clesSources.size < 2) {
+        return res.status(400).json({ error: 'Un mélange demande au moins deux huiles différentes en source (ex. sésame et nigelle).' });
       }
 
       // Bilan : le contenu conditionné (nombre × format) ne peut pas dépasser le vrac utilisé.

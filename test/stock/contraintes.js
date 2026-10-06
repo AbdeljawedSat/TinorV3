@@ -62,6 +62,35 @@ const { api, login, check } = require('./api');
   await refus(conditionner(huileS, 1, 1), 'conditionnement en huile vrac (sans flacon)');
   await ok(conditionner(flaconS, 100, 3), '100 × 30 ml = 3 L avec 3 L de vrac');
 
+  console.log('M2. Mélange dans les 3 étapes + nouveau produit fini au conditionnement');
+  const [gs, gn] = await recevoir([{ produit_id: graineS.id, quantite: 50 }, { produit_id: graineN.id, quantite: 50 }]);
+  const cat = huileS.categorie_id, lit = huileS.unite_id;
+  const vracM = (await post('/produits', { nom: 'Huile Mélange Sésame-Nigelle — Vrac', categorie_id: cat, unite_id: lit, type_article: 'PRODUIT_FABRIQUE', fabriquable: true, stockable: true })).data;
+  const presseM = (srcs, sorties) => post('/presse', { date: '2026-10-03', melange: true, sources: srcs, sorties });
+  await refus(presseM([{ lot_id: gs, quantite: 10 }], [{ produit_id: vracM.id, quantite_produite: 3 }]), 'presse mélange avec une seule graine');
+  await refus(presseM([{ lot_id: gs, quantite: 10 }, { lot_id: gn, quantite: 10 }], [{ produit_id: huileS.id, quantite_produite: 3 }]), 'presse mélange vers « Huile de Sésame — Vrac »');
+  await refus(presseM([{ lot_id: gs, quantite: 10 }, { lot_id: gn, quantite: 10 }], [{ produit_id: vracM.id, quantite_produite: 15, quantite_tourteau: 6 }]), 'presse mélange : 15 + 6 > 20 graines');
+  const pM = await ok(presseM([{ lot_id: gs, quantite: 30 }, { lot_id: gn, quantite: 20 }], [{ produit_id: vracM.id, quantite_produite: 15, quantite_tourteau: 30 }]), 'sésame 30 + nigelle 20 → 15 L de mélange vrac');
+  const compoP = (await api('/presse')).data.find(l => l.id === pM.data.id).composition;
+  check(compoP.length === 2 && compoP.some(c => c.pourcentage === 60), `composition du pressage : ${compoP.map(c => c.matiere + ' ' + c.pourcentage + ' %').join(', ')}`);
+  const filtM2 = await ok(post('/filtration', { date: '2026-10-03', produit_id: prodMelange.id, quantite_produite: 9, quantite_dechet: 1, sources: [{ lot_presse_id: pM.data.id, quantite_utilisee: 10 }] }),
+    'mélange vrac → mélange filtré sans cocher (même huile mélange)');
+  const condM = (body) => post('/conditionnement', { date: '2026-10-03', ...body });
+  await refus(condM({ produit_id: flaconS.id, qty: 10, sources: [{ lot_filtration_id: filtM2.data.id, quantite_utilisee: 0.3 }] }), 'flacon de sésame rempli avec le mélange');
+  await ok(condM({ produit_id: flaconM.id, qty: 10, sources: [{ lot_filtration_id: filtM2.data.id, quantite_utilisee: 0.3 }] }), 'mélange filtré → flacon mélange (sans cocher)');
+  await refus(condM({ melange: true, produit_id: flaconS.id, qty: 10, sources: [{ lot_presse_id: lotPresseS.id, quantite_utilisee: 0.2 }, { lot_presse_id: lotPresseN.id, quantite_utilisee: 0.1 }] }), 'mélange au conditionnement vers un flacon de sésame');
+  await refus(condM({ melange: true, produit_id: flaconM.id, qty: 10, sources: [{ lot_presse_id: lotPresseS.id, quantite_utilisee: 0.3 }] }), 'mélange au conditionnement avec une seule huile');
+  await ok(condM({ melange: true, produit_id: flaconM.id, qty: 10, sources: [{ lot_presse_id: lotPresseS.id, quantite_utilisee: 0.2 }, { lot_presse_id: lotPresseN.id, quantite_utilisee: 0.1 }] }), 'sésame vrac + nigelle vrac → 10 flacons mélange');
+  const f100 = (await api('/formats').catch(() => null))?.data;
+  const format100 = Array.isArray(f100) ? f100.find(f => Number(f.volume) === 100) : null;
+  if (format100) {
+    await refus(condM({ nouveau_produit: { nom: 'Huile de Sésame — Flacon 100ml' }, qty: 5, sources: [{ lot_filtration_id: filt.data.id, quantite_utilisee: 0.5 }] }), 'nouveau produit fini sans format');
+    const nv = await ok(condM({ nouveau_produit: { nom: 'Huile de Sésame — Flacon 100ml' }, format_id: format100.id, qty: 5, sources: [{ lot_filtration_id: filt.data.id, quantite_utilisee: 0.5 }] }), 'nouveau produit fini « Huile de Sésame — Flacon 100ml » créé au conditionnement');
+    const cree = (await api('/produits')).data.find(p => p.id === nv.data.produit_id);
+    check(cree && cree.format_id === format100.id && cree.produit_source_id === huileS.id, `fiche créée : format 100 ml, source « Huile de Sésame — Vrac » (${cree && cree.nom})`);
+    await refus(condM({ nouveau_produit: { nom: 'Huile de Sésame — Flacon 100ml' }, format_id: format100.id, qty: 1, sources: [{ lot_filtration_id: filt.data.id, quantite_utilisee: 0.1 }] }), 'nouveau produit au nom déjà existant');
+  } else check(false, 'format 100 ml introuvable via /formats');
+
   console.log('N. Commandes, paiements, remises');
   await refus(post('/commandes', { client_id: client.id, lignes: [{ produit_id: flaconS.id, qty: -5 }] }), 'quantité commandée négative (ferait entrer du stock)');
   await refus(post('/commandes', { client_id: client.id, lignes: [{ produit_id: flaconS.id, qty: 1.5 }] }), 'demi-flacon commandé');

@@ -1,8 +1,9 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { nextNumero, createLot, consumeLot, recordEntree } = require('../services/lotService');
-const { cleGraine, cleHuileVrac, estGraine, estHuileVrac } = require('../services/graines');
+const { cleGraine, cleHuileVrac, estGraine, estHuileVrac, estHuileMelangeVrac } = require('../services/graines');
 const { positif, positifOuZero, arrondi } = require('../services/regles');
+const { compositions } = require('../services/composition');
 const vide = v => v === undefined || v === null || v === '';
 
 module.exports = function (pool) {
@@ -20,7 +21,8 @@ module.exports = function (pool) {
       LEFT JOIN lots l ON l.id = lp.lot_id
       ORDER BY lp.date DESC, lp.id DESC
     `);
-    res.json(result.rows);
+    const compo = await compositions(pool, result.rows.map(r => r.lot_id));
+    res.json(result.rows.map(r => ({ ...r, composition: compo.get(String(r.lot_id)) || [] })));
   });
 
   router.get('/:id', async (req, res) => {
@@ -46,7 +48,7 @@ module.exports = function (pool) {
   // Bilan, par graine et donc au total : graines utilisées ≥ huile + tourteau.
   router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const { date, reception_id, notes, employe_id, champs_perso } = req.body;
+      const { date, reception_id, notes, employe_id, champs_perso, melange } = req.body;
       let { sources, sorties } = req.body;
       let matiereSansSource = null; // ancien format sans lot : bilan sur la quantité déclarée
       if (!Array.isArray(sorties)) {
@@ -94,10 +96,13 @@ module.exports = function (pool) {
       for (const so of sorties) {
         const produit = (await pool.query('SELECT id, nom, type_article, format_id FROM produits WHERE id = $1', [so.produit_id])).rows[0];
         if (!produit) return res.status(400).json({ error: 'Produit obtenu introuvable.' });
-        if (!estHuileVrac(produit)) {
+        if (melange && !estHuileMelangeVrac(produit)) {
+          return res.status(400).json({ error: `Pour un mélange de graines, le produit obtenu doit être une huile mélange en vrac (ex. « Huile Mélange Sésame-Nigelle — Vrac ») : « ${produit.nom} » ne l'est pas.` });
+        }
+        if (!melange && !estHuileVrac(produit)) {
           return res.status(400).json({ error: `Le produit obtenu d'un pressage doit être une huile en vrac (ex. « Huile de Sésame — Vrac ») : « ${produit.nom} » ne l'est pas.` });
         }
-        const cle = cleHuileVrac(produit.nom);
+        const cle = melange ? '__melange' : cleHuileVrac(produit.nom);
         if (huiles.some(h => h.cle === cle)) return res.status(400).json({ error: `Une seule huile obtenue par graine : « ${produit.nom} » est en double.` });
         huiles.push({
           cle, produit,
@@ -106,8 +111,17 @@ module.exports = function (pool) {
         });
       }
 
+      // ---- Mélange : toutes les graines (au moins deux sortes) donnent UNE huile mélange.
+      if (melange) {
+        if (graines.size < 2) return res.status(400).json({ error: 'Un mélange de graines demande au moins deux graines différentes (ex. sésame et nigelle).' });
+        if (huiles.length !== 1) return res.status(400).json({ error: 'Un mélange de graines donne une seule huile mélange.' });
+        const tout = { nom: 'mélange', total: 0, lots: [] };
+        for (const g of graines.values()) { tout.total = arrondi(tout.total + g.total); tout.lots.push(...g.lots); }
+        graines.clear(); graines.set('__melange', tout);
+      }
+
       // ---- Correspondance graines ↔ huiles et bilan matière
-      if (sources.length) {
+      if (sources.length && !melange) {
         for (const h of huiles) {
           if (!graines.has(h.cle)) {
             return res.status(400).json({ error: `« ${h.produit.nom} » ne correspond à aucun des lots de graines saisis : choisissez l'huile en vrac de la même graine.` });

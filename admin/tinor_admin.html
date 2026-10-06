@@ -617,6 +617,17 @@
   #filtrationComposition{margin-top:8px;} #filtrationComposition .barreCompo{display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--line);}
   #filtrationComposition .barreCompo i{display:block;} #filtrationComposition .txt{font-size:11.5px; color:var(--text-soft); margin-top:3px;}
   .compoListe{font-size:11px; color:var(--text-soft);}
+  /* ---------- Conditionnement en 4 étapes (V3.3) ---------- */
+  .etapeCond{display:flex; align-items:center; gap:8px; margin:18px 0 6px; font-weight:700; font-size:13.5px; color:var(--text);}
+  .etapeCond .n{width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:12px; flex:none;}
+  .etapeCond small{font-weight:500; color:var(--text-soft);}
+  .condAuto{margin-top:8px; background:#FAF0DC; border:1px solid #E9D3A6; border-radius:8px; padding:8px 10px; font-size:12.5px; color:#6E4C10;}
+  .condBilan{margin-top:12px; border-radius:8px; padding:8px 10px; font-size:12.5px; background:var(--good-bg); color:var(--good); border:1px solid #BFD6C2;}
+  .condBilan.ko{background:var(--danger-bg); color:var(--danger); border-color:#E7C4BE;}
+  .srcCond{display:grid; grid-template-columns:1fr 92px 44px 30px; gap:8px; align-items:center; margin-bottom:6px;}
+  .srcCond .delField{background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:13px; border-radius:6px; padding:4px;}
+  .srcCond .delField:hover{background:var(--danger-bg); color:var(--danger);}
+  .srcCond .dispo{font-size:11px; color:var(--text-soft); grid-column:1 / -1; margin-top:-4px;}
   /* ---------- Style Rivage (V3.3) : menu blanc en accordéon, bandeaux mer, cartes flottantes ---------- */
   body{--accent-fonce:#0E3A4A; --accent-vif:#5FA9D6; --sand:#F3F6F6;}
   body[data-rubrique="ventes"]{--accent-fonce:#0F3A4A; --accent-vif:#5FA9D6;}
@@ -2130,11 +2141,13 @@
       <label class="formLbl">Date</label>
       <input type="date" id="presseDate" class="formInput">
       <div id="presseSaisie">
+        <label class="chkLbl melangeCase"><input type="checkbox" id="presseMelange"> <b>Mélange de graines</b> <span class="rowMeta">(sésame + nigelle pressés ensemble → une huile mélange)</span></label>
         <label class="formLbl">Lots de graines consommés</label>
         <div id="presseSources"></div>
         <button type="button" class="btnGhost" id="presseAjoutSource" style="margin:2px 0 12px; font-size:12px;">＋ Ajouter un lot de graines</button>
-        <label class="formLbl">Huiles en vrac obtenues (une par graine)</label>
-        <div id="presseSorties"></div>
+        <label class="formLbl" id="presseSortiesTitre">Huiles en vrac obtenues (une par graine)</label>
+ <div id="presseSorties"></div>
+        <button type="button" class="lienEffacer" id="presseCreerMelange" style="display:none; padding:4px 0;">＋ Créer un produit « Huile Mélange … — Vrac »</button>
         <div id="presseBilan" class="rowMeta" style="font-size:11.5px; margin:8px 0 12px;"></div>
       </div>
       <div id="presseResume" class="rowMeta" style="display:none; font-size:12.5px; margin:4px 0 12px; line-height:1.6;"></div>
@@ -2197,7 +2210,7 @@
 <div class="modalOverlay" id="conditionnementModalOverlay">
   <div class="modal" style="max-width:520px;">
     <div class="modalHead">
-      <div><h2>Nouveau conditionnement</h2><div class="sub">Vrac (presse ou filtration) → produit fini</div></div>
+      <div><h2>Nouveau conditionnement</h2><div class="sub">Huile en vrac ou filtrée → huile en flacon</div></div>
       <button class="modalClose" id="conditionnementModalCloseBtn">×</button>
     </div>
     <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
@@ -2206,33 +2219,35 @@
       <input type="hidden" id="conditionnementModalId">
       <label class="formLbl">Date</label>
       <input type="date" id="conditionnementDate" class="formInput">
-      <label class="formLbl">Produit fini (ex: Sésame 30ml)</label>
-      <select id="conditionnementProduit" class="formInput"></select>
-      <label class="formLbl">Format (contenance de chaque unité)</label>
-      <select id="conditionnementFormat" class="formInput"></select>
-      <div class="rowMeta" style="margin:-4px 0 12px;">Pré-rempli depuis le produit choisi, modifiable si cette opération utilise un autre contenant.</div>
-      <label class="formLbl">Quantité conditionnée (unités)</label>
-      <input type="number" step="1" id="conditionnementQty" class="formInput">
 
-      <label class="formLbl">Volume/poids par unité (optionnel — calcule le vrac nécessaire)</label>
-      <div style="display:grid; grid-template-columns:1fr 100px; gap:8px;">
-        <input type="number" step="0.001" id="conditionnementVolumeUnitaire" class="formInput" placeholder="ex: 30">
-        <select id="conditionnementUniteVolume" class="formInput">
-          <option value="ml">ml</option>
-          <option value="l">L</option>
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-        </select>
+      <div class="etapeCond" data-saisie><span class="n">1</span>Source utilisée <small>(huile en vrac ou filtrée)</small></div>
+      <label class="chkLbl melangeCase" data-saisie><input type="checkbox" id="conditionnementMelange"> <b>Mélange de plusieurs huiles</b> <span class="rowMeta">(sésame + nigelle…)</span></label>
+      <div id="conditionnementSourcesRows" style="margin-top:8px;"></div>
+      <button class="btnGhost" id="conditionnementAddSourceBtn" style="margin-top:2px;">＋ Ajouter une source</button>
+
+      <div class="etapeCond"><span class="n">2</span>Format et quantité</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div><label class="formLbl" style="margin-top:0;">Format (contenance d'une unité)</label><select id="conditionnementFormat" class="formInput"></select></div>
+        <div><label class="formLbl" style="margin-top:0;">Nombre d'unités</label><input type="number" step="1" min="1" id="conditionnementQty" class="formInput"></div>
       </div>
-      <div id="conditionnementVolumeCalcule" class="structLocked" style="display:none; margin-top:8px;"></div>
+      <div id="conditionnementCalcul" class="condAuto" style="display:none;"></div>
 
-      <label class="formLbl" style="margin-top:16px; font-weight:600;">Sources (vrac utilisé)</label>
-      <div id="conditionnementSourcesRows"></div>
-      <button class="btnGhost" id="conditionnementAddSourceBtn" style="margin-top:6px;">＋ Ajouter une source</button>
+      <div class="etapeCond"><span class="n">3</span>Produit fini</div>
+      <select id="conditionnementProduit" class="formInput"></select>
+      <div id="conditionnementNouveauBloc" style="display:none;">
+        <label class="formLbl" style="margin-top:0;">Nom du nouveau produit fini (proposé, modifiable)</label>
+        <input type="text" id="conditionnementNouveauNom" class="formInput">
+        <div class="rowMeta" style="font-size:11.5px; margin-top:3px;">Créé à l'enregistrement : format choisi, unité « pièce », source = l'huile utilisée. Le prix se règle ensuite dans Produits.</div>
+      </div>
+      <div data-saisie style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        <label class="chkLbl melangeCase" style="margin:0;"><input type="checkbox" id="conditionnementTous"> Afficher tous les produits finis</label>
+        <label class="chkLbl melangeCase" style="margin:0;"><input type="checkbox" id="conditionnementNouveau"> Nouveau produit fini</label>
+      </div>
 
-      <label class="formLbl" style="margin-top:16px; font-weight:600;">Consommables utilisés (flacons, bouchons, étiquettes...)</label>
+      <div class="etapeCond" data-saisie><span class="n">4</span>Consommables <small>(proposés automatiquement, modifiables)</small></div>
       <div id="conditionnementConsommablesRows"></div>
-      <button class="btnGhost" id="conditionnementAddConsommableBtn" style="margin-top:6px;">＋ Ajouter un consommable</button>
+      <button class="btnGhost" id="conditionnementAddConsommableBtn" style="margin-top:2px;">＋ Ajouter un consommable</button>
+      <div id="conditionnementBilan" class="condBilan" style="display:none;"></div>
 
       <label class="formLbl">Note</label>
       <input type="text" id="conditionnementNote" class="formInput">
@@ -3790,6 +3805,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   const estHuileVrac = p => huileSansFormat(p) && !nomFiltre(p.nom);
   const estHuileFiltree = p => huileSansFormat(p) && nomFiltre(p.nom) && !/\bmelange\b/.test(normaliserNomGraine(p.nom));
   const estNomMelange = nom => /^huiles?\b/.test(normaliserNomGraine(nom)) && /\bmelange\b/.test(normaliserNomGraine(nom));
+  const estHuileMelangeVrac = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && estNomMelange(p.nom) && !nomFiltre(p.nom);
   const estHuileMelangeFiltree = p => !!p && p.type_article !== 'MATIERE_PREMIERE' && !p.format_id && estNomMelange(p.nom) && nomFiltre(p.nom);
   const estHuileConditionnee = p => !!p && !!p.format_id && (!!cleHuileVrac(p.nom) || estNomMelange(p.nom)) && !['MATIERE_PREMIERE', 'EMBALLAGE', 'CONSOMMABLE'].includes(p.type_article);
   // Liste d'un formulaire : les produits de l'étape, plus celui de la fiche ouverte (ancienne saisie).
@@ -3842,13 +3858,23 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     });
     const groupes = new Map();
     sources.forEach(l => { const lot = lotGraine(l.lot_id); if (!lot) return; const cle = cleGraine(lot.produit_nom); if (!groupes.has(cle)) groupes.set(cle, lot.produit_nom); });
+    const melange = document.getElementById('presseMelange').checked;
+    document.getElementById('presseCreerMelange').style.display = melange ? 'inline-block' : 'none';
+    document.getElementById('presseSortiesTitre').textContent = melange ? 'Huile mélange obtenue (une seule pour toutes les graines)' : 'Huiles en vrac obtenues (une par graine)';
     const huilesVrac = APP_DATA.produits.filter(estHuileVrac);
-    const lignes = groupes.size ? [...groupes].map(([cle, nomGraine]) => ({ cle, nomGraine, huiles: huilesVrac.filter(h => cleHuileVrac(h.nom) === cle) }))
-                                : [{ cle: '*', nomGraine: null, huiles: huilesVrac }];
+    // Mélange : toutes les graines → UNE huile « Huile Mélange … — Vrac ».
+    const lignes = melange ? [{ cle: '__melange', nomGraine: null, melange: true, huiles: APP_DATA.produits.filter(estHuileMelangeVrac) }]
+      : groupes.size ? [...groupes].map(([cle, nomGraine]) => ({ cle, nomGraine, huiles: huilesVrac.filter(h => cleHuileVrac(h.nom) === cle) }))
+                     : [{ cle: '*', nomGraine: null, huiles: huilesVrac }];
     const entete = lignes.some(l => l.huiles.length)
       ? `<div class="rowMeta" style="display:flex; gap:8px; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; padding:0 11px 3px;">
            <span style="flex:1;">Huile en vrac</span><span style="width:95px;">Huile</span><span style="width:95px;">Tourteau</span></div>` : '';
     zone.innerHTML = entete + lignes.map(l => {
+      if (!l.huiles.length && l.melange) {
+        return `<div class="presseSortie" data-cle="${l.cle}" style="color:var(--danger); font-size:11.5px; margin-bottom:4px;">
+          Aucune huile mélange en vrac au catalogue : cliquez « Créer un produit Huile Mélange … — Vrac » ci-dessous.
+          <select style="display:none"></select><input class="qHuile" type="hidden"><input class="qTourteau" type="hidden"></div>`;
+      }
       if (!l.huiles.length) {
         return `<div class="presseSortie" data-cle="${l.cle}" style="color:var(--danger); font-size:11.5px; margin-bottom:8px;">
           Aucune huile en vrac pour « ${l.nomGraine} » au catalogue : créez d'abord « Huile de ${l.nomGraine.replace(/^graines?\s*(de\s+|d')/i, '')} — Vrac » (Produits).
@@ -3880,14 +3906,16 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const zone = document.getElementById('presseBilan');
     zone.style.color = '';
     const sources = lignesSourcesPresse();
-    const parGraine = new Map();
+    const parGraine = new Map(), compoGraines = new Map();
     for (const s of sources) {
       if (!s.lot_id) continue;
       if (s.quantite != null && !(s.quantite > 0)) return (zone.textContent = '', 'Chaque quantité de graines doit être supérieure à 0.');
       const lot = lotGraine(s.lot_id);
       if (s.quantite > Number(lot.quantite_actuelle)) return (zone.textContent = '', `Le lot ${lot.numero_lot} ne contient que ${Number(lot.quantite_actuelle)}.`);
-      const cle = cleGraine(lot.produit_nom);
+      const cle = document.getElementById('presseMelange').checked ? '__melange' : cleGraine(lot.produit_nom);
       parGraine.set(cle, arrondiQte((parGraine.get(cle) || 0) + (s.quantite || 0)));
+      const nomG = lot.produit_nom.replace(/^graines?\s*(de\s+|d')/i, '');
+      compoGraines.set(nomG, arrondiQte((compoGraines.get(nomG) || 0) + (s.quantite || 0)));
     }
     let totalGraines = 0, totalSorties = 0, erreur = null;
     document.querySelectorAll('#presseSorties .presseSortie').forEach(row => {
@@ -3915,9 +3943,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     } else {
       zone.textContent = 'Règle : graines utilisées ≥ huile + tourteau.';
     }
+    if (document.getElementById('presseMelange').checked) {
+      const total = [...compoGraines.values()].reduce((a, b) => a + b, 0);
+      if (compoGraines.size < 2) erreur = erreur || 'Un mélange demande au moins deux graines différentes.';
+      if (total) zone.textContent += ` Composition : ${[...compoGraines].map(([n, q]) => `${n} ${Math.round(q / total * 1000) / 10} %`).join(' · ')}.`;
+    }
     if (erreur) zone.style.color = 'var(--danger)';
     return erreur;
   }
+  document.getElementById('presseMelange').addEventListener('change', majSortiesPresse);
+  document.getElementById('presseCreerMelange').addEventListener('click', async () => {
+    const noms = [...new Set(lignesSourcesPresse().map(l => lotGraine(l.lot_id)).filter(Boolean).map(l => l.produit_nom.replace(/^graines?\s*(de\s+|d')/i, '')))];
+    const id = await creerProduitMelange(noms, 'Vrac', APP_DATA.produits.find(estHuileVrac));
+    if (id) { PRESSE_SAISIES_SORTIES.set('__melange', { ...(PRESSE_SAISIES_SORTIES.get('__melange') || {}), produit_id: String(id) }); majSortiesPresse(); }
+  });
 
   async function openPresseModal(id) {
     document.getElementById('presseFormError').style.display = 'none';
@@ -3941,6 +3980,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         .filter(l => l.statut === 'LIBERE' && Number(l.quantite_actuelle) > 0 && estGraine(produitsParId.get(l.produit_id)))
         .sort((a, b) => a.numero_lot.localeCompare(b.numero_lot));
       PRESSE_SAISIES_SORTIES.clear();
+      document.getElementById('presseMelange').checked = false;
       document.getElementById('presseSources').innerHTML = '';
       document.getElementById('presseSorties').innerHTML = '';
       ajouterLigneSourcePresse(PRESSE_LOTS_GRAINES[0] ? PRESSE_LOTS_GRAINES[0].id : null);
@@ -3989,6 +4029,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (erreurBilan) return erreur(erreurBilan);
     const payload = {
       date: document.getElementById('presseDate').value, sources: sources.map(l => ({ lot_id: l.lot_id, quantite: l.quantite })), sorties,
+      melange: document.getElementById('presseMelange').checked,
       notes: document.getElementById('presseNotes').value.trim() || null,
       employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null,
       champs_perso: champsPerso,
@@ -4037,9 +4078,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (multiMatiere) return APP_DATA.lotsPresse.filter(disponible);
     const produit = APP_DATA.produits.find(p => p.id === Number(document.getElementById('filtrationProduit').value));
     if (!produit) return APP_DATA.lotsPresse.filter(disponible);
-    // Huile de sésame filtrée ← lots pressés d'huile de sésame.
-    const cle = cleHuileVrac(produit.nom);
-    return APP_DATA.lotsPresse.filter(p => cleHuileVrac(p.produit_nom) === cle && disponible(p));
+    // Huile de sésame filtrée ← lots pressés d'huile de sésame ; huile mélange filtrée ← huile mélange pressée.
+    const cle = cleHuileGen(produit.nom);
+    return APP_DATA.lotsPresse.filter(p => cleHuileGen(p.produit_nom) === cle && disponible(p));
   }
   function filtrationSourceRow() {
     const lots = getFiltrationLotsDisponibles();
@@ -4098,36 +4139,38 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Liste « Produit obtenu » : huiles filtrées d'une graine, ou huiles mélange si la case est cochée.
   function remplirProduitsFiltration(idCourant, idASelectionner) {
     const melange = document.getElementById('filtrationMultiMatiere').checked;
-    const liste = produitsEtape(melange ? estHuileMelangeFiltree : estHuileFiltree, idCourant);
+    const liste = produitsEtape(melange ? estHuileMelangeFiltree : p => estHuileFiltree(p) || estHuileMelangeFiltree(p), idCourant);
     const vide = melange ? '— Aucune huile mélange : cliquez « Créer un autre produit mélange » —' : '— Aucune huile filtrée : créez « Huile de … — Filtrée » dans Produits —';
     const sel = document.getElementById('filtrationProduit');
     populateSelect(sel, liste, 'id', 'nom', liste.length ? null : vide);
     if (idASelectionner && liste.some(p => p.id === idASelectionner)) sel.value = idASelectionner;
     document.getElementById('filtrationCreerMelange').style.display = melange && !document.getElementById('filtrationModalId').value ? 'inline-block' : 'none';
   }
-  document.getElementById('filtrationCreerMelange').addEventListener('click', async () => {
-    const { huiles } = compositionFiltration();
-    const noms = huiles.map(h => h.huile);
-    const propose = `Huile Mélange ${noms.length ? noms.join('-') : 'Sésame-Nigelle'} — Filtrée`;
-    const attente = confirmer(`Catégorie et unité reprises de l'huile en vrac. Le prix de vente se règle ensuite dans Produits.`,
+  // Création rapide d'un produit « Huile Mélange … » (presse : — Vrac, filtration : — Filtrée).
+  async function creerProduitMelange(noms, suffixe, modele) {
+    const propose = `Huile Mélange ${noms.length ? noms.join('-') : 'Sésame-Nigelle'} — ${suffixe}`;
+    const attente = confirmer(`Catégorie, unité et TVA reprises de ${modele ? '« ' + modele.nom + ' »' : 'l\'huile en vrac'}. Le prix de vente se règle ensuite dans Produits.`,
       { titre: 'Nouveau produit mélange', ok: 'Créer et choisir', saisie: { label: 'Nom du produit (modifiable)', placeholder: propose } });
-    const champ = document.getElementById('confirmSaisie');
-    champ.value = propose; document.getElementById('confirmOui').disabled = false;
+    document.getElementById('confirmSaisie').value = propose; document.getElementById('confirmOui').disabled = false;
     let nom = await attente;
-    if (!nom) return;
+    if (!nom) return null;
     if (!/m[ée]lange/i.test(nom)) nom = `Huile Mélange ${nom}`;
-    if (!/filtr[ée]/i.test(nom)) nom += ' — Filtrée';
-    const premierLot = APP_DATA.lotsPresse.find(l => String(l.id) === document.querySelector('#filtrationSourcesRows .srcLotPresse')?.value);
-    const modele = APP_DATA.produits.find(p => p.id === premierLot?.produit_id) || APP_DATA.produits.find(estHuileVrac);
-    if (!modele) { notifier('Aucune huile en vrac de référence pour la catégorie et l\'unité.', 'erreur'); return; }
+    if (!new RegExp(suffixe.slice(0, 5), 'i').test(nom)) nom += ` — ${suffixe}`;
+    modele = modele || APP_DATA.produits.find(estHuileVrac);
+    if (!modele) { notifier('Aucune huile en vrac de référence pour la catégorie et l\'unité.', 'erreur'); return null; }
     try {
       const cree = await apiFetch('/produits', { method: 'POST', body: JSON.stringify({
         nom, categorie_id: modele.categorie_id, unite_id: modele.unite_id, type_article: 'PRODUIT_FABRIQUE',
         fabriquable: true, stockable: true, vendable: !!modele.vendable, tva: modele.tva, bio_eligible: !!modele.bio_eligible }) });
       APP_DATA.produits = await apiFetch('/produits');
-      remplirProduitsFiltration(null, cree.id);
       notifier(`Produit « ${nom} » créé et choisi.`, 'succes');
-    } catch (err) { notifier(err.message, 'erreur'); }
+      return cree.id;
+    } catch (err) { notifier(err.message, 'erreur'); return null; }
+  }
+  document.getElementById('filtrationCreerMelange').addEventListener('click', async () => {
+    const premierLot = APP_DATA.lotsPresse.find(l => String(l.id) === document.querySelector('#filtrationSourcesRows .srcLotPresse')?.value);
+    const id = await creerProduitMelange(compositionFiltration().huiles.map(h => h.huile), 'Filtrée', APP_DATA.produits.find(p => p.id === premierLot?.produit_id));
+    if (id) remplirProduitsFiltration(null, id);
   });
   document.getElementById('filtrationProduit').addEventListener('change', () => {
     if (!document.getElementById('filtrationModalId').value) resetFiltrationSourcesRows(); // pas en mode édition
@@ -4320,254 +4363,240 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('historiqueExportXlsxBtn').addEventListener('click', () => exporterVueProduction('#view-historique-prod .panel:last-child', 'Historique de production', 'xlsx'));
   document.getElementById('historiqueExportPdfBtn').addEventListener('click', () => exporterVueProduction('#view-historique-prod .panel:last-child', 'Historique de production', 'pdf'));
 
-  // Ne propose que les lots de presse/filtration issus du même vrac que le
-  // produit fini choisi (via produit_source_id) — exactement le principe déjà
-  // en place pour la Filtration, étendu ici au Conditionnement.
-  function getConditionnementLotsDisponibles() {
-    const produitId = Number(document.getElementById('conditionnementProduit').value) || null;
-    const disponible = l => Number(l.quantite_actuelle) > 0 && l.lot_statut === 'LIBERE';
-    const disponibleLot = l => Number(l.quantite_actuelle) > 0 && l.statut === 'LIBERE';
-    // Vrac reçu directement (achat/réception), sans passage par presse/filtration
-    // — ex: une pâte à savon achetée toute faite plutôt que pressée sur place.
-    const lotsDirects = (vracId) => APP_DATA.lots.filter(l =>
-      (l.origine === 'ACHAT' || l.origine === 'RECEPTION_MP') && l.produit_id === vracId && disponibleLot(l)
-    );
-    if (!produitId) {
-      return {
-        presse: APP_DATA.lotsPresse.filter(disponible),
-        filtration: APP_DATA.lotsFiltration.filter(disponible),
-        direct: [],
-      };
-    }
-    const produit = APP_DATA.produits.find(p => p.id === produitId);
-    const vracId = produit && produit.produit_source_id ? produit.produit_source_id : produitId;
-    return {
-      presse: APP_DATA.lotsPresse.filter(p => p.produit_id === vracId && disponible(p)),
-      filtration: APP_DATA.lotsFiltration.filter(f => f.produit_id === vracId && disponible(f)),
-      direct: lotsDirects(vracId),
-    };
+  // ---------- Conditionnement en 4 étapes : source → format + quantité → produit fini → consommables ----------
+  // Lots utilisables comme source : huile en vrac (presse), huile filtrée (filtration), vrac acheté.
+  function sourcesConditionnement() {
+    const dispoLot = l => Number(l.quantite_actuelle) > 0 && l.lot_statut === 'LIBERE';
+    const produit = id => APP_DATA.produits.find(p => p.id === id);
+    const unite = id => produit(id)?.unite_symbole || 'L';
+    const presse = APP_DATA.lotsPresse.filter(dispoLot).map(l => ({ cle: `presse:${l.id}`, type: 'presse', id: l.id, produit_id: l.produit_id, numero_lot: l.numero_lot, nom: l.produit_nom, dispo: Number(l.quantite_actuelle), tag: 'Vrac' }));
+    const filtration = APP_DATA.lotsFiltration.filter(dispoLot).map(l => ({ cle: `filtration:${l.id}`, type: 'filtration', id: l.id, produit_id: l.produit_id, numero_lot: l.numero_lot, nom: l.produit_nom, dispo: Number(l.quantite_actuelle), tag: 'Filtrée' }));
+    const direct = APP_DATA.lots.filter(l => (l.origine === 'ACHAT' || l.origine === 'RECEPTION_MP') && l.statut === 'LIBERE' && Number(l.quantite_actuelle) > 0
+        && cleHuileGen(produit(l.produit_id)?.nom) && !produit(l.produit_id)?.format_id)
+      .map(l => ({ cle: `direct:${l.id}`, type: 'direct', id: l.id, produit_id: l.produit_id, numero_lot: l.numero_lot, nom: produit(l.produit_id)?.nom || '', dispo: Number(l.quantite_actuelle), tag: 'Achat' }));
+    return [...filtration, ...presse, ...direct].map(s => ({ ...s, unite: unite(s.produit_id) }));
   }
-  // Liste TOUS les lots de vrac disponibles (Presse/Filtration/Achat direct),
-  // tous produits confondus — sert à peupler le double sélecteur Produit+Lot.
-  function tousLesLotsSourcesPossibles() {
-    const disponible = l => Number(l.quantite_actuelle) > 0 && l.lot_statut === 'LIBERE';
-    const disponibleLot = l => Number(l.quantite_actuelle) > 0 && l.statut === 'LIBERE';
-    // Un emballage ou consommable (flacon, étiquette...) n'est jamais une
-    // matière transformée en conditionnement — uniquement matière première
-    // et produits fabriqués (vrac) sont des sources valides.
-    const typeValide = pid => {
-      const p = APP_DATA.produits.find(x => x.id === pid);
-      return p && p.type_article !== 'EMBALLAGE' && p.type_article !== 'CONSOMMABLE';
-    };
-    const presse = APP_DATA.lotsPresse.filter(disponible).map(p => ({ type: 'presse', id: p.id, produit_id: p.produit_id, numero_lot: p.numero_lot, label: 'Presse' }));
-    const filtration = APP_DATA.lotsFiltration.filter(disponible).map(f => ({ type: 'filtration', id: f.id, produit_id: f.produit_id, numero_lot: f.numero_lot, label: 'Filtration' }));
-    const direct = APP_DATA.lots.filter(l => (l.origine === 'ACHAT' || l.origine === 'RECEPTION_MP') && disponibleLot(l) && typeValide(l.produit_id))
-      .map(l => ({ type: 'direct', id: l.id, produit_id: l.produit_id, numero_lot: l.numero_lot, label: l.origine === 'ACHAT' ? 'Achat' : 'Réception' }));
-    return [...presse, ...filtration, ...direct];
+  // Clé d'une huile à toutes les étapes : « Huile de Sésame — Flacon 30ml » → « sesame ».
+  function cleHuileGen(nom) {
+    const m = normaliserNomGraine(nom).match(/^huiles?\s*(?:de\s+|d')?(.+)$/);
+    return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
   }
-  // Double sélecteur Produit + Lot, liés dans les deux sens : choisir un
-  // produit filtre la liste des lots ; choisir un lot directement (utile si
-  // on connaît le numéro mais pas le produit) resynchronise le Produit.
-  function conditionnementSourceRow() {
-    const tousLots = tousLesLotsSourcesPossibles();
-    const produitsDisponibles = [...new Set(tousLots.map(l => l.produit_id))]
-      .map(pid => APP_DATA.produits.find(p => p.id === pid)).filter(Boolean)
-      .sort((a, b) => a.nom.localeCompare(b.nom));
-
-    const produitFiniId = Number(document.getElementById('conditionnementProduit').value) || null;
-    const produitFini = produitFiniId ? APP_DATA.produits.find(p => p.id === produitFiniId) : null;
-    // Huile filtrée de préférence (si elle a du stock), sinon le vrac de presse.
-    const vracId = produitFini ? (produitFini.produit_source_id || produitFini.id) : null;
-    const filtreeDispo = produitsDisponibles.find(p => p.produit_source_id === vracId && estHuileFiltree(p));
-    const vracPreselectionne = filtreeDispo ? filtreeDispo.id : vracId;
-
+  // « Huile de Sésame — Filtrée » → « Huile de Sésame »
+  const baseNomHuile = nom => String(nom || '').split(/\s+[-–—]\s+|\s*\(/)[0].trim();
+  let COND_SOURCES = [];
+  function lignesSourcesCond() {
+    return [...document.querySelectorAll('#conditionnementSourcesRows .srcCond')].map(row => ({
+      row, src: COND_SOURCES.find(s => s.cle === row.querySelector('.srcLot').value) || null,
+      q: Number(row.querySelector('.srcQte').value) || 0,
+    }));
+  }
+  function ligneSourceCond(cle) {
     const row = document.createElement('div');
-    row.className = 'structRow';
-    row.style.gridTemplateColumns = '1fr 1fr 90px 32px';
+    row.className = 'srcCond';
+    const groupe = (tag, titre) => {
+      const l = COND_SOURCES.filter(s => s.tag === tag);
+      return l.length ? `<optgroup label="${titre}">${l.map(s => `<option value="${s.cle}">${s.numero_lot} — ${s.nom}</option>`).join('')}</optgroup>` : '';
+    };
     row.innerHTML = `
-      <select class="srcProduit formInput"></select>
-      <select class="srcLot formInput"></select>
-      <input type="number" step="0.001" class="srcQte formInput" placeholder="Qté">
-      <button class="delField" type="button">✕</button>`;
-
-    const produitSel = row.querySelector('.srcProduit');
-    const lotSel = row.querySelector('.srcLot');
-    let enSynchronisation = false; // évite la boucle produit ↔ lot
-
-    function remplirProduits(idASelectionner) {
-      produitSel.innerHTML = produitsDisponibles.length
-        ? produitsDisponibles.map(p => `<option value="${p.id}" ${p.id === idASelectionner ? 'selected' : ''}>${p.nom}</option>`).join('')
-        : '<option value="">— Aucun vrac disponible —</option>';
-    }
-    function remplirLots(filtrerParProduitId, valeurASelectionner) {
-      const liste = filtrerParProduitId ? tousLots.filter(l => l.produit_id === filtrerParProduitId) : tousLots;
-      lotSel.innerHTML = liste.length
-        ? liste.map(l => {
-            const val = `${l.type}:${l.id}`;
-            const nomProduit = APP_DATA.produits.find(p => p.id === l.produit_id)?.nom || '';
-            return `<option value="${val}" ${val === valeurASelectionner ? 'selected' : ''}>${l.label} — ${l.numero_lot}${filtrerParProduitId ? '' : ' (' + nomProduit + ')'}</option>`;
-          }).join('')
-        : '<option value="">— Aucun lot —</option>';
-    }
-
-    remplirProduits(vracPreselectionne);
-    remplirLots(null, null); // liste complète au départ — le lot peut être choisi avant le produit
-
-    produitSel.addEventListener('change', () => {
-      if (enSynchronisation) return;
-      remplirLots(Number(produitSel.value) || null, null);
-    });
-    lotSel.addEventListener('change', () => {
-      const [type, idStr] = (lotSel.value || '').split(':');
-      const lot = tousLots.find(l => l.type === type && String(l.id) === idStr);
-      if (lot && Number(produitSel.value) !== lot.produit_id) {
-        enSynchronisation = true;
-        remplirProduits(lot.produit_id);
-        enSynchronisation = false;
-      }
-    });
-
-    row.querySelector('.delField').addEventListener('click', () => row.remove());
+      <select class="srcLot formInput" style="margin:0;"><option value="">— Choisir un lot —</option>${groupe('Filtrée', 'Huile filtrée (filtration)')}${groupe('Vrac', 'Huile en vrac (presse)')}${groupe('Achat', 'Vrac acheté')}</select>
+      <input type="number" step="0.001" min="0" class="srcQte formInput" placeholder="Qté" style="margin:0;">
+      <span class="srcPart"></span>
+      <button class="delField" type="button" title="Retirer">✕</button>
+      <div class="dispo"></div>`;
+    row.querySelector('.srcLot').value = cle || '';
+    row.querySelector('.srcLot').addEventListener('change', () => { row.querySelector('.srcQte').dataset.auto = '1'; majConditionnement('source'); });
+    row.querySelector('.srcQte').addEventListener('input', () => { delete row.querySelector('.srcQte').dataset.auto; majConditionnement('qte'); });
+    row.querySelector('.delField').addEventListener('click', () => { row.remove(); majConditionnement('source'); });
+    row.querySelector('.srcQte').dataset.auto = '1';
     return row;
   }
-  // Flacons, bouchons, étiquettes... consommés pour ce conditionnement —
-  // filtrés aux types CONSOMMABLE/EMBALLAGE, regroupés par catégorie. Le
-  // choix reste libre (pas de rapprochement automatique produit↔étiquette,
-  // trop fragile à deviner) — l'opérateur sélectionne ce qui convient.
-  function conditionnementConsommableRow() {
+  function formatCond() { return REF_DATA.formats.find(f => f.id === Number(document.getElementById('conditionnementFormat').value)) || null; }
+  const libFormat = f => !f ? '' : Number(f.volume) >= 1000 ? `${Number(f.volume) / 1000} L` : f.volume ? `${Number(f.volume)} ml` : f.poids ? `${Number(f.poids)} g` : f.nom;
+  // Contenance d'une unité dans l'unité du vrac (L ou kg).
+  const contenanceBase = f => !f ? null : f.volume ? Number(f.volume) / 1000 : f.poids ? Number(f.poids) / 1000 : null;
+  // Nom proposé pour un nouveau produit fini : « Huile de Sésame — Flacon 100ml » / « Huile Mélange Sésame-Nigelle — Flacon 30ml ».
+  function nomProduitPropose() {
+    const srcs = lignesSourcesCond().filter(l => l.src);
+    const f = formatCond();
+    const suffixe = f ? ` — Flacon ${f.volume ? (Number(f.volume) >= 1000 ? Number(f.volume) / 1000 + 'L' : Number(f.volume) + 'ml') : libFormat(f)}` : ' — Flacon';
+    if (!srcs.length) return '';
+    if (document.getElementById('conditionnementMelange').checked) {
+      // Une source déjà « mélange » apporte ses propres huiles : Sésame + (Sésame-Nigelle) → Sésame-Nigelle.
+      const noms = [...new Set(srcs.flatMap(l => {
+        const base = baseNomHuile(l.src.nom);
+        return /^huiles?\s+m[ée]lange\s+/i.test(base) ? base.replace(/^huiles?\s+m[ée]lange\s+/i, '').split('-') : [nomCourtHuile(base)];
+      }))];
+      return `Huile Mélange ${noms.join('-')}${suffixe}`;
+    }
+    return `${baseNomHuile(srcs[0].src.nom)}${suffixe}`;
+  }
+  const estProduitFini = p => !!p && !!p.format_id && !['MATIERE_PREMIERE', 'EMBALLAGE', 'CONSOMMABLE'].includes(p.type_article);
+  function remplirProduitsCond() {
+    const sel = document.getElementById('conditionnementProduit');
+    const avant = sel.value;
+    const melange = document.getElementById('conditionnementMelange').checked;
+    const tous = document.getElementById('conditionnementTous').checked;
+    const nouveau = document.getElementById('conditionnementNouveau').checked;
+    sel.style.display = nouveau ? 'none' : 'block';
+    document.getElementById('conditionnementNouveauBloc').style.display = nouveau ? 'block' : 'none';
+    const f = formatCond();
+    const srcs = lignesSourcesCond().filter(l => l.src);
+    const cle = srcs.length ? cleHuileGen(srcs[0].src.nom) : null;
+    let liste;
+    if (tous) liste = APP_DATA.produits.filter(estProduitFini);
+    else liste = APP_DATA.produits.filter(p => estHuileConditionnee(p)
+      && (melange ? estNomMelange(p.nom) : !cle || cleHuileGen(p.nom) === cle)
+      && (!f || p.format_id === f.id));
+    liste.sort((a, b) => a.nom.localeCompare(b.nom));
+    const quoi = melange ? 'mélange' : srcs.length ? `« ${baseNomHuile(srcs[0].src.nom)} »` : 'huile';
+    populateSelect(sel, liste, 'id', 'nom', liste.length ? null : `— Aucun produit ${quoi}${f ? ' en ' + libFormat(f) : ''} : cochez « Nouveau produit fini » ou « Afficher tous » —`);
+    if (liste.some(p => String(p.id) === avant)) sel.value = avant;
+    const nomInput = document.getElementById('conditionnementNouveauNom');
+    if (!nomInput.dataset.modifie) nomInput.value = nomProduitPropose();
+  }
+  // Consommables proposés : le flacon du format choisi + l'étiquette, autant que d'unités.
+  function ligneConsommableCond(produitId, qte) {
     const consommables = APP_DATA.produits.filter(p => p.type_article === 'CONSOMMABLE' || p.type_article === 'EMBALLAGE');
-    const liste = consommables.length ? consommables : APP_DATA.produits;
-    const options = optionsGroupedByCategorie(liste);
-    const qtySuggeree = Number(document.getElementById('conditionnementQty').value) || '';
     const row = document.createElement('div');
     row.className = 'structRow';
     row.style.gridTemplateColumns = '1.5fr 100px 32px';
     row.innerHTML = `
-      <select class="consProduit formInput">${options}</select>
-      <input type="number" step="1" class="consQte formInput" placeholder="Qté" value="${qtySuggeree}">
+      <select class="consProduit formInput">${optionsGroupedByCategorie(consommables.length ? consommables : APP_DATA.produits)}</select>
+      <input type="number" step="1" class="consQte formInput" placeholder="Qté">
       <button class="delField" type="button">✕</button>`;
-    row.querySelector('.delField').addEventListener('click', () => row.remove());
+    if (produitId) row.querySelector('.consProduit').value = String(produitId);
+    row.querySelector('.consQte').value = qte || '';
+    const manuel = () => { document.getElementById('conditionnementConsommablesRows').dataset.manuel = '1'; };
+    row.querySelector('.consProduit').addEventListener('change', manuel);
+    row.querySelector('.consQte').addEventListener('input', manuel);
+    row.querySelector('.delField').addEventListener('click', () => { manuel(); row.remove(); });
     return row;
   }
-  document.getElementById('conditionnementAddConsommableBtn').addEventListener('click', () => {
-    document.getElementById('conditionnementConsommablesRows').appendChild(conditionnementConsommableRow());
-  });
-  // Calcule le vrac total nécessaire (qty × volume unitaire), convertit vers
-  // l'unité de base du vrac (L pour ml, kg pour g), et pré-remplit la source
-  // s'il n'y en a qu'une seule (l'utilisateur reste libre de corriger).
-  function updateConditionnementVolumeCalcule() {
-    const qty = Number(document.getElementById('conditionnementQty').value) || 0;
-    const volUnitaire = Number(document.getElementById('conditionnementVolumeUnitaire').value) || 0;
-    const unite = document.getElementById('conditionnementUniteVolume').value;
-    const helperEl = document.getElementById('conditionnementVolumeCalcule');
-    if (!qty || !volUnitaire) { helperEl.style.display = 'none'; return; }
-
-    const conversions = { ml: { facteur: 1 / 1000, base: 'L' }, l: { facteur: 1, base: 'L' }, g: { facteur: 1 / 1000, base: 'kg' }, kg: { facteur: 1, base: 'kg' } };
-    const conv = conversions[unite];
-    const totalBase = qty * volUnitaire * conv.facteur;
-    helperEl.style.display = 'block';
-    helperEl.textContent = `${qty} × ${volUnitaire} ${unite} = ${totalBase.toFixed(3)} ${conv.base} de vrac nécessaire`;
-
-    const rows = document.querySelectorAll('#conditionnementSourcesRows .structRow');
-    if (rows.length === 1) rows[0].querySelector('.srcQte').value = totalBase.toFixed(3);
+  function proposerConsommables() {
+    const zone = document.getElementById('conditionnementConsommablesRows');
+    if (zone.dataset.manuel) return;
+    const f = formatCond(), qty = Number(document.getElementById('conditionnementQty').value) || '';
+    zone.innerHTML = '';
+    if (!f) return;
+    const flacon = APP_DATA.produits.find(p => p.type_article === 'EMBALLAGE' && p.format_id === f.id);
+    const etiquette = APP_DATA.produits.find(p => p.type_article === 'CONSOMMABLE' && /tiquette/i.test(p.nom));
+    if (flacon) zone.appendChild(ligneConsommableCond(flacon.id, qty));
+    if (etiquette) zone.appendChild(ligneConsommableCond(etiquette.id, qty));
   }
-  ['conditionnementQty', 'conditionnementVolumeUnitaire', 'conditionnementUniteVolume'].forEach(fid => {
-    document.getElementById(fid).addEventListener('input', updateConditionnementVolumeCalcule);
-    document.getElementById(fid).addEventListener('change', updateConditionnementVolumeCalcule);
-  });
-
+  // Recalcule tout : huile nécessaire, report dans la source, parts du mélange, produits, consommables, bilan.
+  function majConditionnement(origine) {
+    if (document.getElementById('conditionnementModalId').value) return; // mode édition : rien à recalculer
+    const melange = document.getElementById('conditionnementMelange').checked;
+    const f = formatCond(), qty = Number(document.getElementById('conditionnementQty').value) || 0;
+    const unite = contenanceBase(f);
+    const lignes = lignesSourcesCond();
+    const symbole = f && f.poids ? 'kg' : 'L';
+    const besoin = unite && qty ? Math.round(qty * unite * 1000) / 1000 : null;
+    // Une seule source : on y reporte l'huile nécessaire (tant que l'utilisateur n'a pas saisi lui-même).
+    if (besoin != null && lignes.length === 1 && lignes[0].row.querySelector('.srcQte').dataset.auto) {
+      lignes[0].row.querySelector('.srcQte').value = besoin; lignes[0].q = besoin;
+    }
+    const total = lignes.reduce((t, l) => t + l.q, 0);
+    lignes.forEach(l => {
+      l.row.querySelector('.srcPart').textContent = melange && total && l.q ? `${Math.round(l.q / total * 1000) / 10} %` : '';
+      l.row.querySelector('.dispo').innerHTML = l.src ? `<span class="pill">${l.src.tag}</span> disponible : ${l.src.dispo} ${l.src.unite}${l.q > l.src.dispo ? ' — <b style="color:var(--danger)">insuffisant</b>' : ''}` : '';
+    });
+    const calc = document.getElementById('conditionnementCalcul');
+    calc.style.display = f ? 'block' : 'none';
+    if (f) calc.innerHTML = `Contenance : <b>${libFormat(f)} par unité</b> (repris du format)` + (besoin != null ? ` · Huile nécessaire : ${qty} × ${libFormat(f)} = <b>${besoin.toLocaleString('fr-TN', { maximumFractionDigits: 3 })} ${symbole}</b>` : '');
+    if (origine !== 'produit') remplirProduitsCond();
+    if (origine === 'format' || origine === 'qty' || origine === 'init') proposerConsommables();
+    // Bilan
+    const bilan = document.getElementById('conditionnementBilan');
+    const erreurs = [];
+    if (lignes.some(l => l.src && l.q > l.src.dispo)) erreurs.push('une source n\'a pas assez de stock');
+    if (besoin != null && total && besoin > Math.round(total * 1000) / 1000) erreurs.push(`il faut ${besoin} ${symbole} mais les sources ne totalisent que ${Math.round(total * 1000) / 1000} ${symbole}`);
+    const huiles = new Set(lignes.filter(l => l.src).map(l => cleHuileGen(l.src.nom)));
+    if (melange && huiles.size < 2) erreurs.push('un mélange demande au moins deux huiles différentes');
+    if (!melange && huiles.size > 1) erreurs.push('plusieurs huiles différentes : cochez « Mélange »');
+    bilan.style.display = lignes.some(l => l.src) || qty ? 'block' : 'none';
+    bilan.classList.toggle('ko', erreurs.length > 0);
+    const srcTxt = lignes.filter(l => l.src && l.q).map(l => `${l.q} ${l.src.unite} pris sur ${l.src.numero_lot} (reste ${Math.round((l.src.dispo - l.q) * 1000) / 1000} ${l.src.unite})`).join(' · ');
+    bilan.textContent = erreurs.length ? `⚠ ${erreurs.join(' ; ')}.` : `Bilan : ${srcTxt || 'source à choisir'}${qty ? ` · ${qty} unité(s) créée(s)` : ''}`;
+    return erreurs[0] || null;
+  }
   async function openConditionnementModal(id) {
     document.getElementById('conditionnementFormError').style.display = 'none';
-    [APP_DATA.lotsPresse, APP_DATA.lotsFiltration] = await Promise.all([apiFetch('/presse'), apiFetch('/filtration')]);
-
+    [APP_DATA.lotsPresse, APP_DATA.lotsFiltration, APP_DATA.lots] = await Promise.all([apiFetch('/presse'), apiFetch('/filtration'), apiFetch('/lots')]);
+    COND_SOURCES = sourcesConditionnement();
     const c = id ? APP_DATA.conditionnements.find(x => x.id === id) : null;
-    const conditionnees = produitsEtape(estHuileConditionnee, c?.produit_id);
-    populateSelect(document.getElementById('conditionnementProduit'), conditionnees, 'id', 'nom', conditionnees.length ? null : '— Aucune huile en flacon : créez-la dans Produits —');
     document.getElementById('conditionnementModalId').value = c ? c.id : '';
     document.querySelector('#conditionnementModalOverlay .modalHead h2').textContent = c ? `Modifier — ${c.numero_lot}` : 'Nouveau conditionnement';
     document.getElementById('conditionnementDate').value = c ? c.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    document.getElementById('conditionnementProduit').value = c ? c.produit_id : document.getElementById('conditionnementProduit').value;
-    // Huile en flacon : formats en volume uniquement, du plus petit au plus grand (1000 ml affiché « 1 L »).
-    const formatsHuile = REF_DATA.formats.filter(f => Number(f.volume) > 0).sort((x, y) => x.volume - y.volume)
-      .map(f => ({ id: f.id, nom: Number(f.volume) >= 1000 ? `${Number(f.volume) / 1000} L` : f.nom }));
-    populateSelect(document.getElementById('conditionnementFormat'), formatsHuile, 'id', 'nom', '— Format du produit —');
-    const produitCourant = APP_DATA.produits.find(p => p.id === Number(document.getElementById('conditionnementProduit').value));
-    document.getElementById('conditionnementFormat').value = c ? (c.format_id || '') : (produitCourant?.format_id || '');
-    document.getElementById('conditionnementFormat').disabled = !!c;
-    document.getElementById('conditionnementQty').value = c ? c.qty : '';
     document.getElementById('conditionnementNote').value = c && c.note ? c.note : '';
-    document.getElementById('conditionnementVolumeUnitaire').value = '';
-    document.getElementById('conditionnementUniteVolume').value = 'ml';
-    document.getElementById('conditionnementVolumeCalcule').style.display = 'none';
-    document.getElementById('conditionnementVolumeUnitaire').closest('div').previousElementSibling.style.display = c ? 'none' : 'block';
-    document.getElementById('conditionnementVolumeUnitaire').closest('div').style.display = c ? 'none' : 'grid';
-
-    document.getElementById('conditionnementProduit').disabled = !!c;
-    document.getElementById('conditionnementQty').disabled = !!c;
+    ['conditionnementMelange', 'conditionnementTous', 'conditionnementNouveau'].forEach(i => { document.getElementById(i).checked = false; });
+    const nomInput = document.getElementById('conditionnementNouveauNom');
+    nomInput.value = ''; delete nomInput.dataset.modifie;
+    // Formats : en volume (huiles) du plus petit au plus grand, puis les poids.
+    const formats = [...REF_DATA.formats].sort((a, b) => (!!a.poids - !!b.poids) || (Number(a.volume || a.poids) - Number(b.volume || b.poids)))
+      .map(f => ({ id: f.id, nom: libFormat(f) }));
+    populateSelect(document.getElementById('conditionnementFormat'), formats, 'id', 'nom', '— Choisir le format —');
+    document.querySelectorAll('#conditionnementModalOverlay [data-saisie]').forEach(el => { el.style.display = c ? 'none' : ''; });
     document.getElementById('conditionnementLockedNote').style.display = c ? 'block' : 'none';
     document.getElementById('conditionnementAddSourceBtn').style.display = c ? 'none' : 'inline-flex';
-
-    const rowsWrap = document.getElementById('conditionnementSourcesRows');
-    rowsWrap.innerHTML = '';
-    if (c) {
-      rowsWrap.innerHTML = `<div class="rowMeta" style="padding:6px 0;">Sources déjà consommées — non modifiables (voir le Registre des lots pour le détail de traçabilité).</div>`;
-    } else if (APP_DATA.lotsPresse.length || APP_DATA.lotsFiltration.length) {
-      rowsWrap.appendChild(conditionnementSourceRow());
-    }
-
-    const consWrap = document.getElementById('conditionnementConsommablesRows');
-    consWrap.innerHTML = c
-      ? `<div class="rowMeta" style="padding:6px 0;">Consommables déjà consommés — non modifiables.</div>`
-      : '';
     document.getElementById('conditionnementAddConsommableBtn').style.display = c ? 'none' : 'inline-flex';
-
+    ['conditionnementFormat', 'conditionnementQty', 'conditionnementProduit'].forEach(i => { document.getElementById(i).disabled = !!c; });
+    const rowsWrap = document.getElementById('conditionnementSourcesRows');
+    const consWrap = document.getElementById('conditionnementConsommablesRows');
+    delete consWrap.dataset.manuel;
+    document.getElementById('conditionnementBilan').style.display = 'none';
+    document.getElementById('conditionnementCalcul').style.display = 'none';
+    if (c) {
+      const produit = APP_DATA.produits.find(p => p.id === c.produit_id);
+      populateSelect(document.getElementById('conditionnementProduit'), produit ? [produit] : [], 'id', 'nom');
+      document.getElementById('conditionnementProduit').style.display = 'block';
+      document.getElementById('conditionnementNouveauBloc').style.display = 'none';
+      document.getElementById('conditionnementFormat').value = c.format_id || '';
+      document.getElementById('conditionnementQty').value = c.qty;
+      rowsWrap.innerHTML = `<div class="rowMeta" style="padding:6px 0;">Sources déjà consommées — non modifiables (voir le Registre des lots pour le détail de traçabilité).</div>`;
+      consWrap.innerHTML = `<div class="rowMeta" style="padding:6px 0;">Consommables déjà consommés — non modifiables.</div>`;
+    } else {
+      document.getElementById('conditionnementQty').value = '';
+      rowsWrap.innerHTML = '';
+      consWrap.innerHTML = '';
+      rowsWrap.appendChild(ligneSourceCond(COND_SOURCES[0]?.cle));
+      majConditionnement('init');
+      // Format pré-rempli d'après le premier produit proposé.
+      const premier = APP_DATA.produits.find(p => String(p.id) === document.getElementById('conditionnementProduit').value);
+      if (premier?.format_id) { document.getElementById('conditionnementFormat').value = premier.format_id; majConditionnement('format'); }
+    }
     await afficherChampsPerso('conditionnementChampsPerso', 'CONDITIONNEMENT', c && c.champs_perso ? c.champs_perso : {});
     document.getElementById('conditionnementModalOverlay').classList.add('open');
   }
   function closeConditionnementModal() { document.getElementById('conditionnementModalOverlay').classList.remove('open'); }
   document.getElementById('conditionnementAddSourceBtn').addEventListener('click', () => {
-    document.getElementById('conditionnementSourcesRows').appendChild(conditionnementSourceRow());
+    document.getElementById('conditionnementSourcesRows').appendChild(ligneSourceCond(null));
+    majConditionnement('source');
   });
+  document.getElementById('conditionnementAddConsommableBtn').addEventListener('click', () => {
+    document.getElementById('conditionnementConsommablesRows').dataset.manuel = '1';
+    document.getElementById('conditionnementConsommablesRows').appendChild(ligneConsommableCond(null, Number(document.getElementById('conditionnementQty').value) || ''));
+  });
+  document.getElementById('conditionnementFormat').addEventListener('change', () => majConditionnement('format'));
+  document.getElementById('conditionnementQty').addEventListener('input', () => {
+    const zone = document.getElementById('conditionnementConsommablesRows');
+    // Quantités des consommables proposés : suivent le nombre d'unités.
+    if (!zone.dataset.manuel) zone.querySelectorAll('.consQte').forEach(i => { i.value = document.getElementById('conditionnementQty').value; });
+    majConditionnement('qty-saisie');
+  });
+  ['conditionnementMelange', 'conditionnementTous', 'conditionnementNouveau'].forEach(i =>
+    document.getElementById(i).addEventListener('change', () => majConditionnement('source')));
+  document.getElementById('conditionnementNouveauNom').addEventListener('input', e => { e.target.dataset.modifie = '1'; });
+  // Choisir un produit fini sans format choisi : on reprend son format.
   document.getElementById('conditionnementProduit').addEventListener('change', () => {
-    if (document.getElementById('conditionnementModalId').value) return; // pas en mode édition
-    const produit = APP_DATA.produits.find(p => p.id === Number(document.getElementById('conditionnementProduit').value));
-    document.getElementById('conditionnementFormat').value = produit?.format_id || '';
-    const rowsWrap = document.getElementById('conditionnementSourcesRows');
-    rowsWrap.innerHTML = '';
-    if (tousLesLotsSourcesPossibles().length) rowsWrap.appendChild(conditionnementSourceRow());
-  });
-  // Synchronisation inverse : changer le format cherche, dans la même famille
-  // (même produit_source_id), le produit catalogue qui a déjà ce format et
-  // bascule dessus — pour ne jamais avoir un nom de produit ("Sésame 30ml")
-  // incohérent avec le format réellement enregistré ("10ml").
-  document.getElementById('conditionnementFormat').addEventListener('change', () => {
-    if (document.getElementById('conditionnementModalId').value) return; // pas en mode édition
-    const produitSel = document.getElementById('conditionnementProduit');
-    const produitActuel = APP_DATA.produits.find(p => p.id === Number(produitSel.value));
-    if (!produitActuel) return;
-    const formatChoisi = document.getElementById('conditionnementFormat').value ? Number(document.getElementById('conditionnementFormat').value) : null;
-    if (produitActuel.format_id === formatChoisi) return; // déjà cohérent, rien à faire
-
-    // Famille = même produit_source_id que le produit actuel, ou le produit
-    // actuel lui-même s'il n'a pas de source (c'est potentiellement lui la source).
-    const familleId = produitActuel.produit_source_id || produitActuel.id;
-    const correspondant = APP_DATA.produits.find(p =>
-      (p.produit_source_id === familleId || p.id === familleId) && p.format_id === formatChoisi
-    );
-    if (correspondant) {
-      produitSel.value = correspondant.id;
-      const rowsWrap = document.getElementById('conditionnementSourcesRows');
-      rowsWrap.innerHTML = '';
-      if (tousLesLotsSourcesPossibles().length) rowsWrap.appendChild(conditionnementSourceRow());
-    }
-    // Si aucun produit catalogue ne correspond à cette combinaison, on garde
-    // le produit actuel — le format choisi sera quand même enregistré tel
-    // quel sur cette ligne de conditionnement (format_id figé indépendant).
+    const p = APP_DATA.produits.find(x => String(x.id) === document.getElementById('conditionnementProduit').value);
+    if (p?.format_id && !document.getElementById('conditionnementFormat').value) { document.getElementById('conditionnementFormat').value = p.format_id; majConditionnement('format'); }
   });
 
   async function saveConditionnement() {
     const errEl = document.getElementById('conditionnementFormError');
     errEl.style.display = 'none';
+    const erreur = msg => { errEl.textContent = msg; errEl.style.display = 'block'; };
     const id = document.getElementById('conditionnementModalId').value;
 
     if (id) {
@@ -4581,57 +4610,51 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         closeConditionnementModal();
         APP_DATA.conditionnements = await apiFetch('/conditionnement');
         renderConditionnement();
-      } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+      } catch (err) { erreur(err.message); }
       return;
     }
 
-    const sources = [...document.querySelectorAll('#conditionnementSourcesRows .structRow')].map(row => {
-      const [type, refId] = row.querySelector('.srcLot').value.split(':');
-      const qte = Number(row.querySelector('.srcQte').value);
-      const s = { quantite_utilisee: qte };
-      if (type === 'presse') s.lot_presse_id = Number(refId);
-      else if (type === 'filtration') s.lot_filtration_id = Number(refId);
-      else s.lot_id = Number(refId);
+    const sources = lignesSourcesCond().filter(l => l.src && l.q).map(l => {
+      const s = { quantite_utilisee: l.q };
+      if (l.src.type === 'presse') s.lot_presse_id = l.src.id;
+      else if (l.src.type === 'filtration') s.lot_filtration_id = l.src.id;
+      else s.lot_id = l.src.id;
       return s;
-    }).filter(s => s.quantite_utilisee);
-
+    });
     const consommables = [...document.querySelectorAll('#conditionnementConsommablesRows .structRow')].map(row => ({
       produit_id: Number(row.querySelector('.consProduit').value) || null,
       quantite: Number(row.querySelector('.consQte').value) || null,
     })).filter(c => c.produit_id && c.quantite);
-
-    let note = document.getElementById('conditionnementNote').value.trim() || null;
-    const volUnitaire = Number(document.getElementById('conditionnementVolumeUnitaire').value) || 0;
-    if (volUnitaire) {
-      const unite = document.getElementById('conditionnementUniteVolume').value;
-      const formatInfo = `Format : ${volUnitaire} ${unite}/unité`;
-      note = note ? `${note} — ${formatInfo}` : formatInfo;
-    }
-
     const champsPerso = collecterChampsPerso('conditionnementChampsPerso', 'conditionnementFormError');
     if (champsPerso === null) return;
-
+    const nouveau = document.getElementById('conditionnementNouveau').checked;
+    const nomNouveau = document.getElementById('conditionnementNouveauNom').value.trim();
     const payload = {
       date: document.getElementById('conditionnementDate').value,
-      produit_id: Number(document.getElementById('conditionnementProduit').value) || null,
-      format_id: document.getElementById('conditionnementFormat').value ? Number(document.getElementById('conditionnementFormat').value) : null,
-      qty: document.getElementById('conditionnementQty').value ? Number(document.getElementById('conditionnementQty').value) : null,
-      note,
+      format_id: Number(document.getElementById('conditionnementFormat').value) || null,
+      qty: Number(document.getElementById('conditionnementQty').value) || null,
+      note: document.getElementById('conditionnementNote').value.trim() || null,
       employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null,
-      sources,
-      consommables,
-      champs_perso: champsPerso,
+      melange: document.getElementById('conditionnementMelange').checked,
+      sources, consommables, champs_perso: champsPerso,
     };
-    if (!payload.date || !payload.produit_id || !payload.qty || !sources.length) {
-      errEl.textContent = 'Date, produit, quantité et au moins une source valide sont requis.'; errEl.style.display = 'block'; return;
-    }
+    if (nouveau) payload.nouveau_produit = { nom: nomNouveau };
+    else payload.produit_id = Number(document.getElementById('conditionnementProduit').value) || null;
+    if (!payload.date || !sources.length) return erreur('Choisissez au moins une source avec sa quantité.');
+    if (!payload.format_id) return erreur('Choisissez le format (contenance d\'une unité).');
+    if (!payload.qty) return erreur('Indiquez le nombre d\'unités.');
+    if (nouveau && !nomNouveau) return erreur('Indiquez le nom du nouveau produit fini.');
+    if (!nouveau && !payload.produit_id) return erreur('Choisissez le produit fini (ou cochez « Nouveau produit fini »).');
+    const bloquant = majConditionnement('produit');
+    if (bloquant) return erreur(`Impossible : ${bloquant}.`);
     try {
       await apiFetch('/conditionnement', { method: 'POST', body: JSON.stringify(payload) });
       closeConditionnementModal();
       const [conditionnements, lots, produits] = await Promise.all([apiFetch('/conditionnement'), apiFetch('/lots'), apiFetch('/produits')]);
       APP_DATA.conditionnements = conditionnements; APP_DATA.lots = lots; APP_DATA.produits = produits;
       renderConditionnement(); renderLotsRegistre(); renderProduits();
-    } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+      if (nouveau) notifier(`Produit fini « ${nomNouveau} » créé (prix à régler dans Produits).`, 'succes');
+    } catch (err) { erreur(err.message); }
   }
   document.getElementById('conditionnementSaveBtn').addEventListener('click', saveConditionnement);
   document.getElementById('conditionnementCancelBtn').addEventListener('click', closeConditionnementModal);
