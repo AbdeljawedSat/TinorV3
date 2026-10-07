@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { requireAuth } = require('./middleware/auth');
+const { idempotence } = require('./middleware/idempotence');
 
 function createApp(pool) {
   const app = express();
@@ -15,6 +16,9 @@ function createApp(pool) {
   app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version }));
 
   app.use('/api/auth', require('./routes/auth')(pool));
+  // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.
+  app.use('/api', idempotence(pool));
+  app.use('/api/sync', requireAuth, require('./routes/sync')(pool));
 
   app.use('/api/produits', requireAuth, require('./routes/produits')(pool));
   app.use('/api', requireAuth, require('./routes/referentiels')(pool));

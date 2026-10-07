@@ -617,6 +617,21 @@
   #filtrationComposition{margin-top:8px;} #filtrationComposition .barreCompo{display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--line);}
   #filtrationComposition .barreCompo i{display:block;} #filtrationComposition .txt{font-size:11.5px; color:var(--text-soft); margin-top:3px;}
   .compoListe{font-size:11px; color:var(--text-soft);}
+  /* ---------- Hors ligne (V3.3) ---------- */
+  #offlineBanner{display:none; align-items:center; justify-content:space-between; gap:12px; padding:8px 18px; font-size:12.5px; color:#fff; cursor:pointer; background:#3d2e14;}
+  #offlineBanner[data-etat="synchro"]{background:#1C6FA6;} #offlineBanner[data-etat="corriger"]{background:var(--danger);}
+  #offlineBanner[data-etat="attente"], #offlineBanner[data-etat="reconnexion"]{background:var(--warn);}
+  .hlEtat{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; font-size:12.5px; color:var(--text-soft);}
+  .hlEtat b{font-size:14px; color:var(--good);} .hlEtat.off b{color:#8a5a14;}
+  .hlListe{padding:6px 14px 12px;} .hlVide{padding:10px 4px;}
+  .hlOp{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--paper);}
+  .hlOp.ko{border-color:#E7C4BE; background:#FFFAF9;}
+  .hlTete{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hlDesc{font-size:12.5px; color:var(--text-soft); margin-top:2px;}
+  .hlErreur{font-size:12.5px; color:var(--danger); font-weight:600; margin-top:6px;}
+  .hlChamps{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:8px;}
+  .hlChamps label{font-size:11.5px; color:var(--text-soft); display:flex; flex-direction:column; gap:3px;}
+  .hlActions{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
   /* ---------- Conditionnement en 4 étapes (V3.3) ---------- */
   .etapeCond{display:flex; align-items:center; gap:8px; margin:18px 0 6px; font-weight:700; font-size:13.5px; color:var(--text);}
   .etapeCond .n{width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:12px; flex:none;}
@@ -793,6 +808,7 @@
 
     <nav class="navScroll" id="navScroll">
       <a class="navSingle active" data-view="dashboard"><span class="code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span><span>Tableau de bord</span></a>
+      <a class="navSingle" data-view="synchro"><span class="code">🔄</span><span>Synchronisation</span><span class="cnt" id="syncBadge" style="display:none; margin-left:auto; color:#fff; padding:1px 7px; border-radius:20px; font-size:10px;"></span></a>
       <a class="navSingle" data-view="notifications"><span class="code">🔔</span><span>Notifications</span><span class="cnt" id="notifBadge" style="display:none; margin-left:auto; background:var(--danger); color:#fff; padding:1px 7px; border-radius:20px; font-size:10px;"></span></a>
 
       <div class="navGroup open">
@@ -865,8 +881,8 @@
 
   <!-- ============ MAIN ============ -->
   <div class="main">
-    <div id="offlineBanner" style="display:none; background:#3d2e14; color:#fff; padding:8px 18px; font-size:12.5px; display:none; align-items:center; justify-content:space-between;">
-      <span>📡 Hors ligne — les modifications sont enregistrées localement et seront envoyées au retour de la connexion.</span>
+    <div id="offlineBanner" role="status" style="display:none;">
+      <span id="offlineBannerTexte"></span>
       <span id="offlineQueueCount" style="font-weight:600;"></span>
     </div>
     <div class="topbar">
@@ -1318,6 +1334,19 @@
       </div>
 
       <!-- ===== NOTIFICATIONS ===== -->
+      <div class="view" id="view-synchro">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Synchronisation</h1><p>Travail hors ligne : opérations en attente, à corriger et envoyées</p></div>
+          <div style="display:flex; gap:8px;"><button class="btnPrimary" id="synchroMaintenant">🔄 Synchroniser maintenant</button></div>
+        </div>
+        <div class="panel"><div id="synchroEtat" style="padding:14px 18px;"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2 id="synchroCorrigerTitre">À corriger</h2><div class="sub">Refusées par le serveur au retour du réseau : corrigez puis renvoyez — rien n'est perdu</div></div></div><div id="synchroCorriger" class="hlListe"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2 id="synchroAttenteTitre">En attente d'envoi</h2><div class="sub">Enregistrées sur cet appareil, envoyées automatiquement dès que la connexion revient</div></div></div><div id="synchroAttente" class="hlListe"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2>Envoyées récemment</h2><div class="sub">Numéro provisoire → numéro définitif attribué par le serveur</div></div></div><div id="synchroHistorique"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2>Cet appareil</h2><div class="sub">Copie locale des données, session hors ligne (7 jours)</div></div>
+          <button class="btnGhost" id="synchroEffacer">Effacer les données de cet appareil</button></div></div>
+      </div>
+
       <div class="view" id="view-notifications">
         <div class="pageHead"><h1>Notifications</h1><p>Alertes de stock et commandes bloquées — résolvables une fois le stock rectifié</p></div>
         <div class="panel">
@@ -3024,18 +3053,47 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   let CURRENT_USER = null;
   function isGerant() { return CURRENT_USER && CURRENT_USER.role === 'gerant'; }
 
+  // Appel à l'API. Sans réseau (voir « HORS LIGNE ») : lectures depuis la copie
+  // locale, opérations autorisées mises en file, les autres refusées clairement.
   async function apiFetch(path, options = {}) {
-    const res = await fetch(API_BASE + path, {
+    const methode = (options.method || 'GET').toUpperCase();
+    const def = methode !== 'GET' ? hlOperation(methode, path) : null;
+    const idOperation = def ? hlUuid() : null; // même identifiant si l'opération doit être renvoyée
+    const envoyer = () => hlFetch(API_BASE + path, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}),
+        ...(idOperation && methode === 'POST' ? { 'X-Operation-Id': idOperation } : {}),
+        ...(TOKEN && TOKEN !== 'hors-ligne' ? { Authorization: `Bearer ${TOKEN}` } : {}),
         ...(options.headers || {}),
       },
     });
+    let res;
+    try {
+      res = await envoyer();
+    } catch (err) {
+      if (path.startsWith('/auth/')) throw (err instanceof TypeError ? err : new TypeError('Serveur injoignable'));
+      hlPasserHorsLigne();
+      if (methode === 'GET') {
+        const copie = await hlLireCache(path);
+        if (copie) {
+          if (!HL.donneesDu || copie.date < HL.donneesDu) { HL.donneesDu = copie.date; hlMajAffichage(); }
+          return hlAppliquerEffets(path, copie.data);
+        }
+        throw new Error('Hors ligne : ces données ne sont pas encore sur cet appareil (elles le seront après une connexion).');
+      }
+      if (def) return hlMettreEnFile(def, methode, path, options.body, idOperation);
+      throw new Error('Hors ligne : cette action demande une connexion (factures, avoirs, annulations, clients, réglages…). Réessayez une fois connecté.');
+    }
+    // Jeton expiré (ou session ouverte hors ligne) : reconnexion automatique puis nouvel essai.
+    if (res.status === 401 && !path.startsWith('/auth/') && HL.motDePasse && await hlReconnexionSilencieuse()) {
+      try { res = await envoyer(); } catch { /* réseau perdu entre-temps */ }
+    }
+    if (!path.startsWith('/auth/')) { HL.donneesDu = null; hlRepasserEnLigne(); }
     if (res.status === 204) return null;
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Erreur HTTP ${res.status}`);
+    if (methode === 'GET') hlEcrireCache(path, data);
     return data;
   }
 
@@ -3046,26 +3104,39 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     API_BASE = document.getElementById('apiBaseInput').value.trim().replace(/\/$/, '');
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
-    try {
-      const data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
-      TOKEN = data.token;
-      CURRENT_USER = data.user;
+    const entrer = async (user) => {
+      CURRENT_USER = user;
       try { localStorage.setItem(API_BASE_CLE, API_BASE); } catch {}
       document.getElementById('loginOverlay').classList.remove('open');
       document.getElementById('appRoot').style.display = 'flex';
       const who = document.querySelector('.sidebarFoot .who');
       const role = document.querySelector('.sidebarFoot .role');
-      if (who) who.textContent = `${data.user.employe_prenom || ''} ${data.user.employe_nom || data.user.username}`.trim();
-      if (role) role.textContent = data.user.role === 'gerant' ? 'Gérant' : 'Vendeur';
+      if (who) who.textContent = `${user.employe_prenom || ''} ${user.employe_nom || user.username}`.trim();
+      if (role) role.textContent = user.role === 'gerant' ? 'Gérant' : 'Vendeur';
       const utilisateursLink = document.querySelector('a[data-view="utilisateurs"]');
       if (utilisateursLink) utilisateursLink.style.display = isGerant() ? '' : 'none';
       await loadAllData();
+    };
+    let data;
+    try {
+      data = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
     } catch (err) {
       const reseau = err instanceof TypeError; // serveur injoignable (pas une erreur d'identifiants)
-      errEl.textContent = reseau ? 'Serveur injoignable — vérifiez son adresse ci-dessous.' : (err.message || 'Connexion impossible — vérifiez vos identifiants.');
+      // Pas de réseau : connexion hors ligne si ce compte s'est déjà connecté sur cet appareil (7 jours).
+      if (reseau && await hlConnexionHorsLigne(username, password)) {
+        await entrer(CURRENT_USER);
+        notifier('Mode hors ligne : vous travaillez sur la copie locale ; tout sera envoyé au retour de la connexion.', 'info');
+        return;
+      }
+      errEl.textContent = reseau ? (hlSession() ? 'Serveur injoignable, et connexion hors ligne impossible (mot de passe différent, autre compte ou plus de 7 jours) — vérifiez l\'adresse ci-dessous.' : 'Serveur injoignable — vérifiez son adresse ci-dessous.') : (err.message || 'Connexion impossible — vérifiez vos identifiants.');
       errEl.style.display = 'block';
       if (reseau) montrerChampServeur();
+      return;
     }
+    TOKEN = data.token;
+    HL.reconnexion = false;
+    await hlMemoriserSession(username, password, data.user);
+    await entrer(data.user);
   }
   document.getElementById('loginSubmitBtn').addEventListener('click', handleLogin);
   document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
@@ -3172,10 +3243,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       }
     }
 
-    // Reprend l'envoi d'éventuelles réceptions enregistrées hors ligne lors
-    // d'une session précédente (avant fermeture/rechargement de la page).
-    majBanniereHorsLigne();
-    synchroniserFileAttente();
+    // Opérations faites hors ligne (session précédente comprise) : envoi dès que possible.
+    hlMajAffichage();
+    if (!HL.horsLigne && !HL.synchroEnCours) hlOps().then(ops => { if (ops.some(o => o.statut === 'EN_ATTENTE')) hlSynchroniser(); });
   }
 
   // Filtre par grande famille — heuristique sur le nom de catégorie (Huiles/
@@ -6126,85 +6196,499 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
 
   // ============================================================================
-  // HORS LIGNE — Phase 1 : l'interface reste utilisable sans connexion (via
-  // le service worker), et les Réceptions peuvent être enregistrées hors
-  // ligne (mises en file d'attente localement, envoyées automatiquement au
-  // retour du réseau). Les autres écrans nécessitent encore une connexion —
-  // ce sera étendu progressivement, pas d'un coup (trop risqué).
+  // HORS LIGNE (V3.3) — l'application continue de fonctionner sans connexion.
+  //
+  // 1. Copie locale : chaque lecture réussie (GET) est gardée sur l'appareil
+  //    (IndexedDB) ; sans réseau, les écrans s'affichent depuis cette copie.
+  // 2. Opérations hors ligne : commandes, réceptions, presse, filtration,
+  //    conditionnement, encaissements et comptages d'inventaire sont mis en
+  //    file avec un numéro provisoire ; le stock local en tient compte.
+  // 3. Au retour du réseau : envoi dans l'ordre, chacune avec un identifiant
+  //    unique (X-Operation-Id) — le serveur ne l'enregistre jamais deux fois —
+  //    puis rechargement de tout (ce qui a été fait sur le PC arrive ici).
+  // 4. Refus du serveur (stock insuffisant, lot épuisé…) : l'opération passe
+  //    « À corriger » (jamais perdue), notification ici et au bureau.
+  // Factures, avoirs, annulations et réglages restent en ligne seulement.
   // ============================================================================
-  const FILE_DB_NOM = 'tinor_file_attente';
-  function ouvrirFileDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(FILE_DB_NOM, 1);
+  const HL_DB_NOM = 'tinor_hors_ligne';
+  const HL_SESSION_CLE = 'tinor_session_hors_ligne';
+  const HL_SESSION_JOURS = 7;
+  const HL_OPERATIONS = [
+    { type: 'commande', methode: 'POST', motif: /^\/commandes$/, prefixe: 'CMD', libelle: 'Commande' },
+    { type: 'reception', methode: 'POST', motif: /^\/receptions$/, prefixe: 'REC', libelle: 'Réception' },
+    { type: 'presse', methode: 'POST', motif: /^\/presse$/, prefixe: 'PRS', libelle: 'Pressage' },
+    { type: 'filtration', methode: 'POST', motif: /^\/filtration$/, prefixe: 'FLT', libelle: 'Filtration' },
+    { type: 'conditionnement', methode: 'POST', motif: /^\/conditionnement$/, prefixe: 'CND', libelle: 'Conditionnement' },
+    { type: 'paiement', methode: 'POST', motif: /^\/factures\/\d+\/paiements$/, prefixe: 'PAI', libelle: 'Encaissement' },
+    { type: 'inventaire', methode: 'PUT', motif: /^\/inventaires\/\d+\/lignes$/, prefixe: 'INV', libelle: 'Comptage d\'inventaire' },
+  ];
+  const HL = { horsLigne: false, synchroEnCours: false, reconnexion: false, motDePasse: null, derniereSynchro: null, dbPromesse: null };
+
+  function hlDb() {
+    if (!HL.dbPromesse) HL.dbPromesse = new Promise((resolve, reject) => {
+      const req = indexedDB.open(HL_DB_NOM, 1);
       req.onupgradeneeded = () => {
-        req.result.createObjectStore('file', { keyPath: 'id', autoIncrement: true });
+        const db = req.result;
+        db.createObjectStore('cache', { keyPath: 'cle' });
+        db.createObjectStore('ops', { keyPath: 'id' });
+        db.createObjectStore('historique', { keyPath: 'id' });
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => { HL.dbPromesse = null; reject(req.error); };
     });
+    return HL.dbPromesse;
   }
-  async function ajouterALaFileAttente(type, path, payload) {
-    const db = await ouvrirFileDB();
+  async function hlStore(nom, mode, action) {
+    const db = await hlDb();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction('file', 'readwrite');
-      tx.objectStore('file').add({ type, path, payload, dateCreation: new Date().toISOString() });
-      tx.oncomplete = () => resolve();
+      const tx = db.transaction(nom, mode);
+      const req = action(tx.objectStore(nom));
+      tx.oncomplete = () => resolve(req ? req.result : undefined);
       tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
     });
   }
-  async function listerFileAttente() {
-    const db = await ouvrirFileDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('file', 'readonly');
-      const req = tx.objectStore('file').getAll();
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+  const hlCle = path => `${API_BASE}|${path}`;
+  async function hlLireCache(path) {
+    try { const r = await hlStore('cache', 'readonly', s => s.get(hlCle(path))); return r ? r : null; } catch { return null; }
   }
-  async function retirerDeLaFileAttente(id) {
-    const db = await ouvrirFileDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('file', 'readwrite');
-      tx.objectStore('file').delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+  async function hlEcrireCache(path, data) {
+    try { await hlStore('cache', 'readwrite', s => s.put({ cle: hlCle(path), data, date: new Date().toISOString() })); } catch (e) { console.warn('Copie locale impossible :', e); }
   }
-  function estUneErreurReseau() {
-    // navigator.onLine n'est pas fiable à 100% mais reste le meilleur signal
-    // disponible pour distinguer "pas de réseau" d'une vraie erreur métier.
-    return !navigator.onLine;
+  async function hlOps() {
+    try { return ((await hlStore('ops', 'readonly', s => s.getAll())) || []).sort((a, b) => a.cree_le.localeCompare(b.cree_le)); } catch { return []; }
   }
-  async function majBanniereHorsLigne() {
-    const banniere = document.getElementById('offlineBanner');
-    const compteurEl = document.getElementById('offlineQueueCount');
-    const enLigne = navigator.onLine;
-    const file = await listerFileAttente().catch(() => []);
-    banniere.style.display = (!enLigne || file.length) ? 'flex' : 'none';
-    compteurEl.textContent = file.length ? `${file.length} en attente d'envoi` : '';
+  const hlEcrireOp = op => hlStore('ops', 'readwrite', s => s.put(op));
+  const hlSupprimerOp = id => hlStore('ops', 'readwrite', s => s.delete(id));
+  async function hlHistorique() {
+    try { return ((await hlStore('historique', 'readonly', s => s.getAll())) || []).sort((a, b) => b.envoye_le.localeCompare(a.envoye_le)); } catch { return []; }
   }
-  async function synchroniserFileAttente() {
-    if (!navigator.onLine) return;
-    const file = await listerFileAttente().catch(() => []);
-    for (const item of file) {
-      try {
-        await apiFetch(item.path, { method: 'POST', body: JSON.stringify(item.payload) });
-        await retirerDeLaFileAttente(item.id);
-      } catch (err) {
-        if (estUneErreurReseau()) break; // reperdu la connexion en cours de route, on réessaiera plus tard
-        // Erreur métier (ex: stock insuffisant depuis) — on la retire quand
-        // même pour ne pas bloquer la file indéfiniment, et on prévient.
-        await retirerDeLaFileAttente(item.id);
-        notifier(`Une opération en attente a échoué et a été abandonnée : ${err.message}`, 'erreur');
+  async function hlAjouterHistorique(entree) {
+    await hlStore('historique', 'readwrite', s => s.put(entree));
+    const tout = await hlHistorique();
+    for (const vieux of tout.slice(40)) await hlStore('historique', 'readwrite', s => s.delete(vieux.id));
+  }
+
+  // Identifiants : unique par opération ; numéro provisoire lisible par appareil (CMD-HL-K4P2-3).
+  function hlUuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'op-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+  function hlAppareil() {
+    let a = null;
+    try { a = localStorage.getItem('tinor_appareil'); } catch {}
+    if (!a) { a = Math.random().toString(36).slice(2, 6).toUpperCase(); try { localStorage.setItem('tinor_appareil', a); } catch {} }
+    return a;
+  }
+  function hlNumeroProvisoire(prefixe) {
+    let n = 0;
+    try { n = Number(localStorage.getItem('tinor_compteur_hl') || 0) + 1; localStorage.setItem('tinor_compteur_hl', String(n)); } catch { n = Date.now() % 10000; }
+    return `${prefixe}-HL-${hlAppareil()}-${n}`;
+  }
+  const hlOperation = (methode, path) => HL_OPERATIONS.find(o => o.methode === methode && o.motif.test(path)) || null;
+
+  // Résumé lisible d'une opération (écran Synchronisation, notifications).
+  function hlNomProduit(id) { return APP_DATA.produits.find(p => p.id === Number(id))?.nom || `produit ${id}`; }
+  function hlDescription(op) {
+    const p = op.payload || {};
+    const lot = id => APP_DATA.lots.find(l => l.id === Number(id))?.numero_lot || `lot ${id}`;
+    switch (op.type) {
+      case 'commande': {
+        const client = APP_DATA.clients.find(c => c.id === Number(p.client_id));
+        return `${client ? client.nom : 'client ' + p.client_id} · ${(p.lignes || []).map(l => `${l.qty} × ${hlNomProduit(l.produit_id)}`).join(', ')}`;
+      }
+      case 'reception': return (p.lignes || []).map(l => `${l.quantite} × ${hlNomProduit(l.produit_id)}`).join(', ');
+      case 'presse': return `${(p.sources || []).map(s => `${s.quantite} de ${lot(s.lot_id)}`).join(' + ')} → ${(p.sorties || []).map(s => `${s.quantite_produite} ${hlNomProduit(s.produit_id)}`).join(', ')}`;
+      case 'filtration': return `${hlNomProduit(p.produit_id)} : ${p.quantite_produite}`;
+      case 'conditionnement': return `${p.qty} × ${p.nouveau_produit ? p.nouveau_produit.nom : hlNomProduit(p.produit_id)}`;
+      case 'paiement': { const f = APP_DATA.factures.find(x => `/factures/${x.id}/paiements` === op.path); return `${fmtDT(p.montant)}${f ? ' sur ' + f.numero : ''}`; }
+      case 'inventaire': return `${(p.lignes || []).length} ligne(s) comptée(s)`;
+      default: return '';
+    }
+  }
+
+  // ---------- Effets locaux : le stock affiché hors ligne tient compte des opérations en attente ----------
+  async function hlAppliquerEffets(path, data) {
+    const ops = (await hlOps()).filter(o => o.statut === 'EN_ATTENTE');
+    if (!ops.length || !Array.isArray(data)) return data;
+    const copie = JSON.parse(JSON.stringify(data));
+    const presse = path === '/presse' ? copie : ((await hlLireCache('/presse'))?.data || []);
+    const filtration = path === '/filtration' ? copie : ((await hlLireCache('/filtration'))?.data || []);
+    const lots = path === '/lots' ? copie : ((await hlLireCache('/lots'))?.data || []);
+    const deltasLot = new Map();     // lot_id → quantité retirée
+    const deltasProduit = new Map(); // produit_id → variation de stock
+    const ajouterLot = (lotId, q) => { if (lotId) deltasLot.set(Number(lotId), (deltasLot.get(Number(lotId)) || 0) + Number(q || 0)); };
+    const ajouterProduit = (pid, q) => { if (pid) deltasProduit.set(Number(pid), (deltasProduit.get(Number(pid)) || 0) + Number(q || 0)); };
+    const lotDeSource = s => s.lot_id || (s.lot_presse_id ? presse.find(l => l.id === Number(s.lot_presse_id))?.lot_id : s.lot_filtration_id ? filtration.find(l => l.id === Number(s.lot_filtration_id))?.lot_id : null);
+    const produitDuLot = id => lots.find(l => l.id === Number(id))?.produit_id;
+    // Vente : prélèvement « premier périmé, premier sorti » sur les lots du produit.
+    const prelever = (pid, q) => {
+      ajouterProduit(pid, -q);
+      let reste = Number(q || 0);
+      const candidats = lots.filter(l => l.produit_id === Number(pid) && l.statut === 'LIBERE')
+        .sort((a, b) => String(a.date_expiration || '9999').localeCompare(String(b.date_expiration || '9999')) || a.id - b.id);
+      for (const l of candidats) {
+        if (reste <= 0) break;
+        const dispo = Number(l.quantite_actuelle) - (deltasLot.get(l.id) || 0);
+        const pris = Math.min(Math.max(dispo, 0), reste);
+        if (pris > 0) { ajouterLot(l.id, pris); reste -= pris; }
+      }
+    };
+    for (const op of ops) {
+      const p = op.payload || {};
+      if (op.type === 'commande') (p.lignes || []).forEach(l => prelever(l.produit_id, l.qty));
+      if (op.type === 'reception') (p.lignes || []).forEach(l => ajouterProduit(l.produit_id, l.quantite));
+      if (['presse', 'filtration', 'conditionnement'].includes(op.type)) {
+        (p.sources || []).forEach(s => { const lotId = lotDeSource(s); const q = s.quantite ?? s.quantite_utilisee; ajouterLot(lotId, q); ajouterProduit(produitDuLot(lotId), -q); });
+        (p.consommables || []).forEach(c => prelever(c.produit_id, c.quantite));
       }
     }
-    await majBanniereHorsLigne();
-    if (document.querySelector('.view.active')?.id === 'view-receptions') {
-      try { APP_DATA.receptions = await apiFetch('/receptions'); APP_DATA.lots = await apiFetch('/lots'); renderReceptions(); renderLotsRegistre(); } catch {}
+    const arrondi3 = x => Math.round(x * 1000) / 1000;
+    if (path === '/lots') copie.forEach(l => { if (deltasLot.has(l.id)) l.quantite_actuelle = Math.max(0, arrondi3(Number(l.quantite_actuelle) - deltasLot.get(l.id))); });
+    if (path === '/presse' || path === '/filtration') copie.forEach(l => { if (deltasLot.has(Number(l.lot_id))) l.quantite_actuelle = Math.max(0, arrondi3(Number(l.quantite_actuelle) - deltasLot.get(Number(l.lot_id)))); });
+    if (path === '/produits') copie.forEach(pr => { if (deltasProduit.has(pr.id) && pr.stock_actuel != null) pr.stock_actuel = Math.max(0, arrondi3(Number(pr.stock_actuel) + deltasProduit.get(pr.id))); });
+    if (path === '/factures') {
+      ops.filter(o => o.type === 'paiement').forEach(o => {
+        const f = copie.find(x => `/factures/${x.id}/paiements` === o.path);
+        if (!f) return;
+        f.total_paye = arrondi3(Number(f.total_paye || 0) + Number(o.payload.montant || 0));
+        if (f.solde != null) f.solde = arrondi3(Number(f.solde) - Number(o.payload.montant || 0));
+      });
+    }
+    return copie;
+  }
+
+  // ---------- Bascule hors ligne / en ligne ----------
+  function hlPasserHorsLigne() {
+    if (HL.horsLigne) return;
+    HL.horsLigne = true;
+    hlMajAffichage();
+  }
+  function hlRepasserEnLigne() {
+    if (!HL.horsLigne) return;
+    HL.horsLigne = false;
+    hlMajAffichage();
+    setTimeout(() => hlSynchroniser({ recharger: true }), 0); // envoi des opérations + données du PC
+  }
+
+  // Appel réseau d'apiFetch : délai max, puis bascule hors ligne en cas d'échec réseau.
+  async function hlFetch(url, options, delaiMs = 20000) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const minuterie = ctrl ? setTimeout(() => ctrl.abort(), delaiMs) : null;
+    try { return await fetch(url, { ...options, signal: ctrl ? ctrl.signal : undefined }); }
+    finally { if (minuterie) clearTimeout(minuterie); }
+  }
+
+  // Mise en file d'une opération faite sans réseau.
+  async function hlMettreEnFile(def, methode, path, corps, idOperation) {
+    const op = {
+      id: idOperation || hlUuid(), type: def.type, libelle: def.libelle, methode, path,
+      payload: corps ? JSON.parse(corps) : {}, numero_provisoire: hlNumeroProvisoire(def.prefixe),
+      cree_le: new Date().toISOString(), statut: 'EN_ATTENTE', erreur: null, tentatives: 0,
+    };
+    await hlEcrireOp(op);
+    notifier(`Hors ligne — ${def.libelle.toLowerCase()} ${op.numero_provisoire} enregistrée sur cet appareil ; envoi automatique au retour de la connexion.`, 'info');
+    hlMajAffichage();
+    return { hors_ligne: true, id: null, numero: op.numero_provisoire, numero_lot: op.numero_provisoire, operation_id: op.id };
+  }
+
+  // ---------- Synchronisation ----------
+  async function hlServeurJoignable() {
+    try { const r = await hlFetch(API_BASE + '/health', {}, 6000); return r.ok; } catch { return false; }
+  }
+  async function hlReconnexionSilencieuse() {
+    const s = hlSession();
+    if (!s || !HL.motDePasse) return false;
+    try {
+      const r = await hlFetch(API_BASE + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: s.username, password: HL.motDePasse }) });
+      if (!r.ok) return false;
+      const d = await r.json();
+      TOKEN = d.token; CURRENT_USER = d.user; HL.reconnexion = false;
+      return true;
+    } catch { return false; }
+  }
+  async function hlEnvoyer(op) {
+    return hlFetch(API_BASE + op.path, {
+      method: op.methode,
+      headers: { 'Content-Type': 'application/json', 'X-Operation-Id': op.id, ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) },
+      body: JSON.stringify(op.payload),
+    });
+  }
+  async function hlSynchroniser({ recharger = false, manuel = false } = {}) {
+    if (HL.synchroEnCours || !TOKEN) return;
+    HL.synchroEnCours = true;
+    hlMajAffichage();
+    let envoyees = 0, refusees = 0;
+    try {
+      if (!(await hlServeurJoignable())) { HL.horsLigne = true; if (manuel) notifier('Serveur toujours injoignable : nouvel essai automatique dans quelques secondes.', 'erreur'); return; }
+      HL.horsLigne = false;
+      for (const op of (await hlOps()).filter(o => o.statut === 'EN_ATTENTE')) {
+        let rep;
+        try { rep = await hlEnvoyer(op); } catch { HL.horsLigne = true; break; } // connexion reperdue : on reprendra plus tard
+        if (rep.status === 401) {
+          if (await hlReconnexionSilencieuse()) { try { rep = await hlEnvoyer(op); } catch { HL.horsLigne = true; break; } }
+          if (rep.status === 401) { HL.reconnexion = true; break; }
+        }
+        const data = await rep.json().catch(() => ({}));
+        if (rep.ok) {
+          await hlSupprimerOp(op.id);
+          await hlAjouterHistorique({ id: op.id, type: op.type, libelle: op.libelle, numero_provisoire: op.numero_provisoire,
+            numero: data.numero || data.numero_lot || (data.lots_presse && data.lots_presse[0] && data.lots_presse[0].numero_lot) || '✓ enregistrée', description: hlDescription(op), envoye_le: new Date().toISOString(),
+            statut: data.statut || '' });
+          if (op.signale) apiFetch('/sync/conflits/resolus', { method: 'POST', body: JSON.stringify({ numero_provisoire: op.numero_provisoire }) }).catch(() => {});
+          envoyees++;
+          continue;
+        }
+        if (rep.status >= 500 || data.en_cours) { op.tentatives++; await hlEcrireOp(op); break; } // serveur occupé : on réessaiera
+        // Refus métier : l'opération attend une correction (jamais perdue).
+        op.statut = 'A_CORRIGER'; op.erreur = data.error || `Erreur ${rep.status}`; op.tentatives++;
+        if (!op.signale) {
+          try { await apiFetch('/sync/conflits', { method: 'POST', body: JSON.stringify({ libelle: `${op.libelle} — ${hlDescription(op)}`.slice(0, 140), erreur: op.erreur, numero_provisoire: op.numero_provisoire }) }); op.signale = true; } catch {}
+        }
+        await hlEcrireOp(op);
+        refusees++;
+      }
+      if (envoyees || recharger || refusees) {
+        HL.derniereSynchro = new Date().toISOString();
+        try { localStorage.setItem('tinor_derniere_synchro', HL.derniereSynchro); } catch {}
+        if (!HL.horsLigne) await loadAllData(); // données du PC → téléphone (double sens)
+      }
+      if (envoyees) notifier(`${envoyees} opération(s) hors ligne envoyée(s) au serveur.`, 'succes');
+      if (refusees) hlAlerter(`${refusees} opération(s) à corriger`, 'Le serveur a refusé des opérations faites hors ligne (stock insuffisant, lot épuisé…). Ouvrez Synchronisation pour les corriger.');
+      if (HL.reconnexion) notifier('Session expirée : reconnectez-vous pour envoyer les opérations en attente.', 'erreur');
+    } finally {
+      HL.synchroEnCours = false;
+      hlMajAffichage();
     }
   }
-  window.addEventListener('online', () => { majBanniereHorsLigne(); synchroniserFileAttente(); });
-  window.addEventListener('offline', majBanniereHorsLigne);
+  // Notification visible même si l'application est en arrière-plan (Android), sinon message à l'écran.
+  function hlAlerter(titre, texte) {
+    notifier(`${titre} — ${texte}`, 'erreur');
+    try {
+      if (window.TinorAndroid && typeof TinorAndroid.notifier === 'function') TinorAndroid.notifier(titre, texte);
+      else if ('Notification' in window && Notification.permission === 'granted') new Notification(`TinOR — ${titre}`, { body: texte });
+    } catch {}
+  }
+
+  // ---------- Session hors ligne (7 jours) ----------
+  function hlSession() { try { return JSON.parse(localStorage.getItem(HL_SESSION_CLE) || 'null'); } catch { return null; } }
+  async function hlEmpreinte(motDePasse, sel) {
+    const texte = `${sel}|${motDePasse}`;
+    try {
+      if (window.crypto && crypto.subtle) {
+        const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texte));
+        return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch {}
+    let h = 2166136261; // repli (page en http) : FNV-1a
+    for (let i = 0; i < texte.length; i++) { h ^= texte.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return 'fnv' + (h >>> 0).toString(16);
+  }
+  async function hlMemoriserSession(username, motDePasse, user) {
+    HL.motDePasse = motDePasse;
+    const sel = hlUuid();
+    try { localStorage.setItem(HL_SESSION_CLE, JSON.stringify({ api: API_BASE, username, user, sel, empreinte: await hlEmpreinte(motDePasse, sel), date: new Date().toISOString() })); } catch {}
+  }
+  async function hlConnexionHorsLigne(username, motDePasse) {
+    const s = hlSession();
+    if (!s || s.api !== API_BASE || s.username !== username) return false;
+    if (Date.now() - new Date(s.date).getTime() > HL_SESSION_JOURS * 86400000) return false;
+    if (await hlEmpreinte(motDePasse, s.sel) !== s.empreinte) return false;
+    HL.motDePasse = motDePasse;
+    CURRENT_USER = s.user;
+    TOKEN = 'hors-ligne'; // remplacé par un vrai jeton dès le retour du réseau (reconnexion automatique)
+    HL.horsLigne = true;
+    HL.reconnexion = true;
+    return true;
+  }
+
+  // ---------- Affichage : bandeau + écran Synchronisation ----------
+  async function hlMajAffichage() {
+    const ops = await hlOps();
+    const attente = ops.filter(o => o.statut === 'EN_ATTENTE').length;
+    const aCorriger = ops.filter(o => o.statut === 'A_CORRIGER').length;
+    const ban = document.getElementById('offlineBanner');
+    const texte = document.getElementById('offlineBannerTexte');
+    const compteur = document.getElementById('offlineQueueCount');
+    if (ban && texte && compteur) {
+      let etat = '';
+      if (HL.synchroEnCours) etat = 'synchro';
+      else if (aCorriger) etat = 'corriger';
+      else if (HL.horsLigne) etat = 'horsligne';
+      else if (HL.reconnexion && attente) etat = 'reconnexion';
+      else if (attente) etat = 'attente';
+      ban.dataset.etat = etat;
+      ban.style.display = etat ? 'flex' : 'none';
+      const dateCopie = HL.donneesDu ? ` — données du ${new Date(HL.donneesDu).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}` : '';
+      texte.textContent = {
+        synchro: '🔄 Synchronisation en cours…',
+        corriger: `⚠ ${aCorriger} opération(s) hors ligne à corriger`,
+        horsligne: `📡 Hors ligne — vous pouvez continuer à travailler${dateCopie}`,
+        reconnexion: '🔑 Reconnectez-vous pour envoyer les opérations en attente',
+        attente: '⏳ Opérations en attente d\'envoi',
+      }[etat] || '';
+      compteur.textContent = attente ? `${attente} en attente d'envoi · Voir ›` : 'Voir ›';
+    }
+    const badge = document.getElementById('syncBadge');
+    if (badge) { badge.textContent = aCorriger || attente || ''; badge.style.display = (aCorriger || attente) ? '' : 'none'; badge.style.background = aCorriger ? 'var(--danger)' : 'var(--warn)'; }
+    if (document.getElementById('view-synchro')?.classList.contains('active')) renderSynchro();
+  }
+
+  const HL_CHAMPS_QTE = { qty: 'Quantité', quantite: 'Quantité', quantite_utilisee: 'Quantité utilisée', quantite_produite: 'Quantité obtenue', quantite_tourteau: 'Tourteau', quantite_dechet: 'Déchet', montant: 'Montant', quantite_physique: 'Quantité comptée' };
+  // Champs de quantité modifiables d'une opération (lignes, sources, sorties…).
+  function hlChampsModifiables(op) {
+    const champs = [];
+    const lot = id => APP_DATA.lots.find(l => l.id === Number(id))?.numero_lot;
+    const etiquette = (o) => o.produit_id ? hlNomProduit(o.produit_id)
+      : o.lot_id ? (lot(o.lot_id) || 'lot ' + o.lot_id)
+      : o.lot_presse_id ? (APP_DATA.lotsPresse.find(l => l.id === Number(o.lot_presse_id))?.numero_lot || 'lot de presse')
+      : o.lot_filtration_id ? (APP_DATA.lotsFiltration.find(l => l.id === Number(o.lot_filtration_id))?.numero_lot || 'lot filtré') : '';
+    const parcourir = (obj, chemin, contexte) => {
+      Object.entries(obj || {}).forEach(([k, v]) => {
+        if (Array.isArray(v)) v.forEach((el, i) => el && typeof el === 'object' && parcourir(el, [...chemin, k, i], etiquette(el)));
+        else if (HL_CHAMPS_QTE[k] && typeof v === 'number') champs.push({ chemin: [...chemin, k], libelle: `${contexte ? contexte + ' — ' : ''}${HL_CHAMPS_QTE[k]}`, valeur: v });
+      });
+    };
+    parcourir(op.payload, [], op.type === 'conditionnement' ? (op.payload.nouveau_produit?.nom || hlNomProduit(op.payload.produit_id)) : '');
+    return champs;
+  }
+  function hlDefinir(obj, chemin, valeur) {
+    let o = obj;
+    for (let i = 0; i < chemin.length - 1; i++) o = o[chemin[i]];
+    o[chemin[chemin.length - 1]] = valeur;
+  }
+
+  async function renderSynchro() {
+    const ops = await hlOps();
+    const hist = await hlHistorique();
+    const aCorriger = ops.filter(o => o.statut === 'A_CORRIGER');
+    const attente = ops.filter(o => o.statut === 'EN_ATTENTE');
+    const fmt = d => d ? new Date(d).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+    const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    document.getElementById('synchroEtat').innerHTML = `
+      <div class="hlEtat ${HL.horsLigne ? 'off' : 'on'}"><b>${HL.horsLigne ? '📡 Hors ligne' : '✓ En ligne'}</b>
+        <span>Serveur : ${esc(API_BASE)}</span><span>Dernière synchronisation : ${fmt(HL.derniereSynchro)}</span>
+        <span>Appareil : ${hlAppareil()}</span></div>`;
+    document.getElementById('synchroCorrigerTitre').textContent = `À corriger (${aCorriger.length})`;
+    document.getElementById('synchroCorriger').innerHTML = aCorriger.length ? aCorriger.map(op => {
+      const champs = hlChampsModifiables(op);
+      const stock = /stock|insuffisant|disponible|épuis/i.test(op.erreur || '');
+      return `<div class="hlOp ko" data-op="${op.id}">
+        <div class="hlTete"><b>${esc(op.libelle)} ${esc(op.numero_provisoire)}</b><span class="rowMeta">${fmt(op.cree_le)}</span></div>
+        <div class="hlDesc">${esc(hlDescription(op))}</div>
+        <div class="hlErreur">⚠ ${esc(op.erreur)}</div>
+        ${champs.length ? `<div class="hlChamps">${champs.map((c, i) => `<label>${esc(c.libelle)}<input type="number" step="0.001" min="0" class="formInput" data-champ="${i}" value="${c.valeur}"></label>`).join('')}</div>` : ''}
+        <div class="hlActions">
+          ${op.type === 'commande' && stock ? `<button class="rowActionBtn" data-action="ajuster">Ramener au stock disponible</button><button class="rowActionBtn" data-action="attente">Mettre en attente de production</button>` : ''}
+          <button class="rowActionBtn principal" data-action="renvoyer">Renvoyer${champs.length ? ' (quantités ci-dessus)' : ''}</button>
+          <button class="rowActionBtn danger" data-action="abandonner">Abandonner</button>
+        </div></div>`;
+    }).join('') : '<div class="rowMeta hlVide">Rien à corriger.</div>';
+    document.getElementById('synchroAttenteTitre').textContent = `En attente d'envoi (${attente.length})`;
+    document.getElementById('synchroAttente').innerHTML = attente.length ? attente.map(op => `
+      <div class="hlOp" data-op="${op.id}"><div class="hlTete"><b>${esc(op.libelle)} ${esc(op.numero_provisoire)}</b><span class="rowMeta">${fmt(op.cree_le)}</span></div>
+        <div class="hlDesc">${esc(hlDescription(op))}</div>
+        <div class="hlActions"><button class="rowActionBtn danger" data-action="abandonner">Supprimer</button></div></div>`).join('')
+      : '<div class="rowMeta hlVide">Aucune opération en attente.</div>';
+    document.getElementById('synchroHistorique').innerHTML = hist.length ? `<table><thead><tr><th>Opération</th><th>N° provisoire</th><th>N° définitif</th><th>Envoyée le</th></tr></thead><tbody>${hist.map(h => `
+      <tr><td>${esc(h.libelle)}<div class="rowMeta">${esc(h.description)}</div></td><td class="rowMeta">${esc(h.numero_provisoire)}</td><td class="lotCode">${esc(h.numero || '—')}</td><td class="rowMeta">${fmt(h.envoye_le)}</td></tr>`).join('')}</tbody></table>`
+      : '<div class="rowMeta hlVide">Aucun envoi récent.</div>';
+  }
+
+  // Actions de l'écran Synchronisation.
+  document.addEventListener('click', async (e) => {
+    const bouton = e.target.closest('#view-synchro [data-action]');
+    if (!bouton) return;
+    const carte = bouton.closest('[data-op]');
+    const op = (await hlOps()).find(o => o.id === carte?.dataset.op);
+    if (!op) return;
+    const action = bouton.dataset.action;
+    if (action === 'abandonner') {
+      const ok = await confirmer(`${op.libelle} ${op.numero_provisoire} : ${hlDescription(op)}. Elle ne sera jamais envoyée au serveur.`,
+        { titre: 'Abandonner cette opération ?', ok: 'Abandonner', non: 'Garder', danger: true });
+      if (!ok) return;
+      await hlSupprimerOp(op.id);
+      if (op.signale) apiFetch('/sync/conflits/resolus', { method: 'POST', body: JSON.stringify({ numero_provisoire: op.numero_provisoire }) }).catch(() => {});
+      notifier(`${op.numero_provisoire} abandonnée.`, 'info');
+      await hlMajAffichage(); await renderSynchro();
+      return;
+    }
+    // Quantités saisies dans la carte (Renvoyer)
+    const champs = hlChampsModifiables(op);
+    carte.querySelectorAll('[data-champ]').forEach(input => {
+      const c = champs[Number(input.dataset.champ)];
+      const v = Number(input.value);
+      if (c && Number.isFinite(v)) hlDefinir(op.payload, c.chemin, v);
+    });
+    if (action === 'ajuster' && op.type === 'commande') {
+      // Stock actuel du serveur (données fraîches) pour chaque produit de la commande.
+      try { APP_DATA.lots = await apiFetch('/lots'); } catch {}
+      const dispo = pid => APP_DATA.lots.filter(l => l.produit_id === Number(pid) && l.statut === 'LIBERE').reduce((t, l) => Math.max(t, Number(l.quantite_actuelle)), 0);
+      op.payload.lignes = (op.payload.lignes || []).map(l => ({ ...l, qty: Math.min(Number(l.qty), Math.floor(dispo(l.produit_id))) })).filter(l => l.qty > 0);
+      if (!op.payload.lignes.length) { notifier('Plus aucun stock pour ces produits : mettez la commande en attente de production ou abandonnez-la.', 'erreur'); await hlEcrireOp(op); await renderSynchro(); return; }
+    }
+    if (action === 'attente') op.payload.accepter_attente = true;
+    op.statut = 'EN_ATTENTE'; op.erreur = null;
+    await hlEcrireOp(op);
+    await hlSynchroniser({ manuel: true });
+    await renderSynchro();
+  });
+  document.getElementById('synchroMaintenant').addEventListener('click', () => hlSynchroniser({ recharger: true, manuel: true }));
+  document.getElementById('synchroEffacer').addEventListener('click', async () => {
+    const ops = await hlOps();
+    const ok = await confirmer(ops.length
+      ? `${ops.length} opération(s) n'ont pas encore été envoyées et seront PERDUES. Les données de ce téléphone (copie locale, session hors ligne) seront effacées.`
+      : 'La copie locale des données et la session hors ligne de ce téléphone seront effacées (utile avant de prêter ou changer d\'appareil).',
+      { titre: 'Effacer les données de cet appareil ?', ok: 'Effacer', danger: true });
+    if (!ok) return;
+    try { await hlStore('cache', 'readwrite', s => s.clear()); await hlStore('ops', 'readwrite', s => s.clear()); await hlStore('historique', 'readwrite', s => s.clear()); } catch {}
+    try { localStorage.removeItem(HL_SESSION_CLE); localStorage.removeItem('tinor_derniere_synchro'); } catch {}
+    HL.motDePasse = null;
+    notifier('Données de cet appareil effacées.', 'succes');
+    await hlMajAffichage(); await renderSynchro();
+  });
+  document.getElementById('offlineBanner').addEventListener('click', () => {
+    if (HL.reconnexion && !HL.horsLigne) { hlSynchroniser({ manuel: true }); }
+    const lien = document.querySelector('#navScroll a[data-view="synchro"]');
+    if (lien) setActive('synchro', lien);
+  });
+
+  // Ancienne file d'attente (réceptions hors ligne, version précédente) : reprise dans la nouvelle.
+  async function hlReprendreAncienneFile() {
+    try {
+      if (!indexedDB.databases) return;
+      const bases = await indexedDB.databases();
+      if (!bases.some(b => b.name === 'tinor_file_attente')) return;
+      const anciennes = await new Promise((resolve) => {
+        const req = indexedDB.open('tinor_file_attente', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('file', { keyPath: 'id', autoIncrement: true });
+        req.onsuccess = () => { const tx = req.result.transaction('file', 'readonly'); const r = tx.objectStore('file').getAll(); r.onsuccess = () => { resolve(r.result || []); req.result.close(); }; r.onerror = () => resolve([]); };
+        req.onerror = () => resolve([]);
+      });
+      for (const a of anciennes) {
+        const def = hlOperation('POST', a.path);
+        if (def) await hlEcrireOp({ id: hlUuid(), type: def.type, libelle: def.libelle, methode: 'POST', path: a.path, payload: a.payload, numero_provisoire: hlNumeroProvisoire(def.prefixe), cree_le: a.dateCreation || new Date().toISOString(), statut: 'EN_ATTENTE', erreur: null, tentatives: 0 });
+      }
+      indexedDB.deleteDatabase('tinor_file_attente');
+    } catch {}
+  }
+
+  // Retour du réseau : signal du navigateur + vérification régulière (le signal n'est pas fiable sur téléphone).
+  window.addEventListener('online', () => { if (TOKEN) hlSynchroniser({ recharger: true }); });
+  window.addEventListener('offline', () => hlPasserHorsLigne());
+  setInterval(async () => {
+    if (!TOKEN || HL.synchroEnCours) return;
+    const ops = await hlOps();
+    if (HL.horsLigne || ops.some(o => o.statut === 'EN_ATTENTE')) {
+      if (await hlServeurJoignable()) {
+        if (HL.reconnexion && !(await hlReconnexionSilencieuse())) { HL.horsLigne = false; hlMajAffichage(); return; }
+        HL.horsLigne = false;
+        hlSynchroniser({ recharger: true });
+      }
+    }
+  }, 20000);
+  try { HL.derniereSynchro = localStorage.getItem('tinor_derniere_synchro'); } catch {}
+  hlReprendreAncienneFile().then(hlMajAffichage);
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {}); // silencieux : fonctionne en ligne même si le SW échoue (ex: http non sécurisé)
   }
@@ -6235,17 +6719,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const [receptions, achats, lots, produits] = await Promise.all([apiFetch('/receptions'), apiFetch('/achats'), apiFetch('/lots'), apiFetch('/produits')]);
       APP_DATA.receptions = receptions; APP_DATA.achats = achats; APP_DATA.lots = lots; APP_DATA.produits = produits;
       renderReceptions(); renderAchats(); renderLotsRegistre(); renderProduits();
-    } catch (err) {
-      if (estUneErreurReseau()) {
-        // Pas de réseau : enregistré localement, envoyé automatiquement au retour.
-        await ajouterALaFileAttente('reception', '/receptions', payload);
-        await majBanniereHorsLigne();
-        closeReceptionModal();
-        notifier('Hors ligne — cette réception est enregistrée localement et sera envoyée automatiquement dès que la connexion revient.', 'info');
-        return;
-      }
-      errEl.textContent = err.message; errEl.style.display = 'block';
-    }
+    } catch (err) { errEl.textContent = err.message; errEl.style.display = 'block'; }
   }
   document.getElementById('receptionSaveBtn').addEventListener('click', saveReception);
   document.getElementById('receptionCancelBtn').addEventListener('click', closeReceptionModal);
@@ -8357,11 +8831,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:'view-achats', receptions:'view-receptions',
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires',
-    notifications:'view-notifications', paiements:'view-paiements', avoirs:'view-avoirs', stats:'view-stats',
+    notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', avoirs:'view-avoirs', stats:'view-stats',
     certificats:'view-certificats', parametres:'view-parametres'
   };
   const titles = {
-    dashboard:['Tableau de bord',null], notifications:['Notifications',null],
+    dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
     commandes:['Commerce','Commandes'], factures:['Commerce','Factures'],
     paiements:['Commerce','Paiements'], avoirs:['Commerce','Avoirs'], stats:['Commerce','Statistiques'], clients:['Commerce','Clients'],
     'grille-prix':['Commerce','Grille de prix'], remises:['Commerce','Remises'],
@@ -8393,6 +8867,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       document.getElementById('phTitle').textContent = (titles[key] && titles[key][1]) || key;
     }
     document.getElementById(viewId).classList.add('active');
+    if (key === 'synchro') renderSynchro();
 
     const [group, leaf] = titles[key] || [key, null];
     document.getElementById('crumbs').innerHTML = leaf
@@ -8844,7 +9319,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Une icône par écran (menu, titre, recherche Ctrl+K), le menu aux couleurs
   // des rubriques, un bandeau illustré en tête d'écran, des numéros colorés.
   const ICONE_ECRAN = {
-    dashboard: 'accueil', notifications: 'cloche',
+    dashboard: 'accueil', notifications: 'cloche', synchro: 'mouvement',
     commandes: 'commande', factures: 'facture', avoirs: 'avoir', paiements: 'paiement', stats: 'stats', clients: 'client', remises: 'remise', 'grille-prix': 'grille',
     presse: 'presse', filtration: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',

@@ -764,6 +764,19 @@ CREATE TABLE controles_qualite (
 -- Alertes créées automatiquement (ex: commande bloquée faute de stock dans un
 -- format précis alors que le vrac existe) — restent EN_ATTENTE jusqu'à
 -- résolution manuelle ou automatique.
+-- Anti-doublon des opérations envoyées par les téléphones (mode hors ligne) :
+-- une opération renvoyée après une coupure réseau n'est pas enregistrée deux fois.
+CREATE TABLE IF NOT EXISTS operations_sync (
+  id          VARCHAR(64) NOT NULL PRIMARY KEY,
+  methode     VARCHAR(10) NOT NULL,
+  chemin      VARCHAR(200) NOT NULL,
+  statut      VARCHAR(10) NOT NULL DEFAULT 'EN_COURS',
+  code_http   INT NULL,
+  reponse     MEDIUMTEXT NULL,
+  cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  termine_le  DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE notifications (
   id           INT AUTO_INCREMENT PRIMARY KEY,
   type         VARCHAR(40) NOT NULL,   -- ex: 'STOCK_FORMAT_MANQUANT'

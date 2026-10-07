@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Notification « opérations hors ligne à corriger » (Android 13+ : demandée au premier usage). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- usesCleartextTraffic : autorise une API en http sur le réseau local
          (ex. http://192.168.1.10:3001/api) en plus de l'API en ligne https. -->

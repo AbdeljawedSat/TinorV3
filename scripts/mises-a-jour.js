@@ -48,6 +48,13 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     }
   }
 
+  // V3.3 — mode hors ligne : anti-doublon des opérations renvoyées par les téléphones.
+  const [os] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'operations_sync'");
+  if (!os[0].n) {
+    await conn.query(SQL_OPERATIONS_SYNC);
+    journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
+  }
+
   // V3.3 — la filtration donne une huile filtrée, distincte du vrac de presse :
   // « Huile de Sésame — Vrac » reçoit sa fiche « Huile de Sésame — Filtrée ».
   const { estHuileVrac, estHuileFiltree, cleHuileVrac } = require('../src/services/graines');
@@ -70,6 +77,18 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal(`✓ Mise à jour : produit « ${nom} » (code ${code}) créé pour la filtration.`);
   }
 }
+
+const SQL_OPERATIONS_SYNC = `CREATE TABLE IF NOT EXISTS operations_sync (
+  id          VARCHAR(64) NOT NULL PRIMARY KEY,
+  methode     VARCHAR(10) NOT NULL,
+  chemin      VARCHAR(200) NOT NULL,
+  statut      VARCHAR(10) NOT NULL DEFAULT 'EN_COURS',
+  code_http   INT NULL,
+  reponse     MEDIUMTEXT NULL,
+  cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  termine_le  DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
 
 const SQL_AVOIRS = `-- Avoirs (factures d'avoir) : une facture émise ne s'annule pas, on la
 -- corrige par un avoir numéroté AV-xxxx, total ou partiel.

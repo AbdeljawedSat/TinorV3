@@ -67,7 +67,7 @@ module.exports = function (pool) {
 
   router.post('/', enTransaction(pool, async (req, res, next, pool) => {
     try {
-      const { client_id, statut, notes, employe_id, lignes } = req.body;
+      const { client_id, statut, notes, employe_id, lignes, accepter_attente } = req.body;
       if (!client_id) return res.status(400).json({ error: 'client_id est requis.' });
       if (!Array.isArray(lignes) || !lignes.length) {
         return res.status(400).json({ error: 'Au moins une ligne est requise.' });
@@ -124,7 +124,10 @@ module.exports = function (pool) {
             );
             vracTotal = Number(vracRes.rows[0].total);
           }
-          if (vracTotal > 0) {
+          // Rupture acceptée (commande saisie hors ligne puis corrigée) : la ligne
+          // attend une production, la commande n'est pas refusée.
+          const ruptureAcceptee = vracTotal <= 0 && (accepter_attente || l.accepter_attente);
+          if (vracTotal > 0 || ruptureAcceptee) {
             // Vrac disponible : la ligne reste en attente de conditionnement,
             // la commande n'est PAS refusée.
             commandeEnAttente = true;
@@ -133,7 +136,7 @@ module.exports = function (pool) {
               qty: l.qty, prixDetail, unitPrice, ligneTotal, remise, freeUnits, qtePrelevee, enAttente: true,
             });
             notificationsAPreparer.push({
-              produit_id: l.produit_id, produit_nom: produit.nom, demande: qtePrelevee, vracDisponible: vracTotal,
+              produit_id: l.produit_id, produit_nom: produit.nom, demande: qtePrelevee, vracDisponible: vracTotal, rupture: ruptureAcceptee,
             });
             continue;
           }
@@ -194,6 +197,14 @@ module.exports = function (pool) {
       }
 
       for (const n of notificationsAPreparer) {
+        if (n.rupture) {
+          await pool.query(
+            `INSERT INTO notifications (type, titre, message, commande_id, produit_id) VALUES ('RUPTURE', $1, $2, $3, $4)`,
+            [`Rupture — ${n.produit_nom}`,
+             `La commande ${numero} attend ${n.demande} × "${n.produit_nom}" : plus de stock ni de vrac. Une production est nécessaire pour la livrer.`,
+             commandeId, n.produit_id]);
+          continue;
+        }
         await pool.query(
           `INSERT INTO notifications (type, titre, message, commande_id, produit_id)
            VALUES ('STOCK_FORMAT_MANQUANT', $1, $2, $3, $4)`,

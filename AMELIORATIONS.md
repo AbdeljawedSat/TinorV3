@@ -317,3 +317,34 @@ insuffisant, sources inférieures au besoin, ou plusieurs huiles sans « Mélang
   servi à aucune production ; ensuite le choix est verrouillé avec l'explication.
 - Fonction commune `creerProduitFini` (`src/services/produitCode.js`), aussi utilisée par le
   conditionnement.
+
+## Mode hors ligne complet, synchronisation dans les deux sens (V3.3)
+
+L'application (Android ou navigateur) continue de fonctionner sans connexion au serveur.
+
+- **Copie locale** : chaque donnée lue en ligne est gardée sur l'appareil (IndexedDB). Sans
+  réseau, tous les écrans déjà ouverts s'affichent depuis cette copie ; le bandeau indique
+  « Hors ligne — données du … ».
+- **Connexion hors ligne** : un compte qui s'est connecté en ligne sur l'appareil peut se reconnecter
+  sans réseau pendant 7 jours (mot de passe vérifié par empreinte, jamais stocké en clair).
+- **Opérations possibles hors ligne** : commandes, réceptions, presse, filtration, conditionnement,
+  encaissements, comptages d'inventaire. Chacune reçoit un numéro provisoire (`CMD-HL-K4P2-3`) et le
+  stock local en tient compte (lots, produits, solde des factures).
+  **En ligne seulement** : factures, avoirs, annulations, clients, produits, réglages (message clair).
+- **Retour du réseau** (détecté automatiquement, vérification toutes les 20 s, ou bouton
+  « Synchroniser maintenant ») : envoi dans l'ordre, puis rechargement de toutes les données (ce qui
+  a été fait sur le PC arrive sur le téléphone).
+- **Jamais de doublon** : chaque opération porte un identifiant unique (en-tête `X-Operation-Id`,
+  table `operations_sync`). Si la réponse se perd, le renvoi rejoue la réponse déjà donnée.
+- **À corriger** (écran Synchronisation) : une opération refusée (stock insuffisant, lot épuisé…)
+  n'est jamais perdue. Actions : modifier les quantités puis « Renvoyer », « Ramener au stock
+  disponible », « Mettre en attente de production » (commande en attente + notification de rupture),
+  « Abandonner ». Notification Android sur le téléphone et notification « Opération hors ligne à
+  corriger » au bureau, résolue automatiquement une fois corrigée.
+- **Sécurité** : bouton « Effacer les données de cet appareil » ; jeton renouvelé automatiquement au
+  retour du réseau.
+- Tests : `test/stock/hors-ligne.js` (rejeu, envois simultanés, refus puis correction, rupture
+  acceptée, conflits) et parcours complet dans la console (toutes les opérations hors ligne,
+  réponse perdue, rechargement de l'application hors ligne, corrections).
+- Mise à jour : `npm run migrate` crée la table `operations_sync`. Nouvel APK nécessaire pour la
+  notification Android.

@@ -35,7 +35,9 @@ module.exports = function (pool) {
       if (!notif) return res.status(404).json({ error: 'Notification introuvable.' });
       if (notif.statut === 'RESOLUE') return res.status(409).json({ error: 'Cette notification est déjà résolue.' });
       if (!notif.commande_id || !notif.produit_id) {
-        return res.status(400).json({ error: 'Notification sans commande/produit associé — rien à résoudre automatiquement.' });
+        // Information seule (ex. opération hors ligne corrigée) : « Résoudre » la marque comme traitée.
+        await pool.query(`UPDATE notifications SET statut = 'RESOLUE', resolved_at = NOW() WHERE id = $1`, [req.params.id]);
+        return res.json({ resolue: true });
       }
 
       const ligneRes = await pool.query(

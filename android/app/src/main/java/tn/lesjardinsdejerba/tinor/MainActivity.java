@@ -1,11 +1,17 @@
 package tn.lesjardinsdejerba.tinor;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,6 +60,8 @@ public class MainActivity extends Activity {
     private static final String ORIGINE = "https://appassets.androidplatform.net";
     private static final String PAGE = ORIGINE + "/assets/tinor_admin.html";
     private static final int DEMANDE_FICHIER = 42;
+    private static final int DEMANDE_NOTIFICATIONS = 43;
+    private static final String CANAL_SYNCHRO = "tinor_synchro";
 
     private WebView webView;
     private ValueCallback<Uri[]> rappelFichier;
@@ -209,6 +217,45 @@ public class MainActivity extends Activity {
         public void ouvrirLien(String url) {
             runOnUiThread(() -> ouvrirExterne(Uri.parse(url)));
         }
+
+        /** Mode hors ligne : une opération refusée au retour du réseau est à corriger. */
+        @JavascriptInterface
+        public void notifier(String titre, String texte) {
+            runOnUiThread(() -> afficherNotification(titre, texte));
+        }
+    }
+
+    /** Notification Android (visible même application en arrière-plan) ; message à l'écran si refusée. */
+    private void afficherNotification(String titre, String texte) {
+        String entete = "TinOR — " + (titre == null ? "" : titre);
+        NotificationManager gestionnaire = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        boolean autorise = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        if (gestionnaire == null || !autorise) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, DEMANDE_NOTIFICATIONS);
+            }
+            Toast.makeText(this, entete + " : " + texte, Toast.LENGTH_LONG).show();
+            return;
+        }
+        Notification.Builder constructeur;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            gestionnaire.createNotificationChannel(new NotificationChannel(
+                    CANAL_SYNCHRO, "Synchronisation hors ligne", NotificationManager.IMPORTANCE_DEFAULT));
+            constructeur = new Notification.Builder(this, CANAL_SYNCHRO);
+        } else {
+            constructeur = new Notification.Builder(this);
+        }
+        Intent ouvrir = new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent action = PendingIntent.getActivity(this, 0, ouvrir,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        constructeur.setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(entete)
+                .setContentText(texte)
+                .setStyle(new Notification.BigTextStyle().bigText(texte))
+                .setAutoCancel(true)
+                .setContentIntent(action);
+        gestionnaire.notify(1, constructeur.build());
     }
 
     /** Imprime un document HTML (facture, étiquette, liste) via le service d'impression Android. */

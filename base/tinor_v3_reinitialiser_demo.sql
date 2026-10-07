@@ -16,6 +16,20 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Anti-doublon des opérations envoyées par les téléphones (mode hors ligne) :
+-- une opération renvoyée après une coupure réseau n'est pas enregistrée deux fois.
+CREATE TABLE IF NOT EXISTS operations_sync (
+  id          VARCHAR(64) NOT NULL PRIMARY KEY,
+  methode     VARCHAR(10) NOT NULL,
+  chemin      VARCHAR(200) NOT NULL,
+  statut      VARCHAR(10) NOT NULL DEFAULT 'EN_COURS',
+  code_http   INT NULL,
+  reponse     MEDIUMTEXT NULL,
+  cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  termine_le  DATETIME NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+TRUNCATE TABLE operations_sync;
+
 -- Tables ajoutées en V3.3 (créées si la base date d'avant)
 -- Avoirs (factures d'avoir) : une facture émise ne s'annule pas, on la
 -- corrige par un avoir numéroté AV-xxxx, total ou partiel.
