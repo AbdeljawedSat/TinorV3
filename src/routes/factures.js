@@ -5,6 +5,7 @@ const { decrementerLot, LOT_DISPONIBLE } = require('../services/lotService');
 const { StockInsuffisant } = require('../db/transaction');
 const { positif, arrondi } = require('../services/regles');
 const { requireRole } = require('../middleware/auth');
+const { emettreFacture } = require('../services/ventes');
 
 // Total des avoirs émis par facture (réduit ce que le client doit).
 const AVOIRS_PAR_FACTURE = '(SELECT facture_id, SUM(total_ttc) AS total_avoirs FROM avoirs GROUP BY facture_id)';
@@ -64,96 +65,7 @@ module.exports = function (pool) {
     try {
       const { commande_id, tva_rate } = req.body;
       if (!commande_id) return res.status(400).json({ error: 'commande_id est requis.' });
-
-      const cmdRes = await pool.query(
-        `SELECT c.*, cl.nom AS client_nom FROM commandes c
-         LEFT JOIN clients cl ON cl.id = c.client_id WHERE c.id = $1 FOR UPDATE`,
-        [commande_id]
-      );
-      const commande = cmdRes.rows[0];
-      if (!commande) return res.status(404).json({ error: 'Commande introuvable.' });
-      if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est annulée : rien à facturer.` });
-
-      const dejaFacturee = await pool.query(
-        `SELECT id FROM factures WHERE commande_id = $1 AND statut = 'emise'`,
-        [commande_id]
-      );
-      if (dejaFacturee.rows.length) {
-        return res.status(409).json({ error: 'Cette commande a déjà une facture émise.' });
-      }
-
-      const lignesRes = await pool.query(
-        `SELECT cl.*, p.nom AS produit_nom FROM commande_lignes cl
-         LEFT JOIN produits p ON p.id = cl.produit_id WHERE cl.commande_id = $1`,
-        [commande_id]
-      );
-      if (!lignesRes.rows.length) return res.status(400).json({ error: 'Commande sans lignes — rien à facturer.' });
-      // Une ligne sans lot attend son conditionnement : la marchandise n'est pas
-      // encore sortie du stock, on ne peut donc pas la facturer.
-      const enAttente = lignesRes.rows.filter(l => !l.lot_id);
-      if (enAttente.length) {
-        return res.status(409).json({
-          error: `Facturation impossible : ${enAttente.map(l => `« ${l.produit_nom} »`).join(', ')} attend${enAttente.length > 1 ? 'ent' : ''} encore un conditionnement. Conditionnez, puis validez la ligne depuis Notifications avant de facturer.`,
-        });
-      }
-
-      const settingsRes = await pool.query('SELECT * FROM settings WHERE id = 1');
-      const settings = settingsRes.rows[0] || {};
-      const rate = tva_rate ?? settings.tva ?? 19;
-      const fodecRate = settings.fodec_rate ?? 1;
-      const timbreSeuil = Number(settings.timbre_seuil ?? 1000);
-      const droitTimbreConfigure = Number(settings.droit_timbre ?? 1);
-      // Méthode conforme au modèle Excel de référence : HT extrait ligne par
-      // ligne, FODEC/TVA/Timbre ajoutés une seule fois sur le total résultant.
-      const { totalHT, fodecMontant, montantTVA, droitTimbre, totalTTC: totalTtc } = computeFactureTotalsDepuisLignes(
-        lignesRes.rows.map(l => ({ unitPrice: l.unit_price, qty: l.qty })),
-        rate, fodecRate, droitTimbreConfigure, timbreSeuil
-      );
-
-      // Refacturation après annulation : l'annulation a réintégré le stock des
-      // lots vendus ; la nouvelle facture le ressort (sinon les marchandises
-      // livrées restaient comptées en stock — écart constaté).
-      const annulees = await pool.query(
-        `SELECT COUNT(*) AS n FROM factures WHERE commande_id = $1 AND statut = 'annulee'`, [commande_id]
-      );
-      if (Number(annulees.rows[0].n) > 0) {
-        for (const l of lignesRes.rows) {
-          if (!l.lot_id) continue;
-          const qte = Number(l.qty) + Number(l.free_units || 0);
-          const dispo = await pool.query(`SELECT numero_lot FROM lots WHERE id = $1 AND ${LOT_DISPONIBLE}`, [l.lot_id]);
-          if (!dispo.rows[0]) {
-            throw new StockInsuffisant(`Refacturation impossible : le lot de « ${l.produit_nom} » n'est plus disponible (périmé, bloqué ou épuisé). Créez une nouvelle commande.`);
-          }
-          await decrementerLot(pool, l.lot_id, qte);
-          await pool.query(`UPDATE lots SET statut = 'EPUISE' WHERE id = $1 AND quantite_actuelle <= 0`, [l.lot_id]);
-          await pool.query(
-            `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
-             VALUES ($1,'VENTE','SORTIE',$2,$3,$4,'commande',$5,'Refacturation après annulation')`,
-            [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, qte, commande_id]
-          );
-        }
-      }
-
-      const numero = await nextNumero(pool, 'facture_seq', 'FAC');
-      const facRes = await pool.query(
-        `INSERT INTO factures (numero, commande_id, commande_numero, client_id, client_nom, tva_rate, fodec_montant, droit_timbre, total_ht, montant_tva, total_ttc)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-        [numero, commande_id, commande.numero, commande.client_id, commande.client_nom, rate, fodecMontant, droitTimbre, totalHT, montantTVA, totalTtc]
-      );
-      const factureId = facRes.insertId;
-
-      for (const l of lignesRes.rows) {
-        const designation = `${l.produit_nom}${l.free_units ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''}`;
-        await pool.query(
-          `INSERT INTO facture_lignes (facture_id, designation, prix_detail, unit_price, qty, total, remise_nom, remise_pct)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [factureId, designation, l.prix_detail, l.unit_price, l.qty, l.total, l.remise_nom, l.remise_pct]
-        );
-      }
-      await pool.query(`UPDATE commandes SET statut = 'livree' WHERE id = $1`, [commande_id]);
-
-      const result = await pool.query('SELECT * FROM factures WHERE id = $1', [factureId]);
-      res.status(201).json(result.rows[0]);
+      res.status(201).json(await emettreFacture(pool, { commande_id, tva_rate, employe_id: req.body.employe_id }));
     } catch (err) { next(err); }
   }));
 

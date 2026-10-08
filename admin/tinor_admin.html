@@ -816,6 +816,8 @@
         <div class="navChildren">
           <a data-view="commandes"><span>Commandes</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="factures"><span>Factures</span><span class="cnt" style="display:none;"></span></a>
+          <a data-view="livraisons"><span>Bons de livraison</span></a>
+          <a data-view="proformas"><span>Factures en attente</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="avoirs"><span>Avoirs</span></a>
           <a data-view="paiements"><span>Paiements</span></a>
           <a data-view="clients"><span>Clients</span></a>
@@ -1000,7 +1002,7 @@
           <div style="padding:0 18px 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
             <div style="flex:1; min-width:220px;">
               <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Client ou N° de commande</label>
-              <input type="text" id="commandesFilterTexte" class="formInput" placeholder="ex: Amira ou CMD-0012">
+              <input type="text" id="commandesFilterTexte" class="formInput" placeholder="ex: Amira ou BC-0012">
             </div>
             <div style="min-width:150px;">
               <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
@@ -1020,6 +1022,26 @@
       </div>
 
       <!-- ===== AVOIRS ===== -->
+      <div class="view" id="view-livraisons">
+        <div class="pageHead"><h1>Bons de livraison</h1><p id="livraisonsCount">Chargement…</p></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Commande</th><th>Client</th><th>Date</th><th class="num">Quantité</th><th>Facture</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="livraisonsBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="view" id="view-proformas">
+        <div class="pageHead"><h1>Factures en attente</h1><p id="proformasCount">Chargement…</p></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Commande</th><th>Client</th><th>Date</th><th class="num">Total TTC</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="proformasBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="view" id="view-avoirs">
         <div class="pageHead"><h1>Avoirs</h1><p id="avoirsCount">Une facture émise ne s'annule pas : elle se corrige par un avoir (menu ⋯ d'une facture).</p></div>
         <div class="panel">
@@ -2236,6 +2258,60 @@
   </div>
 </div>
 
+<!-- ============ MODALE : LIVRAISON (bon de livraison) ============ -->
+<div class="modalOverlay" id="livraisonOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="livraisonTitre">Livrer</h2><div class="sub" id="livraisonSous"></div></div>
+      <button class="modalClose" id="livraisonFermer">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="livraisonErreur" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;"></div>
+      <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+        <div><label class="formLbl" style="margin-top:0;">Date de livraison</label><input type="date" id="livraisonDate" class="formInput"></div>
+        <div><label class="formLbl" style="margin-top:0;">Notes (transporteur, adresse…)</label><input type="text" id="livraisonNotes" class="formInput"></div>
+      </div>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Produit</th><th class="num">Commandé</th><th class="num">Déjà livré</th><th class="num">Reste</th><th>À livrer</th></tr></thead>
+        <tbody id="livraisonLignes"></tbody>
+      </table>
+      <div class="rowMeta" style="font-size:11.5px; margin-top:8px;">Livraison partielle possible : le reste pourra être livré plus tard ou « soldé » (il revient alors en stock).</div>
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="livraisonToutReste">Tout le reste</button>
+      <div style="display:flex; gap:8px;"><button class="btnGhost" id="livraisonAnnuler">Annuler</button><button class="btnPrimary" id="livraisonValider">Créer le bon de livraison</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE : FACTURE EN ATTENTE (pro forma) ============ -->
+<div class="modalOverlay" id="proformaOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="proformaTitre">Facture en attente</h2><div class="sub" id="proformaSous"></div></div>
+      <button class="modalClose" id="proformaFermer">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="proformaErreur" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;"></div>
+      <table>
+        <thead><tr><th>Désignation</th><th class="num">Qté</th><th>Prix TTC</th><th class="num">Total</th></tr></thead>
+        <tbody id="proformaLignes"></tbody>
+      </table>
+      <div id="proformaTotaux" style="margin-top:10px; font-size:13px;"></div>
+      <label class="formLbl">Notes (conditions, délai, acompte…)</label>
+      <input type="text" id="proformaNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="proformaSupprimer" style="color:var(--danger);">Annuler la pro forma</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btnGhost" id="proformaImprimer">🖨 Imprimer</button>
+        <button class="btnGhost" id="proformaEnregistrer">Enregistrer</button>
+        <button class="btnPrimary" id="proformaValider">Valider la facture</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODALE : CONDITIONNEMENT ============ -->
 <div class="modalOverlay" id="conditionnementModalOverlay">
   <div class="modal" style="max-width:520px;">
@@ -3204,6 +3280,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       ['grilles', '/grille-huiles'], ['settings', '/settings'], ['achats', '/achats'], ['receptions', '/receptions'],
       ['stockMouvements', '/stock-mouvements'], ['stockResume', '/stock-mouvements/resume'], ['notifications', '/notifications'],
       ['paiements', '/paiements'], ['avoirs', '/avoirs'], ['certificats', '/certificats'],
+      ['livraisons', '/livraisons'], ['proformas', '/proformas'],
     ];
     const results = await Promise.allSettled(endpoints.map(([, path]) => apiFetch(path)));
 
@@ -3228,7 +3305,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       renderGrillePrix, renderRemises, renderAchats, renderReceptions,
       renderStockMatiere, renderStockVrac, renderStockFiltre, renderStockConditionne, renderStockEmballage,
       renderStockConsommables, renderStockRepartitionPivot, renderStockMouvements, renderNotifications,
-      renderPaiements, renderAvoirs, renderStats, renderCertificats, renderParametres,
+      renderPaiements, renderAvoirs, renderLivraisons, renderProformas, renderStats, renderCertificats, renderParametres,
       tracPopulateTypes, tracPopulateLots,
     ];
     renders.forEach(fn => { try { fn(); } catch (e) { console.error(`Erreur d'affichage (${fn.name}) :`, e); } });
@@ -5429,10 +5506,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   async function rafraichirVentes() {
     const cles = [['factures', '/factures'], ['commandes', '/commandes'], ['paiements', '/paiements'], ['avoirs', '/avoirs'], ['clients', '/clients'],
-      ['lots', '/lots'], ['produits', '/produits'], ['notifications', '/notifications']];
+      ['lots', '/lots'], ['produits', '/produits'], ['notifications', '/notifications'], ['livraisons', '/livraisons'], ['proformas', '/proformas']];
     const res = await Promise.all(cles.map(([, u]) => apiFetch(u)));
     cles.forEach(([k], i) => { APP_DATA[k] = res[i]; });
-    [renderFactures, renderCommandes, renderPaiements, renderAvoirs, renderClients, renderLotsRegistre, renderProduits, renderDashboard]
+    [renderFactures, renderCommandes, renderPaiements, renderAvoirs, renderLivraisons, renderProformas, renderClients, renderLotsRegistre, renderProduits, renderDashboard]
       .forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
     if (TOKEN) majBadgesMenu();
   }
@@ -6214,7 +6291,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   const HL_SESSION_CLE = 'tinor_session_hors_ligne';
   const HL_SESSION_JOURS = 7;
   const HL_OPERATIONS = [
-    { type: 'commande', methode: 'POST', motif: /^\/commandes$/, prefixe: 'CMD', libelle: 'Commande' },
+    { type: 'commande', methode: 'POST', motif: /^\/commandes$/, prefixe: 'BC', libelle: 'Commande' },
+    { type: 'livraison', methode: 'POST', motif: /^\/livraisons$/, prefixe: 'BL', libelle: 'Bon de livraison' },
+    { type: 'proforma', methode: 'POST', motif: /^\/proformas$/, prefixe: 'PRO', libelle: 'Facture en attente' },
+    { type: 'proforma_modif', methode: 'PUT', motif: /^\/proformas\/\d+$/, prefixe: 'PRO', libelle: 'Modification de facture en attente' },
     { type: 'reception', methode: 'POST', motif: /^\/receptions$/, prefixe: 'REC', libelle: 'Réception' },
     { type: 'presse', methode: 'POST', motif: /^\/presse$/, prefixe: 'PRS', libelle: 'Pressage' },
     { type: 'filtration', methode: 'POST', motif: /^\/filtration$/, prefixe: 'FLT', libelle: 'Filtration' },
@@ -6303,6 +6383,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       case 'conditionnement': return `${p.qty} × ${p.nouveau_produit ? p.nouveau_produit.nom : hlNomProduit(p.produit_id)}`;
       case 'paiement': { const f = APP_DATA.factures.find(x => `/factures/${x.id}/paiements` === op.path); return `${fmtDT(p.montant)}${f ? ' sur ' + f.numero : ''}`; }
       case 'inventaire': return `${(p.lignes || []).length} ligne(s) comptée(s)`;
+      case 'livraison': case 'proforma': { const c = APP_DATA.commandes.find(x => x.id === Number(p.commande_id)); return `commande ${c ? c.numero : p.commande_id}${c && c.client_nom ? ' · ' + c.client_nom : ''}${op.type === 'livraison' && p.lignes ? ' · ' + p.lignes.reduce((t, l) => t + Number(l.qty || 0), 0) + ' unité(s)' : ''}`; }
+      case 'proforma_modif': return `${(p.lignes || []).length} prix modifié(s)`;
       default: return '';
     }
   }
@@ -6534,7 +6616,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (document.getElementById('view-synchro')?.classList.contains('active')) renderSynchro();
   }
 
-  const HL_CHAMPS_QTE = { qty: 'Quantité', quantite: 'Quantité', quantite_utilisee: 'Quantité utilisée', quantite_produite: 'Quantité obtenue', quantite_tourteau: 'Tourteau', quantite_dechet: 'Déchet', montant: 'Montant', quantite_physique: 'Quantité comptée' };
+  const HL_CHAMPS_QTE = { qty: 'Quantité', quantite: 'Quantité', quantite_utilisee: 'Quantité utilisée', quantite_produite: 'Quantité obtenue', quantite_tourteau: 'Tourteau', quantite_dechet: 'Déchet', montant: 'Montant', quantite_physique: 'Quantité comptée', unit_price: 'Prix TTC' };
   // Champs de quantité modifiables d'une opération (lignes, sources, sorties…).
   function hlChampsModifiables(op) {
     const champs = [];
@@ -7736,7 +7818,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const statutLabel = { en_attente: ['warn', 'En attente'], confirmee: ['good', 'Confirmée'], livree: ['grey', 'Livrée'], payee: ['good', 'Payée'], annulee: ['danger', 'Annulée'] };
     const facturees = new Set(APP_DATA.factures.filter(f => f.statut === 'emise').map(f => f.commande_id));
     body.innerHTML = rows.map(c => {
-      const [cls, label] = statutLabel[c.statut] || ['grey', c.statut];
+      const partielle = livraisonPartielle(c);
+      const [cls, label] = partielle ? ['warn', `Livrée ${partielle.liv}/${partielle.cmd}`] : (statutLabel[c.statut] || ['grey', c.statut]);
       const dejaFacturee = facturees.has(c.id);
       return `<tr data-id="${c.id}">
         <td class="lotCode">${c.numero}</td>
@@ -7744,7 +7827,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="rowMeta num">${fmtDate(c.date_iso)}</td>
         <td><div class="statutCell">
           <span class="pill ${cls}">${label}</span>
-          ${ETAPE_SUIVANTE[c.statut] ? `<button class="etapeBtn" title="Passer à l'étape suivante" onclick="changerStatutCommande(${c.id}, '${ETAPE_SUIVANTE[c.statut][0]}')">→ ${ETAPE_SUIVANTE[c.statut][1]}</button>` : ''}
+          ${ETAPE_SUIVANTE[c.statut] && !dejaFacturee ? (ETAPE_SUIVANTE[c.statut][0] === 'livree'
+            ? `<button class="etapeBtn" title="Créer le bon de livraison" onclick="ouvrirLivraison(${c.id})">→ Livrer</button>`
+            : `<button class="etapeBtn" title="Passer à l'étape suivante" onclick="changerStatutCommande(${c.id}, '${ETAPE_SUIVANTE[c.statut][0]}')">→ ${ETAPE_SUIVANTE[c.statut][1]}</button>`) : ''}
+          ${c.proforma_numero ? `<span class="rowMeta" title="Facture en attente">${esc(c.proforma_numero)}</span>` : ''}
         </div></td>
         <td class="num">${fmtDT(c.total)}</td>
         <td class="rowActions">
@@ -7760,9 +7846,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const c = APP_DATA.commandes.find(x => x.id === id);
       if (!c) return [];
       const dejaFacturee = APP_DATA.factures.some(f => f.statut === 'emise' && f.commande_id === id);
-      const items = [{ label: '✎ Voir / notes', action: () => openCommandeModal(id) }];
+      const items = [{ label: '✎ Voir / notes', action: () => openCommandeModal(id) }, { label: '🖨 Imprimer le bon de commande', action: () => imprimerBonCommande(id) }];
       if (c.statut === 'annulee') return items;
-      if (!dejaFacturee) items.push({ label: '🧾 Émettre la facture', action: () => emettreFacture(id) });
+      const reste = Number(c.qte_commandee || 0) - Number(c.qte_livree || 0);
+      items.push(null, dejaFacturee ? { label: '🚚 Livrer (bon de livraison)', desactive: 'Facturée : entièrement livrée' }
+        : reste <= 0 ? { label: '🚚 Livrer (bon de livraison)', desactive: 'Tout est déjà livré' }
+        : { label: '🚚 Livrer… (bon de livraison)', action: () => ouvrirLivraison(id) });
+      if (livraisonPartielle(c) && !dejaFacturee) items.push({ label: '✂ Solder le reliquat…', action: () => solderCommande(id) });
+      if (!dejaFacturee) {
+        items.push({ label: c.proforma_id ? `📝 Facture en attente ${c.proforma_numero}` : '📝 Préparer une facture en attente (pro forma)', action: () => facturerEnAttente(id) });
+        items.push({ label: '🧾 Émettre la facture', action: () => emettreFacture(id) });
+      }
       const statuts = Object.entries(STATUTS_COMMANDE).filter(([k]) => k !== c.statut);
       if (c.statut !== 'payee' && statuts.length) {
         items.push(null);
@@ -7773,6 +7867,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       items.push(null, !isGerant()
         ? { label: 'Annuler la commande', desactive: 'Réservé au gérant' }
         : fac ? { label: 'Annuler la commande', desactive: `Facturée (${fac.numero}) : émettez un avoir sur la facture` }
+        : Number(c.nb_bl) > 0 ? { label: 'Annuler la commande', desactive: 'Déjà livrée en partie : soldez le reliquat ou annulez le bon de livraison' }
         : { label: 'Annuler la commande…', danger: true, action: () => annulerCommande(id) });
       return items;
     });
@@ -8831,13 +8926,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:'view-achats', receptions:'view-receptions',
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires',
-    notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', avoirs:'view-avoirs', stats:'view-stats',
+    notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
     certificats:'view-certificats', parametres:'view-parametres'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
     commandes:['Commerce','Commandes'], factures:['Commerce','Factures'],
-    paiements:['Commerce','Paiements'], avoirs:['Commerce','Avoirs'], stats:['Commerce','Statistiques'], clients:['Commerce','Clients'],
+    paiements:['Commerce','Paiements'], avoirs:['Commerce','Avoirs'], livraisons:['Commerce','Bons de livraison'], proformas:['Commerce','Factures en attente'], stats:['Commerce','Statistiques'], clients:['Commerce','Clients'],
     'grille-prix':['Commerce','Grille de prix'], remises:['Commerce','Remises'],
     produits:['Catalogue & Stock','Produits'], recettes:['Catalogue & Stock','Recettes'],
     lots:['Catalogue & Stock','Registre des lots'], tracabilite:['Catalogue & Stock','Traçabilité'],
@@ -9247,10 +9342,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const facs = APP_DATA.factures.filter(f => f.commande_id === id);
       const lignes = (c.lignes || []).map(l => `<tr><td>${esc(l.produit_nom)}${l.free_units ? ` <span class="rowMeta">(+${l.free_units} offert${l.free_units > 1 ? 's' : ''})</span>` : ''}
         <div class="rowMeta" style="font-size:11px;">${l.numero_lot ? 'Lot ' + esc(l.numero_lot) : '<span style="color:var(--warn);">En attente de conditionnement</span>'}${l.remise_nom ? ' · ' + esc(l.remise_nom) : ''}</div></td>
-        <td class="num">${l.qty}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
+        <td class="num">${l.qty}</td><td class="num">${Number(l.qty_livree || 0)}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
+      const bls = (c.bons_livraison || []).map(b => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="imprimerLivraison(${b.id})">${esc(b.numero)}</span> ${pastille(STATUT_BL[b.statut] || ['grey', b.statut])} · ${fmtDate(b.date_livraison)} · ${Number(b.qte || 0)} unité(s)</div>`).join('');
+      const pros = (c.proformas || []).filter(p => p.statut !== 'annulee').map(p => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="${p.statut === 'en_attente' ? `ouvrirProforma(${p.id})` : `imprimerProforma(${p.id})`}">${esc(p.numero)}</span> ${pastille(STATUT_PRO[p.statut] || ['grey', p.statut])} · ${fmtDT(p.total_ttc)}</div>`).join('');
       const corps = `
-        <div class="ficheBloc"><h3>Lignes</h3><table><thead><tr><th>Produit</th><th class="num">Qté</th><th class="num">Prix TTC</th><th class="num">Total</th></tr></thead><tbody>${lignes}</tbody></table>
+        <div class="ficheBloc"><h3>Lignes</h3><table><thead><tr><th>Produit</th><th class="num">Qté</th><th class="num">Livré</th><th class="num">Prix TTC</th><th class="num">Total</th></tr></thead><tbody>${lignes}</tbody></table>
           <div class="ficheTotaux"><span class="fort">Total TTC</span><span class="fort num">${fmtDT(c.total)}</span></div></div>
+        <div class="ficheBloc"><h3>Livraisons</h3>${bls || '<span class="rowMeta">Pas encore livrée.</span>'}</div>
+        ${pros ? `<div class="ficheBloc"><h3>Facture en attente</h3>${pros}</div>` : ''}
         <div class="ficheBloc"><h3>Facturation</h3>${facs.length ? facs.map(f => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="ouvrirFicheFacture(${f.id})">${esc(f.numero)}</span> ${pastilleVente(f.statut)} ${f.statut === 'emise' ? `· payé ${fmtDT(f.total_paye)} · reste ${fmtDT(f.solde)}` : ''}</div>`).join('') : '<span class="rowMeta">Pas encore facturée.</span>'}</div>
         ${c.notes ? `<div class="ficheBloc"><h3>Notes</h3><div class="ficheNotes">${esc(c.notes)}</div></div>` : ''}`;
       afficherFiche('Commande', esc(c.numero), `${pastilleVente(c.statut)}<span>${esc(c.client_nom || '—')}</span><span>${fmtDate(c.date_iso)}</span>`, corps, 'commandesBody', id);
@@ -9279,6 +9378,293 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       afficherFiche('Facture', esc(f.numero), `${pastilleVente(f.statut)}<span>${esc(f.client_nom || '—')}</span><span>${fmtDate(f.date_emission)}</span>`, corps, 'facturesBody', id);
     } catch (err) { notifier(err.message, 'erreur'); }
   }
+  // ============================================================================
+  // CHAÎNE DE VENTE (V3.3) : bon de commande → bon(s) de livraison → facture en
+  // attente (pro forma) → facture. Le stock est retiré du disponible dès la
+  // commande (réservé) ; le bon de livraison enregistre la sortie physique.
+  // ============================================================================
+  const STATUT_BL = { emis: ['good', 'Émis'], annule: ['danger', 'Annulé'] };
+  const STATUT_PRO = { en_attente: ['warn', 'En attente'], validee: ['good', 'Validée'], annulee: ['danger', 'Annulée'] };
+  const pastille = ([cls, txt]) => `<span class="pill ${cls}">${txt}</span>`;
+  const commandeFacturee = id => APP_DATA.factures.some(f => f.statut === 'emise' && f.commande_id === id);
+  // Livraison partielle : 80 livrés sur 100 commandés.
+  function livraisonPartielle(c) {
+    const cmd = Number(c.qte_commandee || 0), liv = Number(c.qte_livree || 0);
+    return c.statut === 'confirmee' && liv > 0 && liv < cmd ? { liv, cmd } : null;
+  }
+
+  function renderLivraisons() {
+    const body = document.getElementById('livraisonsBody');
+    if (!body) return;
+    const liste = APP_DATA.livraisons || [];
+    document.getElementById('livraisonsCount').textContent = `${liste.filter(b => b.statut === 'emis').length} bon(s) de livraison — sortie physique de la marchandise, sans prix`;
+    if (!liste.length) { body.innerHTML = `<tr><td colspan="8" class="videAction">Aucun bon de livraison : livrez une commande (menu ⋯ › Livrer).</td></tr>`; return; }
+    body.innerHTML = liste.map(b => `
+      <tr data-id="${b.id}"${b.statut === 'annule' ? ' class="ligneAnnulee"' : ''}>
+        <td class="lotCode">${esc(b.numero)}</td>
+        <td><span class="ficheLien" onclick="ouvrirFicheCommande(${b.commande_id})">${esc(b.commande_numero)}</span></td>
+        <td>${esc(b.client_nom || '—')}</td>
+        <td class="rowMeta num">${fmtDate(b.date_livraison)}</td>
+        <td class="num">${Number(b.qte || 0)}</td>
+        <td class="rowMeta">${b.facture_numero ? esc(b.facture_numero) : '—'}</td>
+        <td>${pastille(STATUT_BL[b.statut] || ['grey', b.statut])}${b.annule_motif ? `<div class="rowMeta" style="font-size:11px;">${esc(b.annule_motif)}</div>` : ''}</td>
+        <td class="rowActions"><button class="rowActionBtn" onclick="imprimerLivraison(${b.id})">🖨 Imprimer</button>
+          <button class="rowActionBtn plus" title="Plus d'actions" onclick="ouvrirMenuLigne(event, 'livraisonsBody', ${b.id})">⋯</button></td>
+      </tr>`).join('');
+    colorerNumeros(body);
+    cablerMenuContextuel('livraisonsBody', (id) => {
+      const b = (APP_DATA.livraisons || []).find(x => x.id === id);
+      if (!b) return [];
+      return [{ label: '🖨 Imprimer', action: () => imprimerLivraison(id) }, { label: 'Voir la commande', action: () => ouvrirFicheCommande(b.commande_id) }, null,
+        b.statut !== 'emis' ? { label: 'Annuler le bon de livraison', desactive: 'Déjà annulé' }
+        : !isGerant() ? { label: 'Annuler le bon de livraison', desactive: 'Réservé au gérant' }
+        : b.facture_numero ? { label: 'Annuler le bon de livraison', desactive: `Commande facturée (${b.facture_numero}) : retour par avoir` }
+        : { label: 'Annuler le bon de livraison…', danger: true, action: () => annulerLivraison(id) }];
+    });
+  }
+
+  function renderProformas() {
+    const body = document.getElementById('proformasBody');
+    if (!body) return;
+    const liste = APP_DATA.proformas || [];
+    const enAttente = liste.filter(p => p.statut === 'en_attente').length;
+    document.getElementById('proformasCount').textContent = `${enAttente} facture(s) en attente — pro forma modifiables, sans valeur comptable jusqu'à validation`;
+    const cnt = document.querySelector('#navScroll a[data-view="proformas"] .cnt');
+    if (cnt) { cnt.textContent = enAttente || ''; cnt.style.display = enAttente ? '' : 'none'; }
+    if (!liste.length) { body.innerHTML = `<tr><td colspan="7" class="videAction">Aucune facture en attente : préparez-en une depuis une commande (menu ⋯ › Facture en attente).</td></tr>`; return; }
+    body.innerHTML = liste.map(p => `
+      <tr data-id="${p.id}"${p.statut === 'annulee' ? ' class="ligneAnnulee"' : ''}>
+        <td class="lotCode">${esc(p.numero)}</td>
+        <td><span class="ficheLien" onclick="ouvrirFicheCommande(${p.commande_id})">${esc(p.commande_numero)}</span></td>
+        <td>${esc(p.client_nom || '—')}</td>
+        <td class="rowMeta num">${fmtDate(p.date_proforma)}</td>
+        <td class="num"><span class="montant">${fmtDT(p.total_ttc)}</span></td>
+        <td>${pastille(STATUT_PRO[p.statut] || ['grey', p.statut])}${p.facture_numero ? ` <span class="rowMeta">→ ${esc(p.facture_numero)}</span>` : ''}</td>
+        <td class="rowActions">
+          ${p.statut === 'en_attente' ? `<button class="rowActionBtn principal" onclick="ouvrirProforma(${p.id})">Modifier / valider</button>` : ''}
+          <button class="rowActionBtn" onclick="imprimerProforma(${p.id})">🖨 Imprimer</button>
+        </td>
+      </tr>`).join('');
+    colorerNumeros(body);
+  }
+
+  // ---------- Livrer une commande (bon de livraison) ----------
+  let LIVRAISON_COMMANDE = null;
+  async function ouvrirLivraison(commandeId) {
+    try {
+      const c = await apiFetch(`/commandes/${commandeId}`);
+      LIVRAISON_COMMANDE = c;
+      document.getElementById('livraisonTitre').textContent = `Livrer la commande ${c.numero}`;
+      document.getElementById('livraisonSous').textContent = `${c.client_nom || ''} — chaque livraison crée un bon de livraison (BL)`;
+      document.getElementById('livraisonDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('livraisonNotes').value = '';
+      document.getElementById('livraisonErreur').style.display = 'none';
+      const lignes = (c.lignes || []).map(l => {
+        const reste = Math.round((Number(l.qty) - Number(l.qty_livree || 0)) * 100) / 100;
+        const bloque = !l.lot_id;
+        return `<tr data-ligne="${l.id}">
+          <td>${esc(l.produit_nom)}<div class="rowMeta" style="font-size:11px;">${l.numero_lot ? 'Lot ' + esc(l.numero_lot) : '<span style="color:var(--warn);">En attente de conditionnement / production</span>'}</div></td>
+          <td class="num">${Number(l.qty)}</td><td class="num">${Number(l.qty_livree || 0)}</td><td class="num">${reste}</td>
+          <td><input type="number" class="formInput livQte" min="0" max="${reste}" step="1" value="${bloque ? 0 : reste}" ${bloque || reste <= 0 ? 'disabled' : ''} style="width:90px; margin:0;"></td>
+        </tr>`;
+      }).join('');
+      document.getElementById('livraisonLignes').innerHTML = lignes;
+      document.getElementById('livraisonOverlay').classList.add('open');
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function enregistrerLivraison() {
+    const err = document.getElementById('livraisonErreur');
+    err.style.display = 'none';
+    const lignes = [...document.querySelectorAll('#livraisonLignes tr[data-ligne]')]
+      .map(tr => ({ commande_ligne_id: Number(tr.dataset.ligne), qty: Number(tr.querySelector('.livQte').value) || 0 }))
+      .filter(l => l.qty > 0);
+    if (!lignes.length) { err.textContent = 'Indiquez au moins une quantité à livrer.'; err.style.display = 'block'; return; }
+    try {
+      const bl = await apiFetch('/livraisons', { method: 'POST', body: JSON.stringify({
+        commande_id: LIVRAISON_COMMANDE.id, date_livraison: document.getElementById('livraisonDate').value,
+        notes: document.getElementById('livraisonNotes').value.trim() || null, lignes, employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null }) });
+      document.getElementById('livraisonOverlay').classList.remove('open');
+      await rafraichirVentes();
+      if (!bl.hors_ligne) {
+        notifier(`Bon de livraison ${bl.numero} créé.`, 'succes');
+        if (await confirmer(`Imprimer le bon de livraison ${bl.numero} maintenant ?`, { titre: 'Bon de livraison créé', ok: 'Imprimer', non: 'Plus tard' })) imprimerLivraison(bl.id);
+      }
+    } catch (e) { err.textContent = e.message; err.style.display = 'block'; }
+  }
+  document.getElementById('livraisonValider').addEventListener('click', enregistrerLivraison);
+  document.getElementById('livraisonToutReste').addEventListener('click', () => {
+    document.querySelectorAll('#livraisonLignes .livQte:not(:disabled)').forEach(i => { i.value = i.max; });
+  });
+  ['livraisonFermer', 'livraisonAnnuler'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('livraisonOverlay').classList.remove('open')));
+
+  async function solderCommande(id) {
+    const c = APP_DATA.commandes.find(x => x.id === id);
+    const motif = await confirmer(`Les quantités non livrées de ${c ? c.numero : 'la commande'} reviennent en stock ; la commande ne garde que ce qui a été livré (facturable ensuite).`,
+      { titre: 'Solder le reliquat ?', ok: 'Solder', non: 'Garder', saisie: { label: 'Motif (obligatoire)', placeholder: 'ex. le client ne prend que ce qui a été livré' } });
+    if (!motif) return;
+    try { await apiFetch(`/commandes/${id}/solder`, { method: 'POST', body: JSON.stringify({ motif }) }); notifier('Reliquat soldé : le reste est revenu en stock.', 'succes'); await rafraichirVentes(); }
+    catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function annulerLivraison(id) {
+    const b = (APP_DATA.livraisons || []).find(x => x.id === id);
+    const motif = await confirmer(`Les quantités du ${b ? b.numero : 'bon de livraison'} redeviennent « à livrer » sur la commande (le stock reste réservé).`,
+      { titre: 'Annuler le bon de livraison ?', ok: 'Annuler le BL', non: 'Garder', danger: true, saisie: { label: 'Motif (obligatoire)', placeholder: 'ex. livraison refusée, erreur de saisie' } });
+    if (!motif) return;
+    try { await apiFetch(`/livraisons/${id}/annuler`, { method: 'POST', body: JSON.stringify({ motif }) }); notifier('Bon de livraison annulé.', 'succes'); await rafraichirVentes(); }
+    catch (err) { notifier(err.message, 'erreur'); }
+  }
+
+  // ---------- Facture en attente (pro forma) ----------
+  let PROFORMA = null;
+  async function facturerEnAttente(commandeId) {
+    const c = APP_DATA.commandes.find(x => x.id === commandeId);
+    if (c && c.proforma_id) return ouvrirProforma(c.proforma_id);
+    try {
+      const p = await apiFetch('/proformas', { method: 'POST', body: JSON.stringify({ commande_id: commandeId, employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null }) });
+      await rafraichirVentes();
+      if (p.hors_ligne) return;
+      notifier(`Facture en attente ${p.numero} préparée : ajustez les prix si besoin, imprimez-la, puis validez.`, 'succes');
+      ouvrirProforma(p.id);
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function ouvrirProforma(id) {
+    try {
+      const p = await apiFetch(`/proformas/${id}`);
+      PROFORMA = p;
+      const modifiable = p.statut === 'en_attente';
+      document.getElementById('proformaTitre').textContent = `Facture en attente ${p.numero}`;
+      document.getElementById('proformaSous').textContent = `${p.client_nom || ''} · commande ${p.commande_numero} · pro forma sans valeur comptable`;
+      document.getElementById('proformaNotes').value = p.notes || '';
+      document.getElementById('proformaNotes').disabled = !modifiable;
+      document.getElementById('proformaErreur').style.display = 'none';
+      document.getElementById('proformaLignes').innerHTML = p.lignes.map(l => `<tr data-ligne="${l.id}">
+        <td>${esc(l.designation)}</td><td class="num">${Number(l.qty)}</td>
+        <td><input type="number" class="formInput proPrix" min="0" step="0.001" value="${Number(l.unit_price)}" ${modifiable ? '' : 'disabled'} style="width:110px; margin:0;"></td>
+        <td class="num proTotal">${fmtDT(l.total)}</td></tr>`).join('');
+      majTotauxProforma();
+      ['proformaEnregistrer', 'proformaValider', 'proformaSupprimer'].forEach(b => { document.getElementById(b).style.display = modifiable ? '' : 'none'; });
+      document.getElementById('proformaOverlay').classList.add('open');
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  function majTotauxProforma() {
+    let ttc = 0;
+    document.querySelectorAll('#proformaLignes tr[data-ligne]').forEach(tr => {
+      const l = PROFORMA.lignes.find(x => x.id === Number(tr.dataset.ligne));
+      const t = Math.round(Number(l.qty) * (Number(tr.querySelector('.proPrix').value) || 0) * 1000) / 1000;
+      tr.querySelector('.proTotal').textContent = fmtDT(t);
+      ttc += t;
+    });
+    const modifie = Math.abs(ttc - PROFORMA.lignes.reduce((s, l) => s + Number(l.total), 0)) > 0.0005;
+    document.getElementById('proformaTotaux').innerHTML = modifie
+      ? `Total des lignes : <b>${fmtDT(ttc)}</b> <span class="rowMeta">(HT, FODEC, TVA et timbre recalculés à l'enregistrement)</span>`
+      : `Total HT ${fmtDT(PROFORMA.total_ht)} · TVA ${fmtDT(PROFORMA.montant_tva)}${Number(PROFORMA.droit_timbre) ? ' · timbre ' + fmtDT(PROFORMA.droit_timbre) : ''} · <b>Total TTC ${fmtDT(PROFORMA.total_ttc)}</b>`;
+  }
+  document.getElementById('proformaLignes').addEventListener('input', majTotauxProforma);
+  async function enregistrerProforma(silencieux) {
+    const lignes = [...document.querySelectorAll('#proformaLignes tr[data-ligne]')].map(tr => ({ id: Number(tr.dataset.ligne), unit_price: Number(tr.querySelector('.proPrix').value) }));
+    const p = await apiFetch(`/proformas/${PROFORMA.id}`, { method: 'PUT', body: JSON.stringify({ notes: document.getElementById('proformaNotes').value.trim() || null, lignes }) });
+    if (!p.hors_ligne) { PROFORMA = p; majTotauxProforma(); }
+    if (!silencieux) notifier(p.hors_ligne ? 'Modification enregistrée hors ligne : elle partira au retour du réseau.' : `${PROFORMA.numero} enregistrée.`, 'succes');
+    await rafraichirVentes();
+  }
+  document.getElementById('proformaEnregistrer').addEventListener('click', async () => {
+    try { await enregistrerProforma(false); } catch (e) { const er = document.getElementById('proformaErreur'); er.textContent = e.message; er.style.display = 'block'; }
+  });
+  document.getElementById('proformaImprimer').addEventListener('click', async () => {
+    try { if (PROFORMA.statut === 'en_attente') await enregistrerProforma(true); imprimerProforma(PROFORMA.id); } catch (e) { notifier(e.message, 'erreur'); }
+  });
+  document.getElementById('proformaValider').addEventListener('click', async () => {
+    const er = document.getElementById('proformaErreur');
+    er.style.display = 'none';
+    try {
+      await enregistrerProforma(true);
+      const ok = await confirmer(`La facture définitive est émise avec un numéro légal (FAC-…) et les prix de ${PROFORMA.numero}. Ce qui n'est pas encore livré l'est par un bon de livraison automatique. Elle ne sera plus modifiable (correction par avoir).`,
+        { titre: `Valider ${PROFORMA.numero} ?`, ok: 'Émettre la facture' });
+      if (!ok) return;
+      const f = await apiFetch(`/proformas/${PROFORMA.id}/valider`, { method: 'POST', body: JSON.stringify({ employe_id: CURRENT_USER ? CURRENT_USER.employe_id : null }) });
+      document.getElementById('proformaOverlay').classList.remove('open');
+      await rafraichirVentes();
+      notifier(`Facture ${f.numero} émise.`, 'succes');
+      if (await confirmer(`Imprimer la facture ${f.numero} maintenant ?`, { titre: 'Facture émise', ok: 'Imprimer', non: 'Plus tard' })) imprimerFacture(f.id);
+    } catch (e) { er.textContent = e.message; er.style.display = 'block'; }
+  });
+  document.getElementById('proformaSupprimer').addEventListener('click', async () => {
+    if (!(await confirmer(`${PROFORMA.numero} sera annulée (la commande n'est pas touchée).`, { titre: 'Annuler la facture en attente ?', ok: 'Annuler la pro forma', non: 'Garder', danger: true }))) return;
+    try { await apiFetch(`/proformas/${PROFORMA.id}/annuler`, { method: 'POST', body: '{}' }); document.getElementById('proformaOverlay').classList.remove('open'); await rafraichirVentes(); }
+    catch (e) { notifier(e.message, 'erreur'); }
+  });
+  ['proformaFermer'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('proformaOverlay').classList.remove('open')));
+
+  // ---------- Impression : bon de commande, bon de livraison, facture en attente ----------
+  function imprimerDocumentVente({ titre, numero, date, refs, client, entetes, lignes, totaux, mentions, filigrane, signatures }) {
+    const s = APP_DATA.settings || {};
+    const couleur = s.facture_couleur || '#0E3A4A';
+    const cl = APP_DATA.clients.find(c => c.id === client.id) || {};
+    const w = window.open('', `doc_${numero}_${Date.now()}`);
+    if (!w) { notifier('Autorisez les pop-ups pour imprimer.'); return; }
+    w.document.open();
+    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(titre)} ${esc(numero)}</title><style>
+      @page { size: A4; margin: 12mm; } * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12.5px; color: #1a1a1a; margin: 0; position: relative; }
+      .tete { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid ${couleur}; padding-bottom: 10px; margin-bottom: 14px; }
+      .soc { display: flex; gap: 10px; } .soc img { height: 56px; } .soc b { font-size: 15px; color: ${couleur}; } .soc div { font-size: 11px; line-height: 1.5; }
+      .doc { text-align: right; } .doc h1 { margin: 0; font-size: 20px; color: ${couleur}; letter-spacing: .03em; } .doc div { font-size: 12px; }
+      .client { border: 1px solid #999; border-radius: 6px; padding: 8px 10px; width: 55%; margin-left: auto; margin-bottom: 14px; font-size: 12px; line-height: 1.5; }
+      table { width: 100%; border-collapse: collapse; } th { background: ${couleur}; color: #fff; font-size: 11px; text-align: left; padding: 6px; }
+      td { padding: 6px; border-bottom: 1px solid #ddd; } .num { text-align: right; white-space: nowrap; }
+      .totaux { margin-top: 12px; margin-left: auto; width: 45%; } .totaux div { display: flex; justify-content: space-between; padding: 3px 0; } .totaux .fort { font-weight: bold; font-size: 14px; border-top: 2px solid ${couleur}; padding-top: 6px; }
+      .mentions { margin-top: 14px; font-size: 11px; color: #444; white-space: pre-line; }
+      .sig { display: flex; gap: 20px; margin-top: 26px; } .sig div { flex: 1; border: 1px dashed #888; border-radius: 6px; height: 80px; padding: 6px; font-size: 11px; color: #555; }
+      .fil { position: fixed; top: 38%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 76px; font-weight: 900; color: rgba(191,83,47,.13); pointer-events: none; }
+    </style></head><body>
+      ${filigrane ? `<div class="fil">${esc(filigrane)}</div>` : ''}
+      <div class="tete"><div class="soc">${s.entreprise_logo ? `<img src="${s.entreprise_logo}" alt="">` : ''}<div><b>${esc(s.entreprise_nom || 'TinOR')}</b><br>
+        ${esc(s.entreprise_adresse || '')}${s.entreprise_telephone ? '<br>Tél : ' + esc(s.entreprise_telephone) : ''}${s.entreprise_matricule_fiscal ? '<br>MF : ' + esc(s.entreprise_matricule_fiscal) : ''}</div></div>
+        <div class="doc"><h1>${esc(titre)}</h1><div><b>N° ${esc(numero)}</b> · ${fmtDate(date)}</div>${refs.map(r => `<div>${r}</div>`).join('')}</div></div>
+      <div class="client"><b>${esc(client.nom || '')}</b>${cl.matricule_fiscal ? '<br>MF : ' + esc(cl.matricule_fiscal) : ''}${cl.ville ? '<br>' + esc(cl.ville) : ''}${cl.tel ? '<br>Tél : ' + esc(cl.tel) : ''}</div>
+      <table><thead><tr>${entetes.map(([t, num]) => `<th${num ? ' class="num"' : ''}>${t}</th>`).join('')}</tr></thead>
+        <tbody>${lignes.map(l => `<tr>${l.map((v, i) => `<td${entetes[i][1] ? ' class="num"' : ''}>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>
+      ${totaux ? `<div class="totaux">${totaux.map(([k, v, fort]) => `<div${fort ? ' class="fort"' : ''}><span>${k}</span><span>${v}</span></div>`).join('')}</div>` : ''}
+      ${mentions ? `<div class="mentions">${mentions}</div>` : ''}
+      ${signatures ? `<div class="sig">${signatures.map(t => `<div>${t}</div>`).join('')}</div>` : ''}
+    </body></html>`);
+    w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 300);
+  }
+  async function imprimerBonCommande(id) {
+    try {
+      const c = await apiFetch(`/commandes/${id}`);
+      imprimerDocumentVente({ titre: 'BON DE COMMANDE', numero: c.numero, date: c.date_iso, refs: [], client: { id: c.client_id, nom: c.client_nom },
+        entetes: [['Produit'], ['Qté', 1], ['Prix TTC', 1], ['Remise', 1], ['Total TTC', 1]],
+        lignes: (c.lignes || []).map(l => [esc(l.produit_nom) + (l.free_units ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), Number(l.qty), fmtDT(l.unit_price), l.remise_pct ? `${Number(l.remise_pct)} %` : '—', fmtDT(l.total)]),
+        totaux: [['Total TTC', fmtDT(c.total), true]], mentions: c.notes ? esc(c.notes) : '',
+        signatures: ['Pour Les Jardins de Jerba', 'Bon pour accord — le client (date, signature)'] });
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function imprimerLivraison(id) {
+    try {
+      const b = await apiFetch(`/livraisons/${id}`);
+      imprimerDocumentVente({ titre: 'BON DE LIVRAISON', numero: b.numero, date: b.date_livraison, refs: [`Commande ${esc(b.commande_numero)}`], client: { id: b.client_id, nom: b.client_nom },
+        entetes: [['Produit'], ['Lot'], ['Commandé', 1], ['Livré', 1], ['Reste à livrer', 1]],
+        lignes: b.lignes.map(l => [esc(l.produit_nom) + (l.free_units && Number(l.qty_livree) >= Number(l.qty_commandee) ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), esc(l.numero_lot || '—'),
+          Number(l.qty_commandee), `<b>${Number(l.qty)}</b> ${esc(l.unite || '')}`, Math.max(0, Math.round((Number(l.qty_commandee) - Number(l.qty_livree)) * 100) / 100)]),
+        mentions: `Document de transport, sans prix.${b.statut === 'annule' ? '\nBON ANNULÉ : ' + esc(b.annule_motif || '') : ''}${b.notes ? '\n' + esc(b.notes) : ''}`,
+        filigrane: b.statut === 'annule' ? 'ANNULÉ' : '', signatures: ['Livré par (nom, signature)', 'Reçu par — nom, date, signature, cachet'] });
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+  async function imprimerProforma(id) {
+    try {
+      const p = await apiFetch(`/proformas/${id}`);
+      imprimerDocumentVente({ titre: 'FACTURE PRO FORMA', numero: p.numero, date: p.date_proforma, refs: [`Commande ${esc(p.commande_numero)}`], client: { id: p.client_id, nom: p.client_nom },
+        entetes: [['Désignation'], ['Qté', 1], ['Prix TTC', 1], ['Total TTC', 1]],
+        lignes: p.lignes.map(l => [esc(l.designation), Number(l.qty), fmtDT(l.unit_price), fmtDT(l.total)]),
+        totaux: [['Total HT', fmtDT(p.total_ht)], ...(Number(p.fodec_montant) ? [['FODEC', fmtDT(p.fodec_montant)]] : []), [`TVA (${Number(p.tva_rate)} %)`, fmtDT(p.montant_tva)],
+          ...(Number(p.droit_timbre) ? [['Droit de timbre', fmtDT(p.droit_timbre)]] : []), ['Total TTC', fmtDT(p.total_ttc), true]],
+        mentions: `FACTURE EN ATTENTE — PRO FORMA, SANS VALEUR COMPTABLE.\nLa facture définitive (numéro FAC-…) sera émise à la validation.${p.notes ? '\n' + esc(p.notes) : ''}`,
+        filigrane: p.statut === 'validee' ? '' : 'PRO FORMA' });
+    } catch (err) { notifier(err.message, 'erreur'); }
+  }
+
   document.getElementById('ficheFermer').addEventListener('click', fermerFiche);
   document.getElementById('ficheFond').addEventListener('click', fermerFiche);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.getElementById('fiche').classList.contains('open')) fermerFiche(); });
@@ -9320,7 +9706,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // des rubriques, un bandeau illustré en tête d'écran, des numéros colorés.
   const ICONE_ECRAN = {
     dashboard: 'accueil', notifications: 'cloche', synchro: 'mouvement',
-    commandes: 'commande', factures: 'facture', avoirs: 'avoir', paiements: 'paiement', stats: 'stats', clients: 'client', remises: 'remise', 'grille-prix': 'grille',
+    commandes: 'commande', factures: 'facture', avoirs: 'avoir', livraisons: 'camion', proformas: 'facture', paiements: 'paiement', stats: 'stats', clients: 'client', remises: 'remise', 'grille-prix': 'grille',
     presse: 'presse', filtration: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
@@ -9342,7 +9728,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Numéros de document : la couleur dit le type (vente, avoir, production, stock, achat).
   function rubriqueDuNumero(t) {
     if (/^AV-\d/.test(t)) return 'avoir';
-    if (/^(CMD|FAC)-\d/.test(t)) return 'ventes';
+    if (/^(CMD|BC|BL|PRO|FAC)-\d/.test(t)) return 'ventes';
     if (/^(ACH|REC)-\d/.test(t) || /^\d+-(MP|A)-\d/.test(t)) return 'achats';
     if (/^\d+-(P|F)-\d/.test(t)) return 'production';
     if (/^INV-\d/.test(t) || /^\d+-[A-Z]+-\d/.test(t)) return 'stock';

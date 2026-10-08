@@ -55,6 +55,19 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V3.3 — chaîne de vente : quantités livrées, bons de livraison, factures en attente.
+  if (!(await colonneExiste(conn, 'commande_lignes', 'qty_livree'))) {
+    await conn.query('ALTER TABLE commande_lignes ADD COLUMN qty_livree DECIMAL(10,2) NOT NULL DEFAULT 0');
+    // Commandes déjà livrées, payées ou facturées : considérées entièrement livrées.
+    await conn.query(`UPDATE commande_lignes cl JOIN commandes c ON c.id = cl.commande_id SET cl.qty_livree = cl.qty
+      WHERE c.statut IN ('livree','payee') OR EXISTS (SELECT 1 FROM factures f WHERE f.commande_id = c.id AND f.statut = 'emise')`);
+    journal('✓ Mise à jour : commande_lignes.qty_livree ajoutée (commandes livrées/facturées marquées livrées).');
+  }
+  for (const [table, ordre] of SQL_VENTE.split(/;\s*\n/).map(o => [((o.match(/CREATE TABLE IF NOT EXISTS (\w+)/) || [])[1]), o]).filter(([t]) => t)) {
+    const [ex] = await conn.query('SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?', [table]);
+    if (!ex[0].n) { await conn.query(ordre); journal(`✓ Mise à jour : table ${table} créée (chaîne de vente).`); }
+  }
+
   // V3.3 — la filtration donne une huile filtrée, distincte du vrac de presse :
   // « Huile de Sésame — Vrac » reçoit sa fiche « Huile de Sésame — Filtrée ».
   const { estHuileVrac, estHuileFiltree, cleHuileVrac } = require('../src/services/graines');
@@ -77,6 +90,72 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal(`✓ Mise à jour : produit « ${nom} » (code ${code}) créé pour la filtration.`);
   }
 }
+
+const SQL_VENTE = `CREATE TABLE IF NOT EXISTS bons_livraison (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20) NOT NULL UNIQUE,
+  commande_id     INT NOT NULL,
+  client_id       INT NOT NULL,
+  date_livraison  DATE NOT NULL,
+  statut          VARCHAR(10) NOT NULL DEFAULT 'emis' CHECK (statut IN ('emis','annule')),
+  notes           TEXT NULL,
+  annule_motif    VARCHAR(255) NULL,
+  employe_id      INT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (commande_id) REFERENCES commandes(id),
+  FOREIGN KEY (client_id) REFERENCES clients(id),
+  FOREIGN KEY (employe_id) REFERENCES employes(id) ON DELETE SET NULL,
+  INDEX idx_bl_commande (commande_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS bl_lignes (
+  id                 INT AUTO_INCREMENT PRIMARY KEY,
+  bl_id              INT NOT NULL,
+  commande_ligne_id  INT NOT NULL,
+  produit_id         INT NOT NULL,
+  lot_id             BIGINT NULL,
+  qty                DECIMAL(10,2) NOT NULL,
+  FOREIGN KEY (bl_id) REFERENCES bons_livraison(id) ON DELETE CASCADE,
+  FOREIGN KEY (commande_ligne_id) REFERENCES commande_lignes(id) ON DELETE CASCADE,
+  FOREIGN KEY (produit_id) REFERENCES produits(id),
+  FOREIGN KEY (lot_id) REFERENCES lots(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS proformas (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20) NOT NULL UNIQUE,
+  commande_id     INT NOT NULL,
+  client_id       INT NOT NULL,
+  date_proforma   DATE NOT NULL,
+  statut          VARCHAR(12) NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente','validee','annulee')),
+  tva_rate        DECIMAL(5,2) NOT NULL DEFAULT 19,
+  total_ht        DECIMAL(12,3) NOT NULL DEFAULT 0,
+  fodec_montant   DECIMAL(12,3) NOT NULL DEFAULT 0,
+  montant_tva     DECIMAL(12,3) NOT NULL DEFAULT 0,
+  droit_timbre    DECIMAL(6,3) NOT NULL DEFAULT 0,
+  total_ttc       DECIMAL(12,3) NOT NULL DEFAULT 0,
+  notes           TEXT NULL,
+  facture_id      INT NULL,
+  employe_id      INT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (commande_id) REFERENCES commandes(id),
+  FOREIGN KEY (client_id) REFERENCES clients(id),
+  FOREIGN KEY (facture_id) REFERENCES factures(id) ON DELETE SET NULL,
+  FOREIGN KEY (employe_id) REFERENCES employes(id) ON DELETE SET NULL,
+  INDEX idx_proformas_commande (commande_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS proforma_lignes (
+  id                 INT AUTO_INCREMENT PRIMARY KEY,
+  proforma_id        INT NOT NULL,
+  commande_ligne_id  INT NULL,
+  produit_id         INT NOT NULL,
+  designation        VARCHAR(200) NOT NULL,
+  qty                DECIMAL(10,2) NOT NULL,
+  unit_price         DECIMAL(10,3) NOT NULL,
+  total              DECIMAL(12,3) NOT NULL,
+  FOREIGN KEY (proforma_id) REFERENCES proformas(id) ON DELETE CASCADE,
+  FOREIGN KEY (commande_ligne_id) REFERENCES commande_lignes(id) ON DELETE SET NULL,
+  FOREIGN KEY (produit_id) REFERENCES produits(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
 
 const SQL_OPERATIONS_SYNC = `CREATE TABLE IF NOT EXISTS operations_sync (
   id          VARCHAR(64) NOT NULL PRIMARY KEY,

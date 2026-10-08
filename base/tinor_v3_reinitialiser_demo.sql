@@ -30,6 +30,77 @@ CREATE TABLE IF NOT EXISTS operations_sync (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 TRUNCATE TABLE operations_sync;
 
+-- Chaîne de vente (V3.3) : bons de livraison (une commande peut être livrée en
+-- plusieurs fois) et factures en attente (pro forma, sans numéro légal).
+CREATE TABLE IF NOT EXISTS bons_livraison (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20) NOT NULL UNIQUE,
+  commande_id     INT NOT NULL,
+  client_id       INT NOT NULL,
+  date_livraison  DATE NOT NULL,
+  statut          VARCHAR(10) NOT NULL DEFAULT 'emis' CHECK (statut IN ('emis','annule')),
+  notes           TEXT NULL,
+  annule_motif    VARCHAR(255) NULL,
+  employe_id      INT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (commande_id) REFERENCES commandes(id),
+  FOREIGN KEY (client_id) REFERENCES clients(id),
+  FOREIGN KEY (employe_id) REFERENCES employes(id) ON DELETE SET NULL,
+  INDEX idx_bl_commande (commande_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS bl_lignes (
+  id                 INT AUTO_INCREMENT PRIMARY KEY,
+  bl_id              INT NOT NULL,
+  commande_ligne_id  INT NOT NULL,
+  produit_id         INT NOT NULL,
+  lot_id             BIGINT NULL,
+  qty                DECIMAL(10,2) NOT NULL,
+  FOREIGN KEY (bl_id) REFERENCES bons_livraison(id) ON DELETE CASCADE,
+  FOREIGN KEY (commande_ligne_id) REFERENCES commande_lignes(id) ON DELETE CASCADE,
+  FOREIGN KEY (produit_id) REFERENCES produits(id),
+  FOREIGN KEY (lot_id) REFERENCES lots(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS proformas (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  numero          VARCHAR(20) NOT NULL UNIQUE,
+  commande_id     INT NOT NULL,
+  client_id       INT NOT NULL,
+  date_proforma   DATE NOT NULL,
+  statut          VARCHAR(12) NOT NULL DEFAULT 'en_attente' CHECK (statut IN ('en_attente','validee','annulee')),
+  tva_rate        DECIMAL(5,2) NOT NULL DEFAULT 19,
+  total_ht        DECIMAL(12,3) NOT NULL DEFAULT 0,
+  fodec_montant   DECIMAL(12,3) NOT NULL DEFAULT 0,
+  montant_tva     DECIMAL(12,3) NOT NULL DEFAULT 0,
+  droit_timbre    DECIMAL(6,3) NOT NULL DEFAULT 0,
+  total_ttc       DECIMAL(12,3) NOT NULL DEFAULT 0,
+  notes           TEXT NULL,
+  facture_id      INT NULL,
+  employe_id      INT NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (commande_id) REFERENCES commandes(id),
+  FOREIGN KEY (client_id) REFERENCES clients(id),
+  FOREIGN KEY (facture_id) REFERENCES factures(id) ON DELETE SET NULL,
+  FOREIGN KEY (employe_id) REFERENCES employes(id) ON DELETE SET NULL,
+  INDEX idx_proformas_commande (commande_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS proforma_lignes (
+  id                 INT AUTO_INCREMENT PRIMARY KEY,
+  proforma_id        INT NOT NULL,
+  commande_ligne_id  INT NULL,
+  produit_id         INT NOT NULL,
+  designation        VARCHAR(200) NOT NULL,
+  qty                DECIMAL(10,2) NOT NULL,
+  unit_price         DECIMAL(10,3) NOT NULL,
+  total              DECIMAL(12,3) NOT NULL,
+  FOREIGN KEY (proforma_id) REFERENCES proformas(id) ON DELETE CASCADE,
+  FOREIGN KEY (commande_ligne_id) REFERENCES commande_lignes(id) ON DELETE SET NULL,
+  FOREIGN KEY (produit_id) REFERENCES produits(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+TRUNCATE TABLE bl_lignes;
+TRUNCATE TABLE bons_livraison;
+TRUNCATE TABLE proforma_lignes;
+TRUNCATE TABLE proformas;
+
 -- Tables ajoutées en V3.3 (créées si la base date d'avant)
 -- Avoirs (factures d'avoir) : une facture émise ne s'annule pas, on la
 -- corrige par un avoir numéroté AV-xxxx, total ou partiel.
@@ -297,4 +368,7 @@ INSERT INTO `unites` (`id`, `code`, `nom`, `symbole`, `actif`) VALUES (1,'litre'
 (4,'g','Gramme','g',1),
 (5,'unite','Unité','u',1);
 INSERT INTO `users` (`id`, `username`, `password_hash`, `employe_id`, `role`, `actif`, `created_at`) VALUES (1,'admin','$2b$10$AxRfngrGUh5/WoyVhItRVeFukmhaq7sGt2VCYB55w.aJ6Frrwahr.',1,'gerant',1,'2026-10-03 18:36:49');
+-- Commandes de démonstration livrées et facturées : quantités entièrement livrées.
+UPDATE commande_lignes cl JOIN commandes c ON c.id = cl.commande_id SET cl.qty_livree = cl.qty
+  WHERE c.statut IN ('livree','payee') OR EXISTS (SELECT 1 FROM factures f WHERE f.commande_id = c.id AND f.statut = 'emise');
 SET FOREIGN_KEY_CHECKS = 1;

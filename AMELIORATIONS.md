@@ -348,3 +348,31 @@ L'application (Android ou navigateur) continue de fonctionner sans connexion au 
   réponse perdue, rechargement de l'application hors ligne, corrections).
 - Mise à jour : `npm run migrate` crée la table `operations_sync`. Nouvel APK nécessaire pour la
   notification Android.
+
+## Chaîne de vente : bon de commande → bon de livraison → facture en attente → facture (V3.3)
+
+- **Bon de commande** : les nouvelles commandes sont numérotées `BC-…` (les anciennes gardent
+  `CMD-…`). Menu ⋯ › « Imprimer le bon de commande » (prix, signature « bon pour accord »).
+- **Bons de livraison** `BL-…` (nouvel écran Ventes › Bons de livraison) : menu ⋯ › « Livrer… » ou
+  bouton « → Livrer ». Livraison **partielle** possible (statut « Livrée 80/100 »), lots livrés,
+  document sans prix avec signatures. Annulation d'un BL (gérant, motif) tant que la commande
+  n'est pas facturée : les quantités redeviennent « à livrer ».
+- **Stock** : la quantité commandée est retirée du disponible dès la commande (réservation : elle ne
+  peut pas être vendue deux fois) ; le BL enregistre la sortie physique. « **Solder le reliquat** »
+  (motif obligatoire) remet le non-livré en stock et ramène la commande à ce qui a été livré.
+- **Factures en attente** `PRO-…` (nouvel écran) : pro forma préparée depuis une commande, prix
+  modifiables, imprimée « PRO FORMA — sans valeur comptable » (filigrane). « Valider la facture »
+  applique les prix à la commande et émet la vraie facture `FAC-…`.
+- **Facture** : toujours une par commande. À l'émission, ce qui n'est pas encore livré l'est par un
+  BL automatique (facture = marchandise livrée). « Émettre la facture » direct reste possible.
+- **Hors ligne** : bons de livraison et factures en attente (création, modification des prix)
+  fonctionnent hors ligne (numéros provisoires `BL-HL-…`, `PRO-HL-…`). La validation de la facture
+  reste en ligne (numéro légal).
+- API : `/api/livraisons`, `/api/proformas`, `POST /api/commandes/:id/solder` ; service partagé
+  `src/services/ventes.js`. Base : tables `bons_livraison`, `bl_lignes`, `proformas`,
+  `proforma_lignes`, colonne `commande_lignes.qty_livree` (`npm run migrate` ; les commandes déjà
+  livrées ou facturées sont marquées entièrement livrées).
+- Tests : `test/stock/livraisons.js` (livraison partielle, BL automatique, solde, annulation de BL,
+  pro forma modifiée puis validée) et parcours complet dans la console, en ligne et hors ligne.
+- Pas dans cette version : une facture regroupant **plusieurs commandes** (facture mensuelle) — la
+  facture, les avoirs et le relevé restent liés à une commande.

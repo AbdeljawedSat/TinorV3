@@ -14,6 +14,7 @@ async function nextNumero(pool, seqName, prefix) {
 
 const STATUTS_COMMANDE = ['en_attente', 'confirmee', 'livree', 'payee'];
 const { requireRole } = require('../middleware/auth');
+const { creerLivraison, lignesCommande, majStatutLivraison, arQ } = require('../services/ventes');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -21,11 +22,14 @@ module.exports = function (pool) {
   router.get('/', async (req, res) => {
     const result = await pool.query(`
       SELECT c.*, cl.nom AS client_nom, e.nom AS employe_nom,
-        COALESCE(l.nb, 0) AS nb_lignes
+        COALESCE(l.nb, 0) AS nb_lignes, COALESCE(l.qte, 0) AS qte_commandee, COALESCE(l.livree, 0) AS qte_livree,
+        COALESCE(b.nb, 0) AS nb_bl, pf.numero AS proforma_numero, pf.id AS proforma_id
       FROM commandes c
       LEFT JOIN clients cl ON cl.id = c.client_id
       LEFT JOIN employes e ON e.id = c.employe_id
-      LEFT JOIN (SELECT commande_id, COUNT(*) AS nb FROM commande_lignes GROUP BY commande_id) l ON l.commande_id = c.id
+      LEFT JOIN (SELECT commande_id, COUNT(*) AS nb, SUM(qty) AS qte, SUM(qty_livree) AS livree FROM commande_lignes GROUP BY commande_id) l ON l.commande_id = c.id
+      LEFT JOIN (SELECT commande_id, COUNT(*) AS nb FROM bons_livraison WHERE statut = 'emis' GROUP BY commande_id) b ON b.commande_id = c.id
+      LEFT JOIN proformas pf ON pf.commande_id = c.id AND pf.statut = 'en_attente'
       ORDER BY c.date_iso DESC, c.id DESC
     `);
     res.json(result.rows);
@@ -46,7 +50,10 @@ module.exports = function (pool) {
        WHERE cl.commande_id = $1`,
       [req.params.id]
     );
-    res.json({ ...cmdRes.rows[0], lignes: lignesRes.rows });
+    const bls = (await pool.query(
+      `SELECT b.*, (SELECT SUM(qty) FROM bl_lignes WHERE bl_id = b.id) AS qte FROM bons_livraison b WHERE b.commande_id = $1 ORDER BY b.id`, [req.params.id])).rows;
+    const proformas = (await pool.query('SELECT * FROM proformas WHERE commande_id = $1 ORDER BY id', [req.params.id])).rows;
+    res.json({ ...cmdRes.rows[0], lignes: lignesRes.rows, bons_livraison: bls, proformas });
   });
 
   // Applique une remise à une ligne. Hypothèse retenue pour le type 'lot'
@@ -73,7 +80,7 @@ module.exports = function (pool) {
         return res.status(400).json({ error: 'Au moins une ligne est requise.' });
       }
 
-      const numero = await nextNumero(pool, 'commande_seq', 'CMD');
+      const numero = await nextNumero(pool, 'commande_seq', 'BC'); // bon de commande (les anciennes gardent CMD-…)
       const groupId = require('crypto').randomUUID();
       const lignesAConstruire = [];
       const notificationsAPreparer = [];
@@ -232,7 +239,8 @@ module.exports = function (pool) {
     res.json(result.rows[0]);
   });
 
-  router.put('/:id/statut', async (req, res) => {
+  router.put('/:id/statut', enTransaction(pool, async (req, res, next, pool) => {
+   try {
     const { statut } = req.body;
     if (!statut) return res.status(400).json({ error: 'statut est requis.' });
     if (!STATUTS_COMMANDE.includes(statut)) {
@@ -251,10 +259,65 @@ module.exports = function (pool) {
       if (!fac.rows[0]) return res.status(409).json({ error: `La commande ${commande.numero} n'est pas facturée : elle ne peut pas être « payée ». Émettez la facture puis encaissez-la.` });
       if (Number(fac.rows[0].solde) > 0.0005) return res.status(409).json({ error: `La facture ${fac.rows[0].numero} n'est pas soldée (reste ${Number(fac.rows[0].solde).toFixed(3)} DT) : encaissez-la, la commande passera « payée » d'elle-même.` });
     }
-    await pool.query('UPDATE commandes SET statut = $1 WHERE id = $2', [statut, req.params.id]);
+    if (statut === 'livree') {
+      // « Livrée » : un bon de livraison est établi pour tout ce qui reste à livrer.
+      await creerLivraison(pool, { commande_id: req.params.id, employe_id: req.body.employe_id, siRien: 'ignorer' });
+      await majStatutLivraison(pool, req.params.id);
+    } else {
+      const livree = await pool.query(`SELECT COUNT(*) AS n FROM bons_livraison WHERE commande_id = $1 AND statut = 'emis'`, [req.params.id]);
+      if (Number(livree.rows[0].n) && ['en_attente', 'confirmee'].includes(statut)) {
+        return res.status(409).json({ error: `La commande ${commande.numero} a déjà un bon de livraison : annulez le bon de livraison pour revenir en arrière.` });
+      }
+      await pool.query('UPDATE commandes SET statut = $1 WHERE id = $2', [statut, req.params.id]);
+    }
     const result = await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id]);
     res.json(result.rows[0]);
-  });
+   } catch (err) { next(err); }
+  }));
+
+  // Solde le reliquat non livré : les quantités restantes reviennent en stock et
+  // la commande ne garde que ce qui a été livré (facturable ensuite).
+  router.post('/:id/solder', enTransaction(pool, async (req, res, next, pool) => {
+    try {
+      const motif = String(req.body?.motif || '').trim();
+      if (!motif) return res.status(400).json({ error: 'Le motif est requis (ex. client qui renonce au reste).' });
+      const commande = (await pool.query('SELECT * FROM commandes WHERE id = $1 FOR UPDATE', [req.params.id])).rows[0];
+      if (!commande) return res.status(404).json({ error: 'Commande introuvable.' });
+      if (commande.statut === 'annulee') return res.status(409).json({ error: `La commande ${commande.numero} est annulée.` });
+      if ((await pool.query(`SELECT id FROM factures WHERE commande_id = $1 AND statut = 'emise'`, [req.params.id])).rows.length) {
+        return res.status(409).json({ error: `La commande ${commande.numero} est facturée : plus rien à solder.` });
+      }
+      const lignes = await lignesCommande(pool, req.params.id);
+      if (!lignes.some(l => Number(l.qty_livree) > 0)) {
+        return res.status(409).json({ error: `Rien n'a encore été livré sur ${commande.numero} : annulez plutôt la commande.` });
+      }
+      const aSolder = lignes.filter(l => l.reste > 0);
+      if (!aSolder.length) return res.status(409).json({ error: `Tout est livré sur ${commande.numero} : rien à solder.` });
+      for (const l of aSolder) {
+        if (l.lot_id) {
+          const qte = arQ(l.reste + Number(l.free_units || 0)); // les unités offertes partent avec la fin de ligne
+          await pool.query('UPDATE lots SET quantite_actuelle = quantite_actuelle + $1 WHERE id = $2', [qte, l.lot_id]);
+          await pool.query(`UPDATE lots SET statut = 'LIBERE' WHERE id = $1 AND statut = 'EPUISE'`, [l.lot_id]);
+          await pool.query(
+            `INSERT INTO stock_mouvements (numero, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
+             VALUES ($1,'RETOUR_CLIENT','ENTREE',$2,$3,$4,'commande',$5,$6)`,
+            [await nextNumero(pool, 'mouvement_seq', 'MVT'), l.produit_id, l.lot_id, qte, req.params.id, `Reliquat soldé : ${motif}`.slice(0, 255)]);
+        }
+        if (Number(l.qty_livree) > 0) {
+          await pool.query('UPDATE commande_lignes SET qty = qty_livree, total = ROUND(qty_livree * unit_price, 3), free_units = 0 WHERE id = $1', [l.id]);
+        } else {
+          await pool.query('DELETE FROM commande_lignes WHERE id = $1', [l.id]);
+        }
+      }
+      await pool.query(`UPDATE notifications SET statut = 'RESOLUE', resolved_at = NOW() WHERE commande_id = $1 AND statut = 'EN_ATTENTE'`, [req.params.id]);
+      await pool.query(
+        `UPDATE commandes SET total = (SELECT COALESCE(SUM(total), 0) FROM commande_lignes WHERE commande_id = $1),
+           notes = CONCAT(COALESCE(notes, ''), CASE WHEN notes IS NULL OR notes = '' THEN '' ELSE '\n' END, $2) WHERE id = $1`,
+        [req.params.id, `Reliquat soldé : ${motif}`]);
+      await majStatutLivraison(pool, req.params.id);
+      res.json((await pool.query('SELECT * FROM commandes WHERE id = $1', [req.params.id])).rows[0]);
+    } catch (err) { next(err); }
+  }));
 
   // Annule une commande non facturée (le client renonce) : le stock sorti à la
   // commande est réintégré. Une commande facturée s'annule par sa facture.
@@ -268,6 +331,8 @@ module.exports = function (pool) {
     const facs = await pool.query(`SELECT numero, statut FROM factures WHERE commande_id = $1`, [req.params.id]);
     const emise = facs.rows.find(f => f.statut === 'emise');
     if (emise) return res.status(409).json({ error: `La commande ${commande.numero} est facturée (${emise.numero}) : émettez un avoir sur la facture.` });
+    const bl = (await pool.query(`SELECT numero FROM bons_livraison WHERE commande_id = $1 AND statut = 'emis' ORDER BY id LIMIT 1`, [req.params.id])).rows[0];
+    if (bl) return res.status(409).json({ error: `La commande ${commande.numero} est déjà livrée en partie (${bl.numero}) : soldez le reliquat (le reste revient en stock), ou annulez d'abord le bon de livraison.` });
 
     // Sans aucune facture, le stock est encore sorti : on le réintègre. Après
     // une facture annulée, il l'a déjà été — ne pas le rendre deux fois.
@@ -285,6 +350,7 @@ module.exports = function (pool) {
       }
     }
     await pool.query(`UPDATE notifications SET statut = 'RESOLUE' WHERE commande_id = $1 AND statut = 'EN_ATTENTE'`, [req.params.id]);
+    await pool.query(`UPDATE proformas SET statut = 'annulee' WHERE commande_id = $1 AND statut = 'en_attente'`, [req.params.id]);
     await pool.query(
       `UPDATE commandes SET statut = 'annulee', notes = CONCAT(COALESCE(notes, ''), CASE WHEN notes IS NULL OR notes = '' THEN '' ELSE '\n' END, $1) WHERE id = $2`,
       [`Annulée : ${motif}`, req.params.id]
