@@ -796,7 +796,6 @@
 
 <div class="app" id="appRoot" style="display:none;">
 
-  <div id="loadErrorBanner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:100; background:var(--warn); color:#fff; padding:8px 16px; font-size:12px; text-align:center;"></div>
 
   <!-- ============ SIDEBAR ============ -->
   <aside class="sidebar" id="sidebar">
@@ -885,6 +884,11 @@
 
   <!-- ============ MAIN ============ -->
   <div class="main">
+    <!-- Dans le flux de la page (pas fixé par-dessus) : ne masque jamais les fenêtres ni leur bouton ✕. -->
+    <div id="loadErrorBanner" role="alert" style="display:none; align-items:center; gap:10px; background:var(--warn); color:#fff; padding:7px 10px 7px 16px; font-size:12px;">
+      <span id="loadErrorTexte" style="flex:1;"></span>
+      <button type="button" id="loadErrorFermer" title="Masquer" style="background:none; border:0; color:#fff; font-size:18px; line-height:1; padding:4px 8px; cursor:pointer;">✕</button>
+    </div>
     <div id="offlineBanner" role="status" style="display:none;">
       <span id="offlineBannerTexte"></span>
       <span id="offlineQueueCount" style="font-weight:600;"></span>
@@ -3315,8 +3319,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const banner = document.getElementById('loadErrorBanner');
     if (banner) {
       if (echecs.length) {
-        banner.textContent = `⚠ Certaines données n'ont pas pu être chargées (${echecs.join(', ')}) — vérifiez que votre serveur API est à jour et démarré.`;
-        banner.style.display = 'block';
+        document.getElementById('loadErrorTexte').textContent = `⚠ Certaines données n'ont pas pu être chargées (${echecs.join(', ')}) — vérifiez que votre serveur API est à jour et démarré.`;
+        banner.style.display = 'flex';
       } else {
         banner.style.display = 'none';
       }
@@ -3326,6 +3330,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     hlMajAffichage();
     if (!HL.horsLigne && !HL.synchroEnCours) hlOps().then(ops => { if (ops.some(o => o.statut === 'EN_ATTENTE')) hlSynchroniser(); });
   }
+
+  document.getElementById('loadErrorFermer').addEventListener('click', () => { document.getElementById('loadErrorBanner').style.display = 'none'; });
 
   // Filtre par grande famille — heuristique sur le nom de catégorie (Huiles/
   // Savons.../Consommables/Emballages), faute d'un champ dédié structuré.
