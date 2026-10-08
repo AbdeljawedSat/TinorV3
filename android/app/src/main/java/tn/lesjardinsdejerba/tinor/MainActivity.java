@@ -44,6 +44,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
@@ -64,6 +71,8 @@ public class MainActivity extends Activity {
     private static final String CANAL_SYNCHRO = "tinor_synchro";
 
     private WebView webView;
+    /** Appels au serveur faits par Android (voir Pont.requete). */
+    private final ExecutorService reseau = Executors.newCachedThreadPool();
     private ValueCallback<Uri[]> rappelFichier;
     /** Gardée en mémoire le temps que le service d'impression lise le document. */
     private WebView webViewImpression;
@@ -216,6 +225,63 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void ouvrirLien(String url) {
             runOnUiThread(() -> ouvrirExterne(Uri.parse(url)));
+        }
+
+        /**
+         * Appel au serveur TinOR fait par Android (et non par la WebView) : la page
+         * est en https, le serveur du PC en http sur le réseau local (192.168…, 10…).
+         * Les WebView récentes bloquent ce cas (contenu mixte, accès au réseau local)
+         * alors que Chrome y arrive : en passant par Android, plus aucun blocage.
+         * Réponse renvoyée à la page par window.__tinorReponse(id, json).
+         */
+        @JavascriptInterface
+        public void requete(String id, String methode, String url, String entetesJson, String corps) {
+            reseau.execute(() -> {
+                JSONObject resultat = new JSONObject();
+                HttpURLConnection cx = null;
+                try {
+                    URL adresse = new URL(url);
+                    String protocole = adresse.getProtocol();
+                    if (!"http".equals(protocole) && !"https".equals(protocole)) throw new IOException("Adresse refusée");
+                    cx = (HttpURLConnection) adresse.openConnection();
+                    cx.setConnectTimeout(8000);
+                    cx.setReadTimeout(30000);
+                    cx.setUseCaches(false);
+                    cx.setRequestMethod(methode);
+                    JSONObject entetes = new JSONObject(entetesJson == null || entetesJson.isEmpty() ? "{}" : entetesJson);
+                    for (Iterator<String> it = entetes.keys(); it.hasNext(); ) {
+                        String nom = it.next();
+                        cx.setRequestProperty(nom, entetes.getString(nom));
+                    }
+                    if (corps != null && !"GET".equals(methode) && !"HEAD".equals(methode)) {
+                        byte[] octets = corps.getBytes(StandardCharsets.UTF_8);
+                        cx.setDoOutput(true);
+                        cx.setFixedLengthStreamingMode(octets.length);
+                        try (OutputStream sortie = cx.getOutputStream()) { sortie.write(octets); }
+                    }
+                    int statut = cx.getResponseCode();
+                    InputStream flux = statut >= 400 ? cx.getErrorStream() : cx.getInputStream();
+                    String texte = "";
+                    if (flux != null) {
+                        ByteArrayOutputStream tampon = new ByteArrayOutputStream();
+                        byte[] bloc = new byte[8192];
+                        int n;
+                        while ((n = flux.read(bloc)) != -1) tampon.write(bloc, 0, n);
+                        flux.close();
+                        texte = new String(tampon.toByteArray(), StandardCharsets.UTF_8);
+                    }
+                    resultat.put("status", statut);
+                    resultat.put("type", cx.getContentType() == null ? "" : cx.getContentType());
+                    resultat.put("body", texte);
+                } catch (Exception e) {
+                    try { resultat.put("erreur", e.getClass().getSimpleName() + ": " + e.getMessage()); } catch (Exception ignore) { }
+                } finally {
+                    if (cx != null) cx.disconnect();
+                }
+                String script = "window.__tinorReponse && window.__tinorReponse(" + JSONObject.quote(id) + ","
+                        + JSONObject.quote(resultat.toString()) + ")";
+                runOnUiThread(() -> { if (webView != null) webView.evaluateJavascript(script, null); });
+            });
         }
 
         /** Mode hors ligne : une opération refusée au retour du réseau est à corriger. */

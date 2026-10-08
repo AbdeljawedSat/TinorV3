@@ -5,6 +5,8 @@
 //     (imprimante ou « Enregistrer en PDF »).
 //  2. <a download href="blob:..."> (exports Excel / Word) → le fichier est
 //     transmis à Android, qui l'enregistre dans Téléchargements/TinOR.
+//  3. Appels au serveur du PC (http, réseau local) depuis une page https →
+//     faits par Android (voir plus bas).
 (function () {
   if (!window.TinorAndroid || window.__tinorAndroidPret) return;
   window.__tinorAndroidPret = true;
@@ -38,6 +40,45 @@
       addEventListener: function () {}
     };
   };
+
+  // 3. Appels au serveur TinOR (http sur le réseau local) : faits par Android.
+  //    Les WebView récentes bloquent une page https qui appelle une adresse
+  //    http locale (192.168…, 10…) alors que Chrome y arrive ; Android, non.
+  if (typeof TinorAndroid.requete === 'function') {
+    var fetchOrigine = window.fetch.bind(window);
+    var attentes = {}, compteur = 0;
+    window.__tinorReponse = function (id, json) {
+      var a = attentes[id];
+      if (!a) return;
+      delete attentes[id];
+      var r;
+      try { r = JSON.parse(json); } catch (e) { r = { erreur: 'Réponse illisible' }; }
+      if (r.erreur) { a.ko(new TypeError('Failed to fetch (' + r.erreur + ')')); return; }
+      var sansCorps = r.status === 204 || r.status === 205 || r.status === 304;
+      a.ok(new Response(sansCorps ? null : r.body, { status: r.status, headers: r.type ? { 'Content-Type': r.type } : {} }));
+    };
+    window.fetch = function (entree, options) {
+      options = options || {};
+      var url = typeof entree === 'string' ? entree : (entree instanceof URL ? entree.href : null);
+      var corps = options.body;
+      if (!url || !/^https?:/i.test(url) || new URL(url, location.href).origin === location.origin
+          || (corps != null && typeof corps !== 'string')) {
+        return fetchOrigine(entree, options);
+      }
+      return new Promise(function (ok, ko) {
+        var signal = options.signal;
+        if (signal && signal.aborted) { ko(new DOMException('Requête annulée', 'AbortError')); return; }
+        var id = 'r' + (++compteur) + '_' + Date.now();
+        attentes[id] = { ok: ok, ko: ko };
+        if (signal) signal.addEventListener('abort', function () {
+          if (attentes[id]) { delete attentes[id]; ko(new DOMException('Requête annulée', 'AbortError')); }
+        });
+        var entetes = {};
+        new Headers(options.headers || {}).forEach(function (v, k) { entetes[k] = v; });
+        TinorAndroid.requete(id, String(options.method || 'GET').toUpperCase(), url, JSON.stringify(entetes), corps == null ? null : corps);
+      });
+    };
+  }
 
   var clicOrigine = HTMLAnchorElement.prototype.click;
   HTMLAnchorElement.prototype.click = function () {
