@@ -5,6 +5,12 @@ const { idempotence } = require('./middleware/idempotence');
 
 function createApp(pool) {
   const app = express();
+  // Chrome / WebView récents : une page https (application Android) qui appelle
+  // une adresse du réseau local (192.168.x.x) doit y être autorisée explicitement.
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS' && req.get('Access-Control-Request-Private-Network')) res.set('Access-Control-Allow-Private-Network', 'true');
+    next();
+  });
   app.use(cors());
   app.use(express.json());
 
