@@ -7546,7 +7546,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function cablerMenuContextuel(tbodyId, buildItems) {
     MENUS_LIGNE[tbodyId] = buildItems;
     const tbody = document.getElementById(tbodyId);
-    if (!tbody || tbody._menuContextuelCable) return; // évite d'empiler les écouteurs à chaque rendu
+    if (!tbody) return;
+    // Bouton « ⋯ » sur chaque ligne (le clic droit n'existe pas sur téléphone) :
+    // ajouté ici une fois pour toutes les listes qui ont un menu de ligne.
+    tbody.querySelectorAll('tr[data-id] > td.rowActions').forEach(td => {
+      if (td.querySelector('.rowActionBtn.plus')) return;
+      const id = Number(td.parentElement.dataset.id);
+      td.insertAdjacentHTML('beforeend', ` <button class="rowActionBtn plus" title="Plus d'actions" onclick="ouvrirMenuLigne(event, '${tbodyId}', ${id})">⋯</button>`);
+    });
+    if (tbody._menuContextuelCable) return; // évite d'empiler les écouteurs à chaque rendu
     tbody._menuContextuelCable = true;
     tbody.addEventListener('contextmenu', (e) => {
       const tr = e.target.closest('tr[data-id]');
