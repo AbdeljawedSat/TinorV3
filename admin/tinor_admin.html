@@ -5384,142 +5384,114 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         .factureDoc .signatures div { flex: 1; border: 1px solid #333; height: 86px; padding: 6px 8px; font-size: 11px; color: #555; }
         .filigrane { position: fixed; top: 40%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 80px; font-weight: 900; color: rgba(191,83,47,.13); pointer-events: none; }`;
   }
-  function factureHtmlContent(f) {
+  // ---------- Documents de vente : UNE description (« spec ») par document ----------
+  // La même spec produit l'impression PDF (htmlDepuisSpec) et les fichiers Word /
+  // Excel (générés par le serveur) : les trois formats ont la même forme.
+  const sansDT = (v) => fmtDT(v).replace(' DT', '');
+  function enteteSociete() {
     const s = APP_DATA.settings || {};
-    const couleur = s.facture_couleur || '#17231D';
-    const client = APP_DATA.clients.find(c => c.id === f.client_id); // coordonnées à jour, pas figées (contrairement au prix)
-    const lignesHtml = f.lignes.map(l => {
+    const contact = [s.entreprise_telephone ? `Tél : ${s.entreprise_telephone}` : '', s.entreprise_email || ''].filter(Boolean).join(' — ');
+    return { couleur: s.facture_couleur || '#17231D', logo: logoEntreprise(), nom: s.entreprise_nom || '',
+      lignes: [s.entreprise_adresse || '', contact, s.entreprise_matricule_fiscal ? `MF : ${s.entreprise_matricule_fiscal}` : ''].filter(Boolean) };
+  }
+  function clientSpec(clientId, nom, mention) {
+    const c = APP_DATA.clients.find(x => x.id === clientId) || {}; // coordonnées à jour, pas figées
+    return { nom: nom || c.nom || '', mention: mention || '', lignes: [['Matricule fiscal', c.matricule_fiscal || '—'], ['Adresse', c.ville || '—'], ['Téléphone', c.tel || '—']] };
+  }
+  function specFacture(f) {
+    const e = enteteSociete();
+    const lignes = f.lignes.map(l => {
       const tvaF = 1 + Number(f.tva_rate) / 100;
       const prixTtcCatalogue = Number(l.prix_detail || l.unit_price); // Prix TTC catalogue (avant remise)
       const prixTtcFacture = Number(l.unit_price);                     // Prix TTC facturé (après remise)
       const puHtFacture = prixTtcFacture / tvaF;                       // PU HT (facturé) = Prix TTC facturé / (1+TVA)
-      const totalHtLigne = puHtFacture * Number(l.qty);                // Total HT de la ligne
-      return `
-      <tr>
-        <td>${l.designation}</td>
-        <td class="num">${l.qty}</td>
-        <td class="num">${fmtDT(prixTtcCatalogue).replace(' DT','')}</td>
-        <td class="num">${l.remise_pct ? `${l.remise_pct}%` : '—'}</td>
-        <td class="num">${fmtDT(prixTtcFacture).replace(' DT','')}</td>
-        <td class="num">${fmtDT(puHtFacture).replace(' DT','')}</td>
-        <td class="num">${fmtDT(totalHtLigne).replace(' DT','')}</td>
-      </tr>`;
-    }).join('');
+      return [l.designation, l.qty, sansDT(prixTtcCatalogue), l.remise_pct ? `${l.remise_pct}%` : '—', sansDT(prixTtcFacture), sansDT(puHtFacture), sansDT(puHtFacture * Number(l.qty))];
+    });
     const baseTva = Number(f.total_ht) + Number(f.fodec_montant || 0);
-    // Total remise = ce que la remise par ligne a fait économiser au client
-    // (écart entre le prix catalogue avant remise et le prix réellement facturé).
+    // Total remise = ce que la remise par ligne a fait économiser au client.
     const totalRemise = f.lignes.reduce((sum, l) => sum + (Number(l.prix_detail || l.unit_price) - Number(l.unit_price)) * Number(l.qty), 0);
-
+    return {
+      couleur: e.couleur, logo: e.logo, societe: { nom: e.nom, lignes: e.lignes },
+      numero: f.numero, titre: 'Facture',
+      refs: [['N°', f.numero], ['Date', fmtDate(f.date_emission)]],
+      client: clientSpec(f.client_id, f.client_nom, f.statut === 'annulee' ? 'ANNULÉE' : ''),
+      colonnes: [{ label: 'Désignation' }, { label: 'Qté', num: 1 }, { label: 'Prix TTC catalogue', num: 1 }, { label: 'Remise (%)', num: 1 },
+        { label: 'Prix TTC facturé', num: 1 }, { label: 'PU HT (facturé)', num: 1 }, { label: 'Total HT', num: 1 }],
+      lignes,
+      piedLignes: [String(f.lignes.length), `${f.tva_rate},00`, '', sansDT(f.total_ht)],
+      bas: {
+        tva: { entetes: ['Base', 'Taux TVA', 'Montant TVA'], lignes: [[sansDT(baseTva), `${f.tva_rate},000`, sansDT(f.montant_tva)]] },
+        totaux: [...(totalRemise > 0 ? [['Total remise', `−${sansDT(totalRemise)}`]] : []), ['Total HT', sansDT(f.total_ht)], ['FODEC', sansDT(f.fodec_montant)],
+          ['Total TVA', sansDT(f.montant_tva)], ['Timbre', sansDT(f.droit_timbre)]],
+        net: ['Net à payer', sansDT(f.total_ttc)], reglement: 'Mode règlement',
+      },
+      lettres: { intro: 'Arrêtée la présente à la somme de :', texte: montantEnLettres(f.total_ttc) },
+      piedPage: `Facture N° ${f.numero} pour ${f.client_nom}`,
+    };
+  }
+  // Rendu HTML (PDF) d'une spec — mêmes classes que la facture.
+  function htmlDepuisSpec(sp) {
+    const bas = sp.bas || {};
+    const ligneClient = (sp.client.lignes || []).map(([k, v]) => `<div><b>${esc(k)} :</b> ${esc(v)}</div>`).join('');
+    const blocTotaux = (bas.totaux || []).length ? `<table class="totauxTable">${bas.totaux.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`).join('')}</table>` : '';
+    const blocNet = bas.net ? `<div class="netAPayer"><div class="lbl">${bas.net[0]}</div><div class="val">${bas.net[1]}</div></div>${bas.reglement ? `<div class="modeReglement">${esc(bas.reglement)}</div>` : ''}` : '';
+    const blocGauche = bas.tva
+      ? `<table class="tvaTable"><thead><tr>${bas.tva.entetes.map(e => `<th>${e}</th>`).join('')}</tr></thead><tbody>${bas.tva.lignes.map(l => `<tr>${l.map(v => `<td class="num">${v}</td>`).join('')}</tr>`).join('')}</tbody></table>`
+      : `<div class="mentionsBox">${bas.mentions || ''}</div>`;
     return `
       <div class="factureDoc">
-        <div class="headRow">
-          <div class="companyBlock">
-            ${logoEntreprise() ? `<img src="${logoEntreprise()}" alt="">` : ''}
-            <div>
-              ${s.entreprise_nom ? `<div class="companyName">${s.entreprise_nom}</div>` : ''}
-              <div class="companyDetail">
-                ${s.entreprise_adresse || ''}${s.entreprise_adresse ? '<br>' : ''}
-                ${s.entreprise_telephone ? `Tél : ${s.entreprise_telephone}` : ''}${s.entreprise_telephone && s.entreprise_email ? ' — ' : ''}${s.entreprise_email || ''}
-                ${s.entreprise_matricule_fiscal ? `<br>MF : ${s.entreprise_matricule_fiscal}` : ''}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="factureNum">${f.numero}</div>
-        <div class="factureTitle">Facture</div>
-
+        <div class="headRow"><div class="companyBlock">
+          ${sp.logo ? `<img src="${sp.logo}" alt="">` : ''}
+          <div>${sp.societe.nom ? `<div class="companyName">${esc(sp.societe.nom)}</div>` : ''}
+            <div class="companyDetail">${sp.societe.lignes.map(esc).join('<br>')}</div></div>
+        </div></div>
+        <div class="factureNum">${esc(sp.numero)}</div>
+        <div class="factureTitle">${esc(sp.titre)}</div>
         <table class="infoRow"><tr>
           <td style="width:40%; vertical-align:top; padding-right:14px;">
-            <table class="bordered no-border">
-              <tr>
-                <td class="lblCell">N°</td>
-                <td class="lblCell">Date</td>
-              </tr>
-              <tr>
-                <td style="border-right:1px solid #333; padding:6px 8px;">${f.numero}</td>
-                <td style="padding:6px 8px;">${fmtDate(f.date_emission)}</td>
-              </tr>
+            <table class="bordered no-border refsTable">
+              <tr>${sp.refs.map(([l]) => `<td class="lblCell">${l}</td>`).join('')}</tr>
+              <tr>${sp.refs.map(([, v]) => `<td>${v}</td>`).join('')}</tr>
             </table>
           </td>
-          <td style="vertical-align:top;">
-            <div class="clientBox">
-              <div class="nom">${f.client_nom}${f.statut === 'annulee' ? ' — <span style="color:#a23b2e;">ANNULÉE</span>' : ''}</div>
-              <div><b>Matricule fiscal :</b> ${client?.matricule_fiscal || '—'}</div>
-              <div><b>Adresse :</b> ${client?.ville || '—'}</div>
-              <div><b>Téléphone :</b> ${client?.tel || '—'}</div>
-            </div>
-          </td>
+          <td style="vertical-align:top;"><div class="clientBox">
+            <div class="nom">${esc(sp.client.nom)}${sp.client.mention ? ` — <span style="color:#a23b2e;">${esc(sp.client.mention)}</span>` : ''}</div>${ligneClient}
+          </div></td>
         </tr></table>
-
-        <div class="lignesWrap">
-          <table>
-            <thead class="lignes">
-              <tr>
-                <th style="width:26%;">Désignation</th>
-                <th class="num">Qté</th>
-                <th class="num">Prix TTC catalogue</th>
-                <th class="num">Remise (%)</th>
-                <th class="num">Prix TTC facturé</th>
-                <th class="num">PU HT (facturé)</th>
-                <th class="num">Total HT</th>
-              </tr>
-            </thead>
-            <tbody class="lignes">${lignesHtml}</tbody>
-          </table>
-        </div>
-        <div class="lignesFoot">
-          <span>${f.lignes.length}</span><span>${f.tva_rate},00</span><span></span><span>${fmtDT(f.total_ht).replace(' DT','')}</span>
-        </div>
-
-        <table class="bottomGrid"><tr>
-          <td style="width:33%; vertical-align:top; padding-right:10px;">
-            <table class="tvaTable">
-              <thead><tr><th>Base</th><th>Taux TVA</th><th>Montant TVA</th></tr></thead>
-              <tbody>
-                <tr><td class="num">${fmtDT(baseTva).replace(' DT','')}</td><td class="num">${f.tva_rate},000</td><td class="num">${fmtDT(f.montant_tva).replace(' DT','')}</td></tr>
-              </tbody>
-            </table>
-          </td>
-          <td style="width:33%; vertical-align:top; padding-right:10px;">
-            <table class="totauxTable">
-              ${totalRemise > 0 ? `<tr><td>Total remise</td><td class="num">−${fmtDT(totalRemise).replace(' DT','')}</td></tr>` : ''}
-              <tr><td>Total HT</td><td class="num">${fmtDT(f.total_ht).replace(' DT','')}</td></tr>
-              <tr><td>FODEC</td><td class="num">${fmtDT(f.fodec_montant).replace(' DT','')}</td></tr>
-              <tr><td>Total TVA</td><td class="num">${fmtDT(f.montant_tva).replace(' DT','')}</td></tr>
-              <tr><td>Timbre</td><td class="num">${fmtDT(f.droit_timbre).replace(' DT','')}</td></tr>
-            </table>
-          </td>
-          <td style="width:33%; vertical-align:top;">
-            <div class="netBox">
-              <div class="netAPayer">
-                <div class="lbl">Net à payer</div>
-                <div class="val">${fmtDT(f.total_ttc).replace(' DT','')}</div>
-              </div>
-              <div class="modeReglement">Mode règlement</div>
-            </div>
-          </td>
-        </tr></table>
-
-        <div class="lettres">
-          Arrêtée la présente à la somme de :<br>
-          <b>${montantEnLettres(f.total_ttc)}</b>
-        </div>
-
-        <div class="pageFooter">
-          <span>Facture N° ${f.numero} pour ${f.client_nom}</span>
-          <span>Page 1/1</span>
-        </div>
+        <div class="lignesWrap"><table>
+          <thead class="lignes"><tr>${sp.colonnes.map((c, i) => `<th${c.num ? ' class="num"' : ''}${i === 0 ? ` style="width:${sp.colonnes.length > 4 ? 26 : 34}%;"` : ''}>${c.label}</th>`).join('')}</tr></thead>
+          <tbody class="lignes">${sp.lignes.map(l => `<tr>${l.map((v, i) => `<td${sp.colonnes[i] && sp.colonnes[i].num ? ' class="num"' : ''}>${v}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+        ${sp.piedLignes ? `<div class="lignesFoot">${sp.piedLignes.map(v => `<span>${v}</span>`).join('')}</div>` : ''}
+        ${bas.totaux || bas.net || bas.tva ? `<table class="bottomGrid"><tr>
+          <td style="width:34%; vertical-align:top; padding-right:10px;">${blocGauche}</td>
+          <td style="width:33%; vertical-align:top; padding-right:10px;">${blocTotaux}</td>
+          <td style="width:33%; vertical-align:top;">${blocNet}</td>
+        </tr></table>` : (bas.mentions ? `<div class="mentionsBox" style="margin-top:16px;">${bas.mentions}</div>` : '')}
+        ${sp.lettres ? `<div class="lettres">${sp.lettres.intro}<br><b>${sp.lettres.texte}</b></div>` : ''}
+        ${sp.signatures ? `<div class="signatures">${sp.signatures.map(t => `<div>${t}</div>`).join('')}</div>` : ''}
+        <div class="pageFooter"><span>${esc(sp.piedPage)}</span><span>Page 1/1</span></div>
       </div>`;
   }
-  function factureDownloadBlob(content, mime, filename) {
-    const blob = new Blob([content], { type: mime });
+  function factureHtmlContent(f) { return htmlDepuisSpec(specFacture(f)); }
+  // Word / Excel d'un document : fichier généré par le serveur à partir de la même spec.
+  async function exporterDocument(spec, format) {
+    try {
+      const corps = { ...spec, lignes: spec.lignes.map(l => l.map(v => String(v ?? '').replace(/<[^>]+>/g, '')))};
+      const res = await fetch(`${API_BASE}/exports/document`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+        body: JSON.stringify({ spec: corps, format }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `Erreur HTTP ${res.status}`);
+      telechargerBlob(await res.blob(), `${spec.titre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '_')}_${spec.numero}.${format}`);
+    } catch (err) { notifier(`Export impossible : ${err.message}`, 'erreur'); }
+  }
+  function telechargerBlob(blob, nom) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = filename;
+    a.href = url; a.download = nom;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+
   async function imprimerFacture(factureId) {
     const f = await apiFetch(`/factures/${factureId}`);
     // Nom de fenêtre unique à chaque appel — "_blank" seul peut, sur certains
@@ -5534,27 +5506,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       </body></html>`);
     w.document.close();
   }
-  async function exportFactureDocx(factureId) {
-    const f = await apiFetch(`/factures/${factureId}`);
-    const html = `<html><head><meta charset="UTF-8"></head><body>${factureHtmlContent(f)}</body></html>`;
-    factureDownloadBlob(html, 'application/msword', `facture_${f.numero}.doc`);
-  }
-  async function exportFactureXlsx(factureId) {
-    const f = await apiFetch(`/factures/${factureId}`);
-    const lignesRows = f.lignes.map(l =>
-      `<tr><td>${l.designation}</td><td>${l.qty}</td><td>${l.unit_price}</td><td>${l.remise_pct||0}</td><td>${l.total}</td></tr>`
-    ).join('');
-    const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>
-      <table border="1"><tr><th>Facture</th><td>${f.numero}</td></tr><tr><th>Client</th><td>${f.client_nom}</td></tr>
-      <tr><th>Date</th><td>${f.date_emission}</td></tr></table><br>
-      <table border="1"><thead><tr><th>Désignation</th><th>Qté</th><th>PU</th><th>Remise %</th><th>Total</th></tr></thead>
-      <tbody>${lignesRows}</tbody></table><br>
-      <table border="1"><tr><td>Total HT</td><td>${f.total_ht}</td></tr><tr><td>TVA</td><td>${f.montant_tva}</td></tr>
-      <tr><td>Total TTC</td><td>${f.total_ttc}</td></tr><tr><td>Payé</td><td>${f.total_paye}</td></tr>
-      <tr><td>Solde</td><td>${f.solde}</td></tr></table>
-      </body></html>`;
-    factureDownloadBlob(html, 'application/vnd.ms-excel', `facture_${f.numero}.xls`);
-  }
+  async function exportFactureDocx(factureId) { exporterDocument(specFacture(await apiFetch(`/factures/${factureId}`)), 'docx'); }
+  async function exportFactureXlsx(factureId) { exporterDocument(specFacture(await apiFetch(`/factures/${factureId}`)), 'xlsx'); }
 
   async function emettreFacture(commandeId) {
     try {
@@ -7962,7 +7915,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const c = APP_DATA.commandes.find(x => x.id === id);
       if (!c) return [];
       const dejaFacturee = APP_DATA.factures.some(f => f.statut === 'emise' && f.commande_id === id);
-      const items = [{ label: '✎ Voir / notes', action: () => openCommandeModal(id) }, { label: '🖨 Imprimer le bon de commande', action: () => imprimerBonCommande(id) }];
+      const items = [{ label: '✎ Voir / notes', action: () => openCommandeModal(id) }, { label: '🖨 Imprimer le bon de commande', action: () => imprimerBonCommande(id) },
+        { label: '⬇ Bon de commande — Word (.docx)', action: () => imprimerBonCommande(id, 'docx') }, { label: '⬇ Bon de commande — Excel (.xlsx)', action: () => imprimerBonCommande(id, 'xlsx') }];
       if (c.statut === 'annulee') return items;
       const reste = Number(c.qte_commandee || 0) - Number(c.qte_livree || 0);
       items.push(null, dejaFacturee ? { label: '🚚 Livrer (bon de livraison)', desactive: 'Facturée : entièrement livrée' }
@@ -8594,8 +8548,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const sel = document.getElementById('tracLot');
     sel.innerHTML = list.map(l=>`<option value="${l.numero_lot}">${l.numero_lot} — ${l.produit_nom||''}</option>`).join('');
   }
+  // Niveau dans la chaîne (1 = lien direct) et lot voisin : « utilisé dans » (amont) / « issu de » (aval).
+  function tracLien(r, amont) {
+    if (!r.niveau) return '';
+    return `<div style="font-size:11px;">${r.niveau > 1 ? `niveau ${r.niveau} · ` : ''}${amont ? 'utilisé dans' : 'issu de'} ${esc(r.lot_voisin || '')}</div>`;
+  }
   function tracRenderTable(tbodyId, rows){
     const tbody = document.getElementById(tbodyId);
+    const amont = tbodyId === 'tracAscendants';
     if(!rows.length){
       tbody.innerHTML = `<tr><td colspan="6" class="rowMeta" style="text-align:center; padding:22px;">Aucun lot dans cette direction — extrémité de la chaîne.</td></tr>`;
       return;
@@ -8604,7 +8564,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <tr>
         <td class="lotCode">${r.numero_lot}</td>
         <td>${r.produit||'—'}</td>
-        <td class="rowMeta">${r.origine || r.type}</td>
+        <td class="rowMeta">${r.origine || r.type}${tracLien(r, amont)}</td>
         <td class="num rowMeta">${fmtDate(r.date)}</td>
         <td class="num">${r.qte_utilisee ?? r.quantite ?? '—'}</td>
         <td class="num rowMeta">${r.qte_produite ?? '—'}</td>
@@ -8612,10 +8572,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   let TRAC_CURRENT_CHAIN = []; // dernière chaîne calculée, utilisée par les exports
   function tracRenderChaineComplete(lot, ascendants, descendants){
+    // Du plus lointain (lots de graines) au plus proche, puis le lot choisi, puis l'aval.
+    const amont = [...ascendants].sort((a, b) => (b.niveau || 1) - (a.niveau || 1));
+    const aval = [...descendants].sort((a, b) => (a.niveau || 1) - (b.niveau || 1));
+    const niv = (r) => (r.niveau > 1 ? ` · niv. ${r.niveau}` : '');
     const rows = [
-      ...ascendants.map(r => ({direction:'↑ Ascendant', numero:r.numero_lot, produit:r.produit, origine:r.origine||r.type, date:fmtDate(r.date), qte_utilisee:r.qte_utilisee ?? r.quantite, qte_produite:r.qte_produite})),
+      ...amont.map(r => ({direction:`↑ Ascendant${niv(r)}`, numero:r.numero_lot, produit:r.produit, origine:`${r.origine||r.type} → ${r.lot_voisin || ''}`, date:fmtDate(r.date), qte_utilisee:r.qte_utilisee ?? r.quantite, qte_produite:r.qte_produite})),
       { direction:'● Sélectionné', numero:lot.numero_lot, produit:lot.produit_nom, origine:lot.origine, date:fmtDate(lot.date_production||lot.created_at), qte_utilisee:'—', qte_produite:lot.quantite_initiale },
-      ...descendants.map(r => ({direction:'↓ Descendant', numero:r.numero_lot, produit:r.produit, origine:r.origine||r.type, date:fmtDate(r.date), qte_utilisee:r.qte_utilisee ?? r.quantite, qte_produite:r.qte_produite})),
+      ...aval.map(r => ({direction:`↓ Descendant${niv(r)}`, numero:r.numero_lot, produit:r.produit, origine:`${r.origine||r.type} ← ${r.lot_voisin || ''}`, date:fmtDate(r.date), qte_utilisee:r.qte_utilisee ?? r.quantite, qte_produite:r.qte_produite})),
     ];
     TRAC_CURRENT_CHAIN = rows;
     document.getElementById('tracChaineComplete').innerHTML = rows.map(r=>`
@@ -8670,24 +8634,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     clearTimeout(tracExportStatus._t);
     tracExportStatus._t = setTimeout(()=>{ el.style.opacity = '0'; }, 2200);
   }
-  function tracChainTableHtml(){
-    const headers = ['Direction','N° Lot','Produit','Origine','Date','Qté utilisée','Qté produite'];
-    const rowsHtml = TRAC_CURRENT_CHAIN.map(r =>
-      `<tr><td>${r.direction}</td><td>${r.numero}</td><td>${r.produit}</td><td>${r.origine}</td><td>${r.date}</td><td>${r.qte_utilisee ?? ''}</td><td>${r.qte_produite ?? ''}</td></tr>`
-    ).join('');
-    return `<table border="1" cellspacing="0" cellpadding="4">
-      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>`;
-  }
-  function tracDownloadBlob(content, mime, filename){
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=> URL.revokeObjectURL(url), 1000);
-  }
   // ============================================================================
   // EXPORTS RÉELS (Stock, Commandes, Registre des lots) — DOCX/XLSX sont de
   // vrais fichiers binaires générés côté serveur (exceljs/docx), pas du HTML
@@ -8708,24 +8654,31 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   // Impression PDF générique pour une liste (titre + colonnes + lignes) — même
   // thème visuel que les factures (couleur configurée, tableau propre).
-  function imprimerListeGenerique(titre, colonnes, lignes) {
-    const couleur = (APP_DATA.settings || {}).facture_couleur || '#17231D';
-    const theadHtml = colonnes.map(c => `<th style="text-align:left; padding:6px 8px; font-size:11.5px;">${c.label}</th>`).join('');
-    const tbodyHtml = lignes.map(l => `<tr>${colonnes.map(c => `<td style="padding:5px 8px; border-bottom:1px solid #eee; font-size:12px;">${l[c.key] ?? ''}</td>`).join('')}</tr>`).join('');
+  function imprimerListeGenerique(titre, colonnes, lignes, sousTitre = '') {
+    const e = enteteSociete();
+    const theadHtml = colonnes.map(c => `<th>${esc(c.label)}</th>`).join('');
+    const tbodyHtml = lignes.map(l => `<tr>${colonnes.map(c => `<td>${esc(l[c.key] ?? '')}</td>`).join('')}</tr>`).join('');
     const w = window.open('', `export_print_${Date.now()}`);
     if (!w) { notifier('Autorisez les pop-ups pour imprimer.'); return; }
     w.document.open();
-    w.document.write(`<html><head><meta charset="UTF-8"><title>${titre}</title>
+    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(titre)}</title>
       <style>
-        @page { size: A4; margin: 10mm; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        body { font-family: Arial, sans-serif; margin: 0; }
-        h1 { font-size: 18px; color: ${couleur}; }
-        .meta { font-size: 11px; color: #888; margin-bottom: 12px; }
+        @page { size: A4 landscape; margin: 10mm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; color: #1a1a1a; }
+        .soc { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; } .soc img { height: 64px; }
+        .soc .nom { font-weight: bold; font-size: 13px; color: ${e.couleur}; } .soc .det { font-size: 10.5px; color: #333; line-height: 1.5; }
+        h1 { font-size: 20px; color: ${e.couleur}; margin: 6px 0 2px; }
+        .sous { font-size: 12px; color: #666; font-style: italic; }
+        .meta { font-size: 11px; color: #888; margin: 2px 0 12px; }
         table { border-collapse: collapse; width: 100%; }
-        thead th { background: ${couleur}; color: #fff; }
+        th { background: ${e.couleur}; color: #fff; text-align: left; padding: 6px 8px; font-size: 11.5px; border: 1px solid #333; }
+        td { padding: 5px 8px; border: 1px solid #ddd; font-size: 12px; vertical-align: top; }
+        tbody tr:nth-child(even) td { background: #fafaf6; }
       </style></head><body>
-      <h1>${titre}</h1>
+      <div class="soc">${e.logo ? `<img src="${e.logo}" alt="">` : ''}<div>${e.nom ? `<div class="nom">${esc(e.nom)}</div>` : ''}<div class="det">${e.lignes.map(esc).join('<br>')}</div></div></div>
+      <h1>${esc(titre)}</h1>
+      ${sousTitre ? `<div class="sous">${esc(sousTitre)}</div>` : ''}
       <div class="meta">Généré le ${new Date().toLocaleDateString('fr-TN')} — ${lignes.length} ligne${lignes.length > 1 ? 's' : ''}</div>
       <table><thead><tr>${theadHtml}</tr></thead><tbody>${tbodyHtml}</tbody></table>
       <script>window.onload = () => window.print();<\/script>
@@ -8733,41 +8686,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     w.document.close();
   }
 
-  function tracExportDocx(){
+  // Traçabilité : la chaîne complète affichée, exportée comme toute liste
+  // (même forme en PDF, Word et Excel).
+  function tracExporter(format) {
     const numero = document.getElementById('tracLot').value;
-    const html = `<html><head><meta charset="UTF-8"></head><body>
-      <h2>Traçabilité — Lot ${numero}</h2>${tracChainTableHtml()}</body></html>`;
-    tracDownloadBlob(html, 'application/msword', `tracabilite_${numero}.doc`);
-    tracExportStatus('✓ Export DOCX généré');
+    if (!TRAC_CURRENT_CHAIN.length) { tracExportStatus('⚠ Lancez d\'abord la recherche du lot'); return; }
+    const headers = [['direction', 'Sens'], ['numero', 'N° lot'], ['produit', 'Produit'], ['origine', 'Origine'], ['date', 'Date'],
+      ['qte_utilisee', 'Qté utilisée'], ['qte_produite', 'Qté produite']].map(([key, label]) => ({ key, label }));
+    const rows = TRAC_CURRENT_CHAIN.map(r => Object.fromEntries(headers.map(h => [h.key, r[h.key] == null ? '—' : String(r[h.key])])));
+    telechargerExportGenerique(`Traçabilité — Lot ${numero}`, 'Chaîne complète : amont (graines, presse, filtration) → lot → aval', headers, rows, format, `tracabilite_${numero}`);
+    tracExportStatus(format === 'pdf' ? '✓ Aperçu PDF ouvert (imprimer → Enregistrer en PDF)' : `✓ Export ${format.toUpperCase()} généré`);
   }
-  function tracExportXlsx(){
-    const numero = document.getElementById('tracLot').value;
-    const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8">
-      <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-      <x:Name>Traçabilité</x:Name><x:WorksheetOptions></x:WorksheetOptions>
-      </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-      </head><body>${tracChainTableHtml()}</body></html>`;
-    tracDownloadBlob(html, 'application/vnd.ms-excel', `tracabilite_${numero}.xls`);
-    tracExportStatus('✓ Export XLSX généré');
-  }
-  function tracExportPdf(){
-    const numero = document.getElementById('tracLot').value;
-    const w = window.open('', '_blank');
-    if(!w){ tracExportStatus('⚠ Autorisez les pop-ups pour exporter en PDF'); return; }
-    w.document.write(`<html><head><meta charset="UTF-8"><title>Traçabilité ${numero}</title>
-      <style>
-        body{font-family:Arial,sans-serif; padding:24px; color:#1A1E1B;}
-        h2{font-family:Georgia,serif;}
-        table{border-collapse:collapse; width:100%; font-size:12px;}
-        th,td{border:1px solid #ccc; padding:6px 8px; text-align:left;}
-        th{background:#F5F2EA;}
-      </style></head><body>
-      <h2>Traçabilité — Lot ${numero}</h2>${tracChainTableHtml()}
-      <script>window.onload = () => window.print();<\/script>
-      </body></html>`);
-    w.document.close();
-    tracExportStatus('✓ Aperçu PDF ouvert (imprimer → Enregistrer en PDF)');
-  }
+  const tracExportDocx = () => tracExporter('docx');
+  const tracExportXlsx = () => tracExporter('xlsx');
+  const tracExportPdf = () => tracExporter('pdf');
   // Extrait le tableau HTML actuellement visible (en-têtes + lignes en texte
   // brut) — fonctionne pour n'importe quel onglet, y compris la Répartition
   // dont la structure de colonnes change dynamiquement.
@@ -8785,11 +8717,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return { headers, rows };
   }
   async function telechargerExportGenerique(titre, sousTitre, headers, rows, format, nomFichier) {
-    if (format === 'pdf') { imprimerListeGenerique(titre, headers, rows); return; }
+    if (format === 'pdf') { imprimerListeGenerique(titre, headers, rows, sousTitre); return; }
     const res = await fetch(`${API_BASE}/exports/generique`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
-      body: JSON.stringify({ titre, sousTitre, headers, rows, format }),
+      body: JSON.stringify({ titre, sousTitre, headers, rows, format, entete: enteteSociete() }),
     });
     if (!res.ok) { notifier('Erreur lors de la génération du fichier.', 'erreur'); return; }
     const blob = await res.blob();
@@ -9663,7 +9595,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     cablerMenuContextuel('livraisonsBody', (id) => {
       const b = (APP_DATA.livraisons || []).find(x => x.id === id);
       if (!b) return [];
-      return [{ label: '🖨 Imprimer', action: () => imprimerLivraison(id) }, { label: 'Voir la commande', action: () => ouvrirFicheCommande(b.commande_id) }, null,
+      return [{ label: '🖨 Imprimer', action: () => imprimerLivraison(id) }, { label: '⬇ Word (.docx)', action: () => imprimerLivraison(id, 'docx') },
+        { label: '⬇ Excel (.xlsx)', action: () => imprimerLivraison(id, 'xlsx') }, { label: 'Voir la commande', action: () => ouvrirFicheCommande(b.commande_id) }, null,
         b.statut !== 'emis' ? { label: 'Annuler le bon de livraison', desactive: 'Déjà annulé' }
         : !isGerant() ? { label: 'Annuler le bon de livraison', desactive: 'Réservé au gérant' }
         : b.facture_numero ? { label: 'Annuler le bon de livraison', desactive: `Commande facturée (${b.facture_numero}) : retour par avoir` }
@@ -9692,6 +9625,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         </td>
       </tr>`).join('');
     colorerNumeros(body);
+    cablerMenuContextuel('proformasBody', (id) => {
+      const p = (APP_DATA.proformas || []).find(x => x.id === id);
+      if (!p) return [];
+      return [{ label: '🖨 Imprimer', action: () => imprimerProforma(id) }, { label: '⬇ Word (.docx)', action: () => imprimerProforma(id, 'docx') },
+        { label: '⬇ Excel (.xlsx)', action: () => imprimerProforma(id, 'xlsx') }, { label: 'Voir la commande', action: () => ouvrirFicheCommande(p.commande_id) }];
+    });
   }
 
   // ---------- Livrer une commande (bon de livraison) ----------
@@ -9842,73 +9781,46 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   ['proformaFermer'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('proformaOverlay').classList.remove('open')));
 
   // ---------- Impression : bon de commande, bon de livraison, facture en attente ----------
-  function imprimerDocumentVente({ titre, numero, date, refs, client, entetes, lignes, totaux, mentions, filigrane, signatures, montant }) {
-    const s = APP_DATA.settings || {};
-    const cl = APP_DATA.clients.find(c => c.id === client.id) || {};
-    const logo = logoEntreprise();
-    // refs : [['Commande', 'BC-0004'], …] → colonnes supplémentaires à côté de N° et Date.
-    const colonnes = [['N°', esc(numero)], ['Date', fmtDate(date)], ...(refs || [])];
+  // BC, BL, pro forma : même spec que la facture → PDF, Word ou Excel de même forme.
+  function specDocumentVente({ titre, numero, date, refs, client, entetes, lignes, totaux, mentions, signatures, montant }) {
+    const e = enteteSociete();
     const net = (totaux || []).find(t => t[2]);
-    const autres = (totaux || []).filter(t => !t[2]);
-    const w = window.open('', `doc_${numero}_${Date.now()}`);
+    return {
+      couleur: e.couleur, logo: e.logo, societe: { nom: e.nom, lignes: e.lignes },
+      numero, titre, refs: [['N°', esc(numero)], ['Date', fmtDate(date)], ...(refs || [])],
+      client: clientSpec(client.id, client.nom),
+      colonnes: entetes.map(([label, num]) => ({ label, num: !!num })), lignes,
+      piedLignes: [`${lignes.length} ligne${lignes.length > 1 ? 's' : ''}`, ''],
+      bas: totaux ? { mentions: mentions || '', totaux: totaux.filter(t => !t[2]), net: net ? [net[0], net[1]] : null } : { mentions: mentions || '' },
+      lettres: montant != null ? { intro: 'Arrêté le présent document à la somme de :', texte: montantEnLettres(montant) } : null,
+      signatures: signatures || null,
+      piedPage: `${titre} N° ${numero} pour ${client.nom || ''}`,
+    };
+  }
+  function imprimerDocumentVente(args, format = 'pdf') {
+    const spec = specDocumentVente(args);
+    if (format !== 'pdf') return exporterDocument(spec, format);
+    const w = window.open('', `doc_${args.numero}_${Date.now()}`);
     if (!w) { notifier('Autorisez les pop-ups pour imprimer.'); return; }
     w.document.open();
-    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(titre)} ${esc(numero)}</title><style>${cssDocumentVente()}
-      .factureDoc { --couleur: ${s.facture_couleur || '#17231D'}; }</style></head><body>
-      ${filigrane ? `<div class="filigrane">${esc(filigrane)}</div>` : ''}
-      <div class="factureDoc">
-        <div class="headRow"><div class="companyBlock">
-          ${logo ? `<img src="${logo}" alt="">` : ''}
-          <div>${s.entreprise_nom ? `<div class="companyName">${esc(s.entreprise_nom)}</div>` : ''}
-            <div class="companyDetail">${esc(s.entreprise_adresse || '')}${s.entreprise_adresse ? '<br>' : ''}
-              ${s.entreprise_telephone ? `Tél : ${esc(s.entreprise_telephone)}` : ''}${s.entreprise_telephone && s.entreprise_email ? ' — ' : ''}${esc(s.entreprise_email || '')}
-              ${s.entreprise_matricule_fiscal ? `<br>MF : ${esc(s.entreprise_matricule_fiscal)}` : ''}</div></div>
-        </div></div>
-        <div class="factureNum">${esc(numero)}</div>
-        <div class="factureTitle">${esc(titre)}</div>
-        <table class="infoRow"><tr>
-          <td style="width:40%; vertical-align:top; padding-right:14px;">
-            <table class="bordered no-border refsTable">
-              <tr>${colonnes.map(([l]) => `<td class="lblCell">${l}</td>`).join('')}</tr>
-              <tr>${colonnes.map(([, v]) => `<td>${v}</td>`).join('')}</tr>
-            </table>
-          </td>
-          <td style="vertical-align:top;"><div class="clientBox">
-            <div class="nom">${esc(client.nom || '')}</div>
-            <div><b>Matricule fiscal :</b> ${esc(cl.matricule_fiscal || '—')}</div>
-            <div><b>Adresse :</b> ${esc(cl.ville || '—')}</div>
-            <div><b>Téléphone :</b> ${esc(cl.tel || '—')}</div>
-          </div></td>
-        </tr></table>
-        <div class="lignesWrap"><table>
-          <thead class="lignes"><tr>${entetes.map(([t, num], i) => `<th${num ? ' class="num"' : ''}${i === 0 ? ' style="width:34%;"' : ''}>${t}</th>`).join('')}</tr></thead>
-          <tbody class="lignes">${lignes.map(l => `<tr>${l.map((v, i) => `<td${entetes[i][1] ? ' class="num"' : ''}>${v}</td>`).join('')}</tr>`).join('')}</tbody>
-        </table></div>
-        <div class="lignesFoot"><span>${lignes.length} ligne${lignes.length > 1 ? 's' : ''}</span><span></span></div>
-        ${totaux ? `<table class="bottomGrid"><tr>
-          <td style="width:34%; vertical-align:top; padding-right:10px;"><div class="mentionsBox">${mentions || ''}</div></td>
-          <td style="width:33%; vertical-align:top; padding-right:10px;">${autres.length ? `<table class="totauxTable">${autres.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`).join('')}</table>` : ''}</td>
-          <td style="width:33%; vertical-align:top;">${net ? `<div class="netAPayer"><div class="lbl">${net[0]}</div><div class="val">${net[1]}</div></div>` : ''}</td>
-        </tr></table>` : (mentions ? `<div class="mentionsBox" style="margin-top:16px;">${mentions}</div>` : '')}
-        ${montant != null ? `<div class="lettres">Arrêté le présent document à la somme de :<br><b>${montantEnLettres(montant)}</b></div>` : ''}
-        ${signatures ? `<div class="signatures">${signatures.map(t => `<div>${t}</div>`).join('')}</div>` : ''}
-        <div class="pageFooter"><span>${esc(titre)} N° ${esc(numero)} pour ${esc(client.nom || '')}</span><span>Page 1/1</span></div>
-      </div>
+    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(args.titre)} ${esc(args.numero)}</title><style>${cssDocumentVente()}
+      .factureDoc { --couleur: ${spec.couleur}; }</style></head><body>
+      ${args.filigrane ? `<div class="filigrane">${esc(args.filigrane)}</div>` : ''}${htmlDepuisSpec(spec)}
     </body></html>`);
     w.document.close();
     setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 300);
   }
-  async function imprimerBonCommande(id) {
+  async function imprimerBonCommande(id, format = 'pdf') {
     try {
       const c = await apiFetch(`/commandes/${id}`);
       imprimerDocumentVente({ titre: 'Bon de commande', numero: c.numero, date: c.date_iso, refs: [], client: { id: c.client_id, nom: c.client_nom },
         entetes: [['Produit'], ['Qté', 1], ['Prix TTC', 1], ['Remise', 1], ['Total TTC', 1]],
         lignes: (c.lignes || []).map(l => [esc(l.produit_nom) + (l.free_units ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), Number(l.qty), fmtDT(l.unit_price).replace(' DT', ''), l.remise_pct ? `${Number(l.remise_pct)} %` : '—', fmtDT(l.total).replace(' DT', '')]),
         totaux: [['Net à payer', fmtDT(c.total).replace(' DT', ''), true]], montant: c.total, mentions: c.notes ? esc(c.notes) : 'Remarques',
-        signatures: ['Pour Les Jardins de Jerba', 'Bon pour accord — le client (date, signature)'] });
+        signatures: ['Pour Les Jardins de Jerba', 'Bon pour accord — le client (date, signature)'] }, format);
     } catch (err) { notifier(err.message, 'erreur'); }
   }
-  async function imprimerLivraison(id) {
+  async function imprimerLivraison(id, format = 'pdf') {
     try {
       const b = await apiFetch(`/livraisons/${id}`);
       imprimerDocumentVente({ titre: 'Bon de livraison', numero: b.numero, date: b.date_livraison, refs: [['Commande', esc(b.commande_numero)]], client: { id: b.client_id, nom: b.client_nom },
@@ -9916,10 +9828,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         lignes: b.lignes.map(l => [esc(l.produit_nom) + (l.free_units && Number(l.qty_livree) >= Number(l.qty_commandee) ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), esc(l.numero_lot || '—'),
           Number(l.qty_commandee), `<b>${Number(l.qty)}</b> ${esc(l.unite || '')}`, Math.max(0, Math.round((Number(l.qty_commandee) - Number(l.qty_livree)) * 100) / 100)]),
         mentions: `Document de transport, sans prix.${b.statut === 'annule' ? '\nBON ANNULÉ : ' + esc(b.annule_motif || '') : ''}${b.notes ? '\n' + esc(b.notes) : ''}`,
-        filigrane: b.statut === 'annule' ? 'ANNULÉ' : '', signatures: ['Livré par (nom, signature)', 'Reçu par — nom, date, signature, cachet'] });
+        filigrane: b.statut === 'annule' ? 'ANNULÉ' : '', signatures: ['Livré par (nom, signature)', 'Reçu par — nom, date, signature, cachet'] }, format);
     } catch (err) { notifier(err.message, 'erreur'); }
   }
-  async function imprimerProforma(id) {
+  async function imprimerProforma(id, format = 'pdf') {
     try {
       const p = await apiFetch(`/proformas/${id}`);
       imprimerDocumentVente({ titre: 'Facture pro forma', numero: p.numero, date: p.date_proforma, refs: [['Commande', esc(p.commande_numero)]], client: { id: p.client_id, nom: p.client_nom },
@@ -9928,7 +9840,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         totaux: [['Total HT', fmtDT(p.total_ht).replace(' DT', '')], ['FODEC', fmtDT(p.fodec_montant).replace(' DT', '')], ['Total TVA', fmtDT(p.montant_tva).replace(' DT', '')],
           ['Timbre', fmtDT(p.droit_timbre).replace(' DT', '')], ['Net à payer', fmtDT(p.total_ttc).replace(' DT', ''), true]], montant: p.total_ttc,
         mentions: `FACTURE EN ATTENTE — PRO FORMA, SANS VALEUR COMPTABLE.\nLa facture définitive (numéro FAC-…) sera émise à la validation.${p.notes ? '\n' + esc(p.notes) : ''}`,
-        filigrane: p.statut === 'validee' ? '' : 'PRO FORMA' });
+        filigrane: p.statut === 'validee' ? '' : 'PRO FORMA' }, format);
     } catch (err) { notifier(err.message, 'erreur'); }
   }
 

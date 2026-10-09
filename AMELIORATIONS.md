@@ -403,3 +403,18 @@ page de la facture : logo et coordonnées de la société, numéro et titre cent
 (et Commande), cadre client (matricule fiscal, adresse, téléphone), tableau aux couleurs de la
 facture, totaux et « Net à payer », montant en lettres, pied de page. Le logo est celui des
 Paramètres ; s'il n'y en a pas, le logo Les Jardins de Jerba de l'application est utilisé.
+
+## Exports Word / Excel à la forme du PDF — traçabilité sur toute la chaîne (V3.3)
+
+- **Documents de vente** (facture, bon de commande, bon de livraison, pro forma) : une seule
+  description du document produit l'impression PDF et les fichiers Word (.docx) et Excel (.xlsx)
+  générés par le serveur — logo, coordonnées de la société, numéro, titre, cases N° / Date,
+  cadre client, tableau aux couleurs, totaux, « Net à payer », montant en lettres, signatures,
+  pied de page. Word / Excel : menu ⋯ de la facture, de la commande (bon de commande), du bon
+  de livraison et de la facture en attente.
+- **Listes** (commandes, factures, lots, stock, mouvements, production, traçabilité) : PDF, Word
+  et Excel ont le même en-tête (logo + société), le titre, le sous-titre, « Généré le … — N
+  lignes » et le tableau aux couleurs de la facture.
+- **Traçabilité sur tous les niveaux** : un lot conditionné remonte au lot filtré, au lot de
+  presse puis au lot de graines (MP) ; un lot de graines descend jusqu'aux produits conditionnés.
+  Chaque ligne indique son niveau et le lot voisin (« utilisé dans » / « issu de »).

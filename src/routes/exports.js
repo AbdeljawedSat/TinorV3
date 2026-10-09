@@ -1,5 +1,5 @@
 const express = require('express');
-const { buildXlsxBuffer, buildDocxBuffer } = require('../services/exportService');
+const { buildXlsxBuffer, buildDocxBuffer, buildDocumentDocx, buildDocumentXlsx } = require('../services/exportService');
 
 function envoyerFichier(res, buffer, filename, format) {
   const mime = format === 'xlsx'
@@ -17,16 +17,30 @@ module.exports = function (pool) {
   // à l'écran (ex: Stock filtré sur un seul onglet/catégorie), pas toute la
   // table. Le client envoie déjà les lignes préparées. ----------
   router.post('/generique', async (req, res) => {
-    const { titre, sousTitre, headers, rows, format } = req.body;
+    const { titre, sousTitre, headers, rows, format, entete } = req.body;
     if (!titre || !Array.isArray(headers) || !Array.isArray(rows)) {
       return res.status(400).json({ error: 'titre, headers et rows sont requis.' });
     }
     const fmt = format === 'docx' ? 'docx' : 'xlsx';
+    // entete : logo + coordonnées de la société, comme sur l'impression PDF.
     const buffer = fmt === 'xlsx'
-      ? await buildXlsxBuffer(titre, headers, rows)
-      : await buildDocxBuffer(titre, sousTitre || '', headers, rows);
+      ? await buildXlsxBuffer(titre, headers, rows, entete || {}, sousTitre || '')
+      : await buildDocxBuffer(titre, sousTitre || '', headers, rows, entete || {});
     const nomFichier = titre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'export';
     envoyerFichier(res, buffer, nomFichier, fmt);
+  });
+
+  // ---------- Document de vente (facture, BC, BL, pro forma) — même « spec »
+  // que celle qui produit l'impression PDF dans la console. ----------
+  router.post('/document', async (req, res) => {
+    const { spec, format } = req.body || {};
+    if (!spec || !spec.titre || !Array.isArray(spec.colonnes) || !Array.isArray(spec.lignes)) {
+      return res.status(400).json({ error: 'Document incomplet.' });
+    }
+    const fmt = format === 'docx' ? 'docx' : 'xlsx';
+    const buffer = fmt === 'docx' ? await buildDocumentDocx(spec) : await buildDocumentXlsx(spec);
+    const nom = `${spec.titre}_${spec.numero || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'document';
+    envoyerFichier(res, buffer, nom, fmt);
   });
 
   // ---------- Stock (tous lots avec quantité > 0) ----------

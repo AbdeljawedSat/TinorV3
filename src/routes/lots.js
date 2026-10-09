@@ -41,7 +41,7 @@ module.exports = function (pool) {
   });
 
   // Traçabilité : ascendants (d'où vient ce lot) et descendants (où il a été utilisé),
-  // sur un seul niveau — même logique que l'écran Traçabilité de l'interface.
+  // sur tous les niveaux de la chaîne (graines → presse → filtration → conditionnement).
   router.get('/:numero/tracabilite', async (req, res) => {
     const lotRes = await pool.query(
       `SELECT l.*, p.nom AS produit_nom FROM lots l LEFT JOIN produits p ON p.id = l.produit_id
@@ -51,31 +51,47 @@ module.exports = function (pool) {
     const lot = lotRes.rows[0];
     if (!lot) return res.status(404).json({ error: 'Lot introuvable.' });
 
-    // Pour chaque lot de la chaîne : origine (= opération d'où il vient),
-    // date, quantité utilisée dans CE lien précis (lot_origines), et quantité
-    // produite au total par ce lot (quantite_initiale, indépendant du lien).
-    const ascendants = await pool.query(
-      `SELECT ls.numero_lot, ps.nom AS produit, ls.origine, ls.origine AS type,
-              COALESCE(ls.date_production, ls.created_at) AS date,
-              lo.quantite_utilisee AS quantite, lo.quantite_utilisee AS qte_utilisee,
-              ls.quantite_initiale AS qte_produite
-       FROM lot_origines lo
-       JOIN lots ls ON ls.id = lo.lot_source_id
-       LEFT JOIN produits ps ON ps.id = ls.produit_id
-       WHERE lo.lot_fils_id = $1`,
-      [lot.id]
-    );
-    const descendants = await pool.query(
-      `SELECT lf.numero_lot, pf.nom AS produit, lf.origine, lf.origine AS type,
-              COALESCE(lf.date_production, lf.created_at) AS date,
-              lo.quantite_utilisee AS quantite, lo.quantite_utilisee AS qte_utilisee,
-              lf.quantite_initiale AS qte_produite
-       FROM lot_origines lo
-       JOIN lots lf ON lf.id = lo.lot_fils_id
-       LEFT JOIN produits pf ON pf.id = lf.produit_id
-       WHERE lo.lot_source_id = $1`,
-      [lot.id]
-    );
+    // Toute la chaîne, sur tous les niveaux : un lot filtré remonte à son lot de
+    // presse, puis aux lots de graines (MP) pressés ; dans l'autre sens, jusqu'aux
+    // produits conditionnés. Pour chaque lien : origine, date, quantité utilisée
+    // dans CE lien (lot_origines), quantité produite au total (quantite_initiale),
+    // niveau (1 = lien direct) et lot voisin dans la chaîne (« utilisé dans » /
+    // « issu de »). Un lot atteint par plusieurs chemins (mélange) n'apparaît
+    // qu'une fois, au niveau le plus proche.
+    async function parcourir(sens) {
+      const [cle, autre] = sens === 'amont' ? ['lo.lot_fils_id', 'lo.lot_source_id'] : ['lo.lot_source_id', 'lo.lot_fils_id'];
+      const vus = new Set([lot.id]);
+      const resultat = [];
+      let front = [lot.id];
+      for (let niveau = 1; front.length && niveau <= 20; niveau++) {
+        const marques = front.map((_, i) => `$${i + 1}`).join(', ');
+        const r = await pool.query(
+          `SELECT l.id, l.numero_lot, p.nom AS produit, l.origine, l.origine AS type,
+                  COALESCE(l.date_production, l.created_at) AS date,
+                  lo.quantite_utilisee AS quantite, lo.quantite_utilisee AS qte_utilisee,
+                  l.quantite_initiale AS qte_produite, voisin.numero_lot AS lot_voisin
+           FROM lot_origines lo
+           JOIN lots l ON l.id = ${autre}
+           JOIN lots voisin ON voisin.id = ${cle}
+           LEFT JOIN produits p ON p.id = l.produit_id
+           WHERE ${cle} IN (${marques})
+           ORDER BY l.id`,
+          front
+        );
+        const suivant = [];
+        for (const row of r.rows) {
+          if (vus.has(row.id)) continue;
+          vus.add(row.id);
+          suivant.push(row.id);
+          const { id, ...ligne } = row;
+          resultat.push({ ...ligne, niveau });
+        }
+        front = suivant;
+      }
+      return resultat;
+    }
+    const ascendants = { rows: await parcourir('amont') };
+    const descendants = { rows: await parcourir('aval') };
     res.json({ lot, ascendants: ascendants.rows, descendants: descendants.rows });
   });
 

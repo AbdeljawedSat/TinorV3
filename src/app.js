@@ -12,7 +12,7 @@ function createApp(pool) {
     next();
   });
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '8mb' })); // logo de la société envoyé avec les exports (data URI)
 
   // Console d'administration servie par l'API : https://<domaine>/ ouvre la
   // console, déjà reliée à cette API, et installable comme application.
