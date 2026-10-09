@@ -681,6 +681,46 @@
   .navChildren a.active .ecranIc{color:#fff;}
   .navChildren a .cnt{background:color-mix(in srgb, var(--r, #0E3A4A) 13%, transparent); color:var(--r, #0E3A4A); font-weight:700;}
   .navChildren a.active .cnt{background:rgba(255,255,255,.25); color:#fff;}
+  /* Ventes : groupes + étapes numérotées de la chaîne (BC → BL → PRO → FAC → paiement) */
+  .navGroup.open .navChildren{max-height:900px;}
+  .navSous{font-size:10px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--r, #0E3A4A); padding:10px 10px 3px 20px; opacity:.9;}
+  .navSous:first-child{padding-top:4px;}
+  .navChildren a[data-etape] .ecranIc{display:none;}
+  .navChildren a[data-etape]::before{content:attr(data-etape); flex:0 0 18px; width:18px; height:18px; border-radius:50%; display:grid; place-items:center;
+    background:var(--r, #0E3A4A); color:#fff; font-size:10.5px; font-weight:800;}
+  .navChildren a[data-etape].active::before{background:#fff; color:var(--r, #0E3A4A);}
+  .navChildren a.sousEtape{padding-left:37px;}
+  .navChildren a .cnt.afaire{background:#FCEBD3; color:#A0600B;}
+  .navChildren a.active .cnt.afaire{background:#fff; color:#A0600B;}
+  /* Fil de la vente (en haut des 5 écrans de la chaîne) */
+  .filVente{display:flex; background:var(--paper); border:1px solid var(--line); border-radius:12px; box-shadow:0 6px 18px rgba(15,47,58,.08);
+    margin:-30px 0 16px; position:relative; z-index:2; overflow-x:auto; scrollbar-width:none;}
+  .filVente::-webkit-scrollbar{display:none;}
+  .filEtape{flex:1 0 132px; padding:9px 14px 10px; border:0; border-right:1px solid var(--line); background:none; text-align:left; cursor:pointer; font:inherit; color:var(--text); position:relative;}
+  .filEtape:last-child{border-right:0;}
+  .filEtape:hover{background:var(--accent-fond, #E3F0F9);}
+  .filEtape.cour{background:var(--accent-fond, #E3F0F9); box-shadow:inset 0 -3px 0 var(--accent, #1C6FA6);}
+  .filEtape:not(:last-child)::after{content:'›'; position:absolute; right:-6px; top:50%; transform:translateY(-50%); width:12px; text-align:center;
+    background:var(--paper); color:var(--accent, #1C6FA6); font-weight:800; z-index:1;}
+  .filEtape .filLib{display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft);}
+  .filEtape .filLib b{width:16px; height:16px; border-radius:50%; display:grid; place-items:center; background:var(--accent, #1C6FA6); color:#fff; font-size:9.5px; letter-spacing:0;}
+  .filEtape .filVal{display:block; font-size:15px; font-weight:800; color:#0F2F3A; margin-top:2px; white-space:nowrap;}
+  .filEtape .filAFaire{display:inline-block; font-size:11.5px; font-weight:600; color:#A0600B; margin-top:1px; border-radius:6px; padding:0 3px; margin-left:-3px;}
+  .filEtape .filAFaire:hover{background:#FCEBD3; text-decoration:underline;}
+  .filEtape .filAFaire.ok{color:var(--good, #2F6B2F);}
+  .filEtape .filAFaire.ok:hover{background:none; text-decoration:none;}
+  @media (max-width:700px){ .filVente{margin:-22px 0 12px;} .filEtape{flex:0 0 112px; padding:8px 10px;} .filEtape .filVal{font-size:13.5px;} }
+  /* Documents liés (fiches commande / facture) */
+  .chaineDocs{display:flex; flex-wrap:wrap; align-items:center; gap:6px;}
+  .chaineDocs .flecheDoc{color:var(--text-soft); font-size:14px;}
+  .docLie{border:1px solid #CFE0EC; border-radius:9px; padding:5px 9px; font-size:11.5px; background:#F6FAFD; cursor:pointer; text-align:left; font-family:inherit; color:var(--text); line-height:1.35;}
+  .docLie b{display:block; font-family:'IBM Plex Mono',monospace; font-size:12px; color:#1C6FA6;}
+  .docLie:hover{border-color:#1C6FA6;}
+  .docLie.ici{background:#E3F0F9; border-color:#1C6FA6; cursor:default;}
+  .docLie.fait b{color:#2F6B2F;}
+  .docLie.attente{border-style:dashed; background:#FFF9F0; border-color:#E8C48D;}
+  .docLie.attente b{color:#A0600B;}
+  .docLie.annule{opacity:.55; text-decoration:line-through;}
   .sidebarFoot{border-top:1px solid var(--line);}
   .sidebarFoot .who{color:#0F2F3A;} .sidebarFoot .role{color:#5F7780;}
   .avatar{background:#E6EEF0; color:#0E3A4A; border-color:var(--line);}
@@ -815,15 +855,18 @@
       <div class="navGroup open">
         <button class="navGroupBtn"><span class="code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><span class="lbl">Ventes</span><span class="chev">›</span></button>
         <div class="navChildren">
-          <a data-view="commandes"><span>Commandes</span><span class="cnt" style="display:none;"></span></a>
-          <a data-view="factures"><span>Factures</span><span class="cnt" style="display:none;"></span></a>
-          <a data-view="livraisons"><span>Bons de livraison</span></a>
-          <a data-view="proformas"><span>Factures en attente</span><span class="cnt" style="display:none;"></span></a>
-          <a data-view="avoirs"><span>Avoirs</span></a>
-          <a data-view="paiements"><span>Paiements</span></a>
+          <div class="navSous">Chaîne de vente</div>
+          <a data-view="commandes" data-etape="1"><span>Commandes (BC)</span><span class="cnt afaire" style="display:none;"></span></a>
+          <a data-view="livraisons" data-etape="2"><span>Bons de livraison</span><span class="cnt afaire" style="display:none;"></span></a>
+          <a data-view="proformas" data-etape="3"><span>Factures en attente</span><span class="cnt afaire" style="display:none;"></span></a>
+          <a data-view="factures" data-etape="4"><span>Factures</span><span class="cnt afaire" style="display:none;"></span></a>
+          <a data-view="paiements" data-etape="5"><span>Paiements</span><span class="cnt afaire" style="display:none;"></span></a>
+          <a data-view="avoirs" class="sousEtape"><span>Avoirs</span></a>
+          <div class="navSous">Clients et tarifs</div>
           <a data-view="clients"><span>Clients</span></a>
           <a data-view="remises"><span>Remises</span></a>
           <a data-view="grille-prix"><span>Grille de prix</span></a>
+          <div class="navSous">Analyse</div>
           <a data-view="stats"><span>Statistiques</span></a>
         </div>
       </div>
@@ -5500,9 +5543,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function emettreFacture(commandeId) {
     try {
       await apiFetch('/factures', { method: 'POST', body: JSON.stringify({ commande_id: commandeId }) });
-      const [factures, commandes] = await Promise.all([apiFetch('/factures'), apiFetch('/commandes')]);
-      APP_DATA.factures = factures; APP_DATA.commandes = commandes;
-      renderFactures(); renderCommandes();
+      await rafraichirVentes(); // la facture peut créer un BL automatique ; compteurs et fil de la vente suivent
     } catch (err) { notifier(err.message, 'erreur'); }
   }
 
@@ -7859,7 +7900,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   let COMMANDES_FILTER = '';
   // « Payée » n'est pas choisi à la main : il suit l'encaissement de la facture.
   const STATUTS_COMMANDE = { en_attente: 'En attente', confirmee: 'Confirmée', livree: 'Livrée' };
-  const ETAPE_SUIVANTE = { en_attente: ['confirmee', 'Confirmer'], confirmee: ['livree', 'Livrée'] };
   function renderCommandes() {
     const body = document.getElementById('commandesBody');
 
@@ -7885,23 +7925,19 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const partielle = livraisonPartielle(c);
       const [cls, label] = partielle ? ['warn', `Livrée ${partielle.liv}/${partielle.cmd}`] : (statutLabel[c.statut] || ['grey', c.statut]);
       const dejaFacturee = facturees.has(c.id);
+      const etape = prochaineEtapeCommande(c);
       return `<tr data-id="${c.id}">
         <td class="lotCode">${c.numero}</td>
         <td>${c.client_nom || '—'}</td>
         <td class="rowMeta num">${fmtDate(c.date_iso)}</td>
         <td><div class="statutCell">
           <span class="pill ${cls}">${label}</span>
-          ${ETAPE_SUIVANTE[c.statut] && !dejaFacturee ? (ETAPE_SUIVANTE[c.statut][0] === 'livree'
-            ? `<button class="etapeBtn" title="Créer le bon de livraison" onclick="ouvrirLivraison(${c.id})">→ Livrer</button>`
-            : `<button class="etapeBtn" title="Passer à l'étape suivante" onclick="changerStatutCommande(${c.id}, '${ETAPE_SUIVANTE[c.statut][0]}')">→ ${ETAPE_SUIVANTE[c.statut][1]}</button>`) : ''}
           ${c.proforma_numero ? `<span class="rowMeta" title="Facture en attente">${esc(c.proforma_numero)}</span>` : ''}
         </div></td>
         <td class="num">${fmtDT(c.total)}</td>
         <td class="rowActions">
-          ${c.statut === 'annulee' ? `<span class="rowMeta">Annulée</span>`
-            : dejaFacturee
-            ? `<span class="rowMeta">Facturée</span>`
-            : `<button class="rowActionBtn principal" onclick="emettreFacture(${c.id})">Facturer</button>`}
+          ${etape ? `<button class="rowActionBtn principal" title="Prochaine étape" onclick="etapeCommande(${c.id})">${etape.court} →</button>`
+            : `<span class="rowMeta">${c.statut === 'annulee' ? 'Annulée' : c.statut === 'payee' ? 'Payée' : dejaFacturee ? 'Facturée' : ''}</span>`}
           <button class="rowActionBtn plus" title="Plus d'actions" onclick="ouvrirMenuLigne(event, 'commandesBody', ${c.id})">⋯</button>
         </td>
       </tr>`;
@@ -7957,11 +7993,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('commandesFilterDateFin').value = '';
     renderCommandes();
   });
+  function etapeCommande(id) { const e = prochaineEtapeCommande(APP_DATA.commandes.find(x => x.id === id)); if (e) e.action(); }
   async function changerStatutCommande(id, statut) {
     try {
       await apiFetch(`/commandes/${id}/statut`, { method: 'PUT', body: JSON.stringify({ statut }) });
       APP_DATA.commandes = await apiFetch('/commandes');
-      renderCommandes();
+      renderCommandes(); majBadgesMenu();
     } catch (err) { notifier(err.message, 'erreur'); renderCommandes(); }
   }
 
@@ -8436,9 +8473,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Compteurs du menu, calculés à partir des données réelles (avant : valeurs
   // fixes de maquette). Masqués quand ils valent zéro.
   function majBadgesMenu() {
+    const af = aFaireVente();
     const compteurs = {
-      commandes: { n: APP_DATA.commandes.filter(c => c.statut === 'en_attente').length, titre: 'commande(s) en attente' },
-      factures: { n: APP_DATA.factures.filter(f => f.statut !== 'annulee' && Number(f.solde) > 0).length, titre: 'facture(s) avec un solde impayé' },
+      commandes: { n: af.confirmer, titre: 'commande(s) à confirmer' },
+      livraisons: { n: af.livrer, titre: 'commande(s) à livrer' },
+      proformas: { n: af.valider, titre: 'facture(s) en attente à valider' },
+      factures: { n: af.facturer, titre: 'commande(s) à facturer' },
+      paiements: { n: af.encaisser, titre: 'facture(s) à encaisser' },
       produits: { n: APP_DATA.produits.length, titre: 'produit(s) au catalogue' },
       lots: { n: APP_DATA.lots.filter(l => Number(l.quantite_actuelle) > 0 && !['EPUISE', 'CLOTURE', 'REJETE'].includes(l.statut)).length, titre: 'lot(s) en stock' },
       fournisseurs: { n: APP_DATA.fournisseurs.length, titre: 'fournisseur(s)' },
@@ -8450,6 +8491,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       badge.title = `${n} ${titre}`;
       badge.style.display = n ? '' : 'none';
     });
+    majFilVente();
   }
 
   async function regulariserEcartsStock(ctrl) {
@@ -9407,25 +9449,23 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function ouvrirFicheCommande(id) {
     try {
       const c = await apiFetch(`/commandes/${id}`);
-      const facs = APP_DATA.factures.filter(f => f.commande_id === id);
       const lignes = (c.lignes || []).map(l => `<tr><td>${esc(l.produit_nom)}${l.free_units ? ` <span class="rowMeta">(+${l.free_units} offert${l.free_units > 1 ? 's' : ''})</span>` : ''}
         <div class="rowMeta" style="font-size:11px;">${l.numero_lot ? 'Lot ' + esc(l.numero_lot) : '<span style="color:var(--warn);">En attente de conditionnement</span>'}${l.remise_nom ? ' · ' + esc(l.remise_nom) : ''}</div></td>
         <td class="num">${l.qty}</td><td class="num">${Number(l.qty_livree || 0)}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
-      const bls = (c.bons_livraison || []).map(b => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="imprimerLivraison(${b.id})">${esc(b.numero)}</span> ${pastille(STATUT_BL[b.statut] || ['grey', b.statut])} · ${fmtDate(b.date_livraison)} · ${Number(b.qte || 0)} unité(s)</div>`).join('');
-      const pros = (c.proformas || []).filter(p => p.statut !== 'annulee').map(p => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="${p.statut === 'en_attente' ? `ouvrirProforma(${p.id})` : `imprimerProforma(${p.id})`}">${esc(p.numero)}</span> ${pastille(STATUT_PRO[p.statut] || ['grey', p.statut])} · ${fmtDT(p.total_ttc)}</div>`).join('');
       const corps = `
         <div class="ficheBloc"><h3>Lignes</h3><table><thead><tr><th>Produit</th><th class="num">Qté</th><th class="num">Livré</th><th class="num">Prix TTC</th><th class="num">Total</th></tr></thead><tbody>${lignes}</tbody></table>
           <div class="ficheTotaux"><span class="fort">Total TTC</span><span class="fort num">${fmtDT(c.total)}</span></div></div>
-        <div class="ficheBloc"><h3>Livraisons</h3>${bls || '<span class="rowMeta">Pas encore livrée.</span>'}</div>
-        ${pros ? `<div class="ficheBloc"><h3>Facture en attente</h3>${pros}</div>` : ''}
-        <div class="ficheBloc"><h3>Facturation</h3>${facs.length ? facs.map(f => `<div style="margin-bottom:4px;"><span class="ficheLien" onclick="ouvrirFicheFacture(${f.id})">${esc(f.numero)}</span> ${pastilleVente(f.statut)} ${f.statut === 'emise' ? `· payé ${fmtDT(f.total_paye)} · reste ${fmtDT(f.solde)}` : ''}</div>`).join('') : '<span class="rowMeta">Pas encore facturée.</span>'}</div>
+        ${chaineDocumentsHtml(c, c.numero)}
         ${c.notes ? `<div class="ficheBloc"><h3>Notes</h3><div class="ficheNotes">${esc(c.notes)}</div></div>` : ''}`;
       afficherFiche('Commande', esc(c.numero), `${pastilleVente(c.statut)}<span>${esc(c.client_nom || '—')}</span><span>${fmtDate(c.date_iso)}</span>`, corps, 'commandesBody', id);
+      const resume = APP_DATA.commandes.find(x => x.id === id) || c;
+      actionsChaineFiche(prochaineEtapeCommande(resume), documentsImprimables(c));
     } catch (err) { notifier(err.message, 'erreur'); }
   }
   async function ouvrirFicheFacture(id) {
     try {
       const f = await apiFetch(`/factures/${id}`);
+      const cmd = f.commande_id ? await apiFetch(`/commandes/${f.commande_id}`).catch(() => null) : null;
       const lignes = (f.lignes || []).map(l => `<tr><td>${esc(l.designation)}${l.remise_nom ? `<div class="rowMeta" style="font-size:11px;">${esc(l.remise_nom)}</div>` : ''}</td><td class="num">${l.qty}</td><td class="num">${fmtDT(l.unit_price)}</td><td class="num">${fmtDT(l.total)}</td></tr>`).join('');
       const paiements = (f.paiements || []).map(p => `<tr${p.annule_le ? ' class="ligneAnnulee"' : ''}><td class="rowMeta num">${fmtDate(p.date_paiement)}</td><td>${esc(MODE_PAIEMENT_LABEL[p.mode] || p.mode)}${p.reference ? ' · ' + esc(p.reference) : ''}${p.annule_le ? `<div style="font-size:11px; color:var(--danger);">Annulé : ${esc(p.annule_motif || '')}</div>` : ''}</td><td class="num"><span class="montant">${fmtDT(p.montant)}</span></td></tr>`).join('');
       const corps = `
@@ -9442,8 +9482,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           <div class="ficheTotaux"><span>Payé</span><span class="num">${fmtDT(f.total_paye)}</span>
             ${Number(f.total_avoirs) ? `<span>Avoirs</span><span class="num">−${fmtDT(f.total_avoirs)}</span>` : ''}
             <span class="fort">${f.solde < -0.0005 ? 'Crédit client' : 'Reste dû'}</span><span class="fort num" style="color:${f.solde > 0.0005 && f.statut !== 'annulee' ? 'var(--warn)' : 'var(--good)'};">${fmtDT(f.statut === 'annulee' ? 0 : Math.abs(f.solde))}</span></div></div>
-        ${f.commande_id ? `<div class="ficheBloc"><h3>Commande</h3><span class="ficheLien" onclick="ouvrirFicheCommande(${f.commande_id})">${esc(f.commande_numero || 'Voir la commande')}</span></div>` : ''}`;
+        ${cmd ? chaineDocumentsHtml(cmd, f.numero) : ''}`;
       afficherFiche('Facture', esc(f.numero), `${pastilleVente(f.statut)}<span>${esc(f.client_nom || '—')}</span><span>${fmtDate(f.date_emission)}</span>`, corps, 'facturesBody', id);
+      const resumeFac = APP_DATA.factures.find(x => x.id === id) || f;
+      actionsChaineFiche(factureAEncaisser(resumeFac) ? { label: '💰 Encaisser', action: () => openPaiementModal(id) } : null, cmd ? documentsImprimables(cmd) : null);
     } catch (err) { notifier(err.message, 'erreur'); }
   }
   // ============================================================================
@@ -9459,6 +9501,128 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function livraisonPartielle(c) {
     const cmd = Number(c.qte_commandee || 0), liv = Number(c.qte_livree || 0);
     return c.statut === 'confirmee' && liv > 0 && liv < cmd ? { liv, cmd } : null;
+  }
+
+  // ---------- Liens de la vente (V3.3) ----------
+  // Ce qui reste à faire à chaque étape de la chaîne (mêmes règles que les vues rapides).
+  const commandeALivrer = c => c.statut === 'confirmee' && Number(c.qte_commandee || 0) - Number(c.qte_livree || 0) > 0.0005 && !commandeFacturee(c.id);
+  const commandeAFacturer = c => (c.statut === 'confirmee' || c.statut === 'livree') && !commandeFacturee(c.id);
+  function aFaireVente() {
+    const cmds = APP_DATA.commandes || [], facs = APP_DATA.factures || [];
+    const aEncaisser = facs.filter(factureAEncaisser);
+    return {
+      commandes: cmds.filter(c => c.statut !== 'annulee').length,
+      confirmer: cmds.filter(c => c.statut === 'en_attente').length,
+      bl: (APP_DATA.livraisons || []).filter(b => b.statut === 'emis').length,
+      livrer: cmds.filter(commandeALivrer).length,
+      valider: (APP_DATA.proformas || []).filter(p => p.statut === 'en_attente').length,
+      fac: facs.filter(f => f.statut === 'emise').length,
+      facturer: cmds.filter(commandeAFacturer).length,
+      encaisser: aEncaisser.length,
+      reste: aEncaisser.reduce((t, f) => t + Number(f.solde || 0), 0),
+    };
+  }
+  // Ouvre un écran (et, si demandé, sa vue rapide « à faire »).
+  function allerVente(vue, vueRapide) {
+    const lien = document.querySelector(`#navScroll a[data-view="${vue}"]`);
+    if (lien) setActive(vue, lien);
+    if (vueRapide) choisirVue(vue, vueRapide);
+  }
+  const ECRANS_CHAINE = ['commandes', 'livraisons', 'proformas', 'factures', 'paiements'];
+  function majFilVente() {
+    const a = aFaireVente();
+    const pl = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+    const etapes = [
+      ['commandes', 'Commandes', pl(a.commandes, 'commande', 'commandes'), a.confirmer, 'à confirmer', ['commandes', 'confirmer']],
+      ['livraisons', 'Livraisons', pl(a.bl, 'BL', 'BL'), a.livrer, 'à livrer', ['commandes', 'livrer']],
+      ['proformas', 'En attente', pl(a.valider, 'pro forma', 'pro forma'), a.valider, 'à valider', ['proformas', null]],
+      ['factures', 'Factures', pl(a.fac, 'facture', 'factures'), a.facturer, 'à facturer', ['commandes', 'facturer']],
+      ['paiements', 'Paiements', a.encaisser ? fmtDT(a.reste) : 'Tout encaissé', a.encaisser, 'à encaisser', ['factures', 'encaisser']],
+    ];
+    document.querySelectorAll('.filVente').forEach(fil => {
+      fil.innerHTML = etapes.map(([vue, lib, val, n, quoi], i) => `
+        <button type="button" class="filEtape${fil.dataset.ecran === vue ? ' cour' : ''}" data-i="${i}" title="Ouvrir : ${lib}">
+          <span class="filLib"><b>${i + 1}</b>${lib}</span>
+          <span class="filVal">${val}</span>
+          ${n ? `<span class="filAFaire" data-afaire="${i}" title="Voir la liste">${n} ${quoi}</span>` : '<span class="filAFaire ok">✓ à jour</span>'}
+        </button>`).join('');
+      fil.onclick = (e) => {
+        const b = e.target.closest('.filEtape'); if (!b) return;
+        const et = etapes[Number(b.dataset.i)];
+        const lien = e.target.closest('[data-afaire]');
+        if (lien) allerVente(et[5][0], et[5][1]); else allerVente(et[0]);
+      };
+    });
+  }
+  ECRANS_CHAINE.forEach(vue => {
+    const tete = document.querySelector(`#view-${vue} .pageHead`);
+    if (!tete || tete.nextElementSibling?.classList.contains('filVente')) return;
+    tete.insertAdjacentHTML('afterend', `<nav class="filVente" data-ecran="${vue}" aria-label="Chaîne de vente"></nav>`);
+  });
+
+  // Prochaine étape d'une commande : un seul bouton principal selon l'état.
+  function prochaineEtapeCommande(c) {
+    if (!c || c.statut === 'annulee' || c.statut === 'payee') return null;
+    const fac = APP_DATA.factures.find(f => f.statut === 'emise' && f.commande_id === c.id);
+    if (fac) return factureAEncaisser(fac) ? { court: 'Encaisser', label: '💰 Encaisser', action: () => openPaiementModal(fac.id) } : null;
+    if (c.statut === 'en_attente') return { court: 'Confirmer', label: '✓ Confirmer', action: () => changerStatutCommande(c.id, 'confirmee') };
+    if (Number(c.qte_commandee || 0) - Number(c.qte_livree || 0) > 0.0005) return { court: 'Livrer', label: '🚚 Livrer…', action: () => ouvrirLivraison(c.id) };
+    if (c.proforma_id) return { court: 'Valider', label: `🧾 Valider la facture en attente ${c.proforma_numero || ''}`.trim(), action: () => ouvrirProforma(c.proforma_id) };
+    return { court: 'Facturer', label: '🧾 Facturer', action: () => emettreFacture(c.id) };
+  }
+  // Documents liés : toute la chaîne d'une commande, chaque document s'ouvre d'un clic.
+  // `ici` = document affiché (« BC-… » ou « FAC-… »).
+  function chaineDocumentsHtml(c, ici) {
+    const bouton = (cls, numero, texte, action) => `<button type="button" class="docLie ${cls}"${action ? ` onclick="${action}"` : ''}><b>${esc(numero)}</b>${texte}</button>`;
+    const fleche = '<span class="flecheDoc">→</span>';
+    const morceaux = [bouton(ici === c.numero ? 'ici' : 'fait', c.numero, `Commande · ${Number(c.qte_commandee || (c.lignes || []).reduce((t, l) => t + Number(l.qty || 0), 0))} u`,
+      ici === c.numero ? null : `fermerFiche(); ouvrirFicheCommande(${c.id})`)];
+    const bls = (c.bons_livraison || []);
+    morceaux.push(fleche, bls.length
+      ? bls.map(b => bouton(b.statut === 'annule' ? 'annule' : 'fait', b.numero, `${Number(b.qte || 0)} u · ${fmtDate(b.date_livraison)}`, `imprimerLivraison(${b.id})`)).join('')
+      : (c.statut === 'annulee' ? '' : bouton('attente', 'Livraison', 'à faire', `fermerFiche(); ouvrirLivraison(${c.id})`)));
+    const pros = (c.proformas || []).filter(p => p.statut !== 'annulee');
+    if (pros.length) morceaux.push(fleche, pros.map(p => bouton(p.statut === 'en_attente' ? 'attente' : 'fait', p.numero, p.statut === 'en_attente' ? 'à valider' : 'validée', `fermerFiche(); ouvrirProforma(${p.id})`)).join(''));
+    const facs = APP_DATA.factures.filter(f => f.commande_id === c.id);
+    const fac = facs.find(f => f.statut === 'emise');
+    morceaux.push(fleche, facs.length
+      ? facs.map(f => bouton(f.numero === ici ? 'ici' : f.statut === 'annulee' ? 'annule' : 'fait', f.numero, fmtDT(f.total_ttc), f.numero === ici ? null : `fermerFiche(); ouvrirFicheFacture(${f.id})`)).join('')
+      : (c.statut === 'annulee' ? '' : bouton('attente', 'Facture', 'à faire', `fermerFiche(); emettreFacture(${c.id})`)));
+    if (fac) morceaux.push(fleche, factureAEncaisser(fac)
+      ? bouton('attente', 'Paiement', `reste ${fmtDT(fac.solde)}`, `fermerFiche(); openPaiementModal(${fac.id})`)
+      : bouton('fait', 'Payée', fmtDT(fac.total_paye), null));
+    return `<div class="ficheBloc"><h3>Documents liés</h3><div class="chaineDocs">${morceaux.join('')}</div></div>`;
+  }
+  // Bouton « Prochaine étape » + « Imprimer… » en tête des actions de la fiche.
+  function actionsChaineFiche(etape, documents) {
+    const zone = document.getElementById('ficheActions');
+    if (!zone) return;
+    if (documents && documents.length) {
+      // « Imprimer… » remplace les boutons d'impression un par un.
+      zone.querySelectorAll('button').forEach(b => { if (/^🖨 Imprimer /.test(b.textContent)) b.remove(); });
+      const imp = document.createElement('button');
+      imp.type = 'button'; imp.textContent = '🖨 Imprimer…';
+      imp.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = imp.getBoundingClientRect();
+        afficherMenuContextuel({ preventDefault() {}, clientX: r.left, clientY: r.top - 8 - documents.length * 36 }, documents);
+      });
+      zone.insertBefore(imp, zone.firstChild);
+    }
+    if (etape) {
+      zone.querySelectorAll('button.principal').forEach(b => b.classList.remove('principal'));
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'principal'; b.textContent = `Prochaine étape : ${etape.label.replace(/…$/, '')} →`;
+      b.addEventListener('click', () => { fermerFiche(); etape.action(); });
+      zone.insertBefore(b, zone.firstChild);
+    }
+  }
+  function documentsImprimables(c) {
+    const docs = [{ label: `🖨 Bon de commande ${c.numero}`, action: () => imprimerBonCommande(c.id) }];
+    (c.bons_livraison || []).filter(b => b.statut !== 'annule').forEach(b => docs.push({ label: `🖨 Bon de livraison ${b.numero}`, action: () => imprimerLivraison(b.id) }));
+    (c.proformas || []).filter(p => p.statut !== 'annulee').forEach(p => docs.push({ label: `🖨 Facture en attente ${p.numero}`, action: () => imprimerProforma(p.id) }));
+    APP_DATA.factures.filter(f => f.commande_id === c.id && f.statut === 'emise').forEach(f => docs.push({ label: `🖨 Facture ${f.numero}`, action: () => imprimerFacture(f.id) }));
+    return docs;
   }
 
   function renderLivraisons() {
@@ -9497,8 +9661,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const liste = APP_DATA.proformas || [];
     const enAttente = liste.filter(p => p.statut === 'en_attente').length;
     document.getElementById('proformasCount').textContent = `${enAttente} facture(s) en attente — pro forma modifiables, sans valeur comptable jusqu'à validation`;
-    const cnt = document.querySelector('#navScroll a[data-view="proformas"] .cnt');
-    if (cnt) { cnt.textContent = enAttente || ''; cnt.style.display = enAttente ? '' : 'none'; }
     if (!liste.length) { body.innerHTML = `<tr><td colspan="7" class="videAction">Aucune facture en attente : préparez-en une depuis une commande (menu ⋯ › Facture en attente).</td></tr>`; return; }
     body.innerHTML = liste.map(p => `
       <tr data-id="${p.id}"${p.statut === 'annulee' ? ' class="ligneAnnulee"' : ''}>

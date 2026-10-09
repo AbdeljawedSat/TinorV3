@@ -376,3 +376,22 @@ L'application (Android ou navigateur) continue de fonctionner sans connexion au 
   pro forma modifiée puis validée) et parcours complet dans la console, en ligne et hors ligne.
 - Pas dans cette version : une facture regroupant **plusieurs commandes** (facture mensuelle) — la
   facture, les avoirs et le relevé restent liés à une commande.
+
+## Liens de la vente : menu par étapes, fil de la vente, documents liés (V3.3)
+
+Organisation reprise des logiciels de gestion courants (Sage, EBP, SAP Business One, Odoo) :
+
+- **Menu Ventes en trois groupes** : *Chaîne de vente* (1 Commandes · 2 Bons de livraison ·
+  3 Factures en attente · 4 Factures · 5 Paiements, puis Avoirs), *Clients et tarifs*, *Analyse*.
+  Le compteur orange de chaque étape indique ce qui reste à faire : à confirmer, à livrer,
+  à valider, à facturer, à encaisser.
+- **Fil de la vente** en haut des cinq écrans de la chaîne : nombre de documents par étape et
+  reste à faire. Un clic sur l'étape ouvre son écran ; un clic sur « N à … » ouvre directement
+  la liste filtrée (ex. « à facturer » → Commandes, vue À facturer).
+- **Documents liés** dans les fiches commande et facture : BC → BL → pro forma → facture →
+  paiement, chaque document s'ouvre d'un clic ; ce qui manque apparaît en pointillés (« à faire »).
+- **Un seul bouton principal « Prochaine étape »** (liste et fiche) : Confirmer → Livrer →
+  Facturer (ou valider la facture en attente) → Encaisser.
+- **« Imprimer… »** dans la fiche : choix du document à imprimer (BC, BL, pro forma, facture).
+
+Aucune règle de gestion ne change (stock, numérotation, hors ligne) : seulement la navigation.
