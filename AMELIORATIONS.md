@@ -395,3 +395,11 @@ Organisation reprise des logiciels de gestion courants (Sage, EBP, SAP Business 
 - **« Imprimer… »** dans la fiche : choix du document à imprimer (BC, BL, pro forma, facture).
 
 Aucune règle de gestion ne change (stock, numérotation, hors ligne) : seulement la navigation.
+
+## Documents de vente à la forme de la facture, avec le logo (V3.3)
+
+Le bon de commande, le bon de livraison et la facture pro forma reprennent exactement la mise en
+page de la facture : logo et coordonnées de la société, numéro et titre centré, cases N° / Date
+(et Commande), cadre client (matricule fiscal, adresse, téléphone), tableau aux couleurs de la
+facture, totaux et « Net à payer », montant en lettres, pied de page. Le logo est celui des
+Paramètres ; s'il n'y en a pas, le logo Les Jardins de Jerba de l'application est utilisé.

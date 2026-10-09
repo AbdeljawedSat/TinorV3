@@ -5325,6 +5325,65 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     : ` <span class="pill warn" title="Avoir de ${fmtDT(f.total_avoirs)}">Avoir partiel</span>`;
 
   // ---------- Impression / export de facture (DOCX, XLSX, PDF via impression) ----------
+  // Mise en page commune des documents de vente (facture, BC, BL, pro forma) :
+  // même en-tête, même tableau, mêmes totaux. Logo : celui des Paramètres, sinon
+  // le logo Les Jardins de Jerba de l'application.
+  function logoEntreprise() {
+    const s = APP_DATA.settings || {};
+    return s.entreprise_logo || document.querySelector('.brand img')?.src || '';
+  }
+  function cssDocumentVente() {
+    return `
+        @page { size: A4; margin: 10mm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12.5px; color: #1a1a1a; margin: 0; padding: 0; }
+        .factureDoc table { border-collapse: collapse; width: 100%; }
+        .factureDoc .no-border td, .factureDoc .no-border th { border: none; }
+        .factureDoc .bordered { border: 1px solid #333; }
+        .factureDoc .headRow { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+        .factureDoc .companyBlock { display: flex; gap: 10px; align-items: flex-start; }
+        .factureDoc .companyBlock img { height: 58px; width: auto; }
+        .factureDoc .companyName { font-weight: bold; font-size: 13px; color: var(--couleur); }
+        .factureDoc .companyDetail { font-size: 10.5px; color: #333; line-height: 1.5; }
+        .factureDoc .factureNum { font-size: 15px; font-weight: bold; margin: 10px 0 2px; }
+        .factureDoc .factureTitle { font-size: 19px; font-weight: bold; text-align: center; margin: 4px 0 14px; color: var(--couleur); }
+        .factureDoc .infoRow { width: 100%; margin-bottom: 16px; }
+        .factureDoc .lblCell { background: #eef3ea; font-weight: bold; border-right: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 8px; font-size: 11px; }
+        .factureDoc .clientBox { border: 1px solid #333; padding: 8px 12px; }
+        .factureDoc .clientBox .nom { font-weight: bold; text-align: center; margin-bottom: 6px; font-size: 13px; }
+        .factureDoc .clientBox div { font-size: 11px; margin: 2px 0; }
+        .factureDoc thead.lignes th { background: var(--couleur); color: #fff; font-weight: bold; padding: 6px 8px; text-align: left; border: 1px solid #333; font-size: 11.5px; }
+        .factureDoc tbody.lignes td { padding: 5px 8px; border-left: 1px solid #333; border-right: 1px solid #333; font-size: 12px; }
+        .factureDoc tbody.lignes tr:nth-child(even) { background: #fafaf6; }
+        .factureDoc .num { text-align: right; }
+        .factureDoc .lignesWrap { border: 1px solid #333; border-top: none; min-height: 260px; }
+        .factureDoc .lignesFoot { display: flex; justify-content: space-between; border: 1px solid #333; border-top: none; padding: 5px 8px; font-weight: bold; font-size: 12px; }
+        .factureDoc .bottomGrid { width: 100%; margin-top: 16px; border-collapse: separate; }
+        .factureDoc .tvaTable, .factureDoc .totauxTable { width: 100%; }
+        .factureDoc .tvaTable th, .factureDoc .tvaTable td, .factureDoc .totauxTable td { border: 1px solid #333; padding: 5px 8px; font-size: 11px; }
+        .factureDoc .tvaTable th { background: var(--couleur); color: #fff; }
+        .factureDoc .totauxTable td:first-child { background: #eef3ea; font-weight: bold; width: 55%; }
+        .factureDoc .etapeTable { margin-top: 16px; }
+        .factureDoc .etapeTable th, .factureDoc .etapeTable td { border: 1px solid #333; padding: 6px 8px; font-size: 11.5px; }
+        .factureDoc .etapeTable th { background: var(--couleur); color: #fff; text-align: left; }
+        .factureDoc .etapeTable td:first-child { font-weight: 600; width: 22%; }
+        .factureDoc .etapeTable td:nth-child(2) { color: #555; width: 45%; }
+        .factureDoc .netAPayer { border: 1px solid #333; }
+        .factureDoc .netAPayer .lbl { background: var(--couleur); color: #fff; font-weight: bold; padding: 6px 8px; font-size: 11px; }
+        .factureDoc .netAPayer .val { padding: 10px 8px; font-size: 17px; font-weight: bold; color: var(--couleur); text-align: right; }
+        .factureDoc .modeReglement { border: 1px solid #333; margin-top: 8px; padding: 10px; min-height: 44px; font-size: 11px; color: #666; }
+        .factureDoc .lettres { margin-top: 16px; font-size: 12px; }
+        .factureDoc .lettres b { font-style: italic; }
+        .factureDoc .pageFooter { display: flex; justify-content: space-between; border-top: 1px solid #333; margin-top: 22px; padding-top: 6px; font-size: 10.5px; color: #555; }
+        .factureDoc { --couleur: ${(APP_DATA.settings || {}).facture_couleur || '#17231D'}; }
+        .factureDoc .companyBlock img { height: 64px; }
+        .factureDoc .refsTable td { border-right: 1px solid #333; padding: 6px 8px; }
+        .factureDoc .refsTable td:last-child { border-right: none; }
+        .factureDoc .mentionsBox { border: 1px solid #333; padding: 8px 10px; font-size: 11px; color: #333; white-space: pre-line; min-height: 60px; }
+        .factureDoc .signatures { display: flex; gap: 16px; margin-top: 18px; }
+        .factureDoc .signatures div { flex: 1; border: 1px solid #333; height: 86px; padding: 6px 8px; font-size: 11px; color: #555; }
+        .filigrane { position: fixed; top: 40%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 80px; font-weight: 900; color: rgba(191,83,47,.13); pointer-events: none; }`;
+  }
   function factureHtmlContent(f) {
     const s = APP_DATA.settings || {};
     const couleur = s.facture_couleur || '#17231D';
@@ -5355,7 +5414,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <div class="factureDoc">
         <div class="headRow">
           <div class="companyBlock">
-            ${s.entreprise_logo ? `<img src="${s.entreprise_logo}" alt="">` : ''}
+            ${logoEntreprise() ? `<img src="${logoEntreprise()}" alt="">` : ''}
             <div>
               ${s.entreprise_nom ? `<div class="companyName">${s.entreprise_nom}</div>` : ''}
               <div class="companyDetail">
@@ -5470,50 +5529,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!w) { notifier('Autorisez les pop-ups pour imprimer la facture.'); return; }
     w.document.open(); // vide explicitement tout contenu déjà présent avant d'écrire
     w.document.write(`<html><head><meta charset="UTF-8"><title>Facture ${f.numero}</title>
-      <style>
-        @page { size: A4; margin: 10mm; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12.5px; color: #1a1a1a; margin: 0; padding: 0; }
-        .factureDoc table { border-collapse: collapse; width: 100%; }
-        .factureDoc .no-border td, .factureDoc .no-border th { border: none; }
-        .factureDoc .bordered { border: 1px solid #333; }
-        .factureDoc .headRow { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-        .factureDoc .companyBlock { display: flex; gap: 10px; align-items: flex-start; }
-        .factureDoc .companyBlock img { height: 58px; width: auto; }
-        .factureDoc .companyName { font-weight: bold; font-size: 13px; color: var(--couleur); }
-        .factureDoc .companyDetail { font-size: 10.5px; color: #333; line-height: 1.5; }
-        .factureDoc .factureNum { font-size: 15px; font-weight: bold; margin: 10px 0 2px; }
-        .factureDoc .factureTitle { font-size: 19px; font-weight: bold; text-align: center; margin: 4px 0 14px; color: var(--couleur); }
-        .factureDoc .infoRow { width: 100%; margin-bottom: 16px; }
-        .factureDoc .lblCell { background: #eef3ea; font-weight: bold; border-right: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 8px; font-size: 11px; }
-        .factureDoc .clientBox { border: 1px solid #333; padding: 8px 12px; }
-        .factureDoc .clientBox .nom { font-weight: bold; text-align: center; margin-bottom: 6px; font-size: 13px; }
-        .factureDoc .clientBox div { font-size: 11px; margin: 2px 0; }
-        .factureDoc thead.lignes th { background: var(--couleur); color: #fff; font-weight: bold; padding: 6px 8px; text-align: left; border: 1px solid #333; font-size: 11.5px; }
-        .factureDoc tbody.lignes td { padding: 5px 8px; border-left: 1px solid #333; border-right: 1px solid #333; font-size: 12px; }
-        .factureDoc tbody.lignes tr:nth-child(even) { background: #fafaf6; }
-        .factureDoc .num { text-align: right; }
-        .factureDoc .lignesWrap { border: 1px solid #333; border-top: none; min-height: 260px; }
-        .factureDoc .lignesFoot { display: flex; justify-content: space-between; border: 1px solid #333; border-top: none; padding: 5px 8px; font-weight: bold; font-size: 12px; }
-        .factureDoc .bottomGrid { width: 100%; margin-top: 16px; border-collapse: separate; }
-        .factureDoc .tvaTable, .factureDoc .totauxTable { width: 100%; }
-        .factureDoc .tvaTable th, .factureDoc .tvaTable td, .factureDoc .totauxTable td { border: 1px solid #333; padding: 5px 8px; font-size: 11px; }
-        .factureDoc .tvaTable th { background: var(--couleur); color: #fff; }
-        .factureDoc .totauxTable td:first-child { background: #eef3ea; font-weight: bold; width: 55%; }
-        .factureDoc .etapeTable { margin-top: 16px; }
-        .factureDoc .etapeTable th, .factureDoc .etapeTable td { border: 1px solid #333; padding: 6px 8px; font-size: 11.5px; }
-        .factureDoc .etapeTable th { background: var(--couleur); color: #fff; text-align: left; }
-        .factureDoc .etapeTable td:first-child { font-weight: 600; width: 22%; }
-        .factureDoc .etapeTable td:nth-child(2) { color: #555; width: 45%; }
-        .factureDoc .netAPayer { border: 1px solid #333; }
-        .factureDoc .netAPayer .lbl { background: var(--couleur); color: #fff; font-weight: bold; padding: 6px 8px; font-size: 11px; }
-        .factureDoc .netAPayer .val { padding: 10px 8px; font-size: 17px; font-weight: bold; color: var(--couleur); text-align: right; }
-        .factureDoc .modeReglement { border: 1px solid #333; margin-top: 8px; padding: 10px; min-height: 44px; font-size: 11px; color: #666; }
-        .factureDoc .lettres { margin-top: 16px; font-size: 12px; }
-        .factureDoc .lettres b { font-style: italic; }
-        .factureDoc .pageFooter { display: flex; justify-content: space-between; border-top: 1px solid #333; margin-top: 22px; padding-top: 6px; font-size: 10.5px; color: #555; }
-        .factureDoc { --couleur: ${(APP_DATA.settings || {}).facture_couleur || '#17231D'}; }
-      </style></head><body>${factureHtmlContent(f)}
+      <style>${cssDocumentVente()}      </style></head><body>${factureHtmlContent(f)}
       <script>window.onload = () => window.print();<\/script>
       </body></html>`);
     w.document.close();
@@ -9826,37 +9842,58 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   ['proformaFermer'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('proformaOverlay').classList.remove('open')));
 
   // ---------- Impression : bon de commande, bon de livraison, facture en attente ----------
-  function imprimerDocumentVente({ titre, numero, date, refs, client, entetes, lignes, totaux, mentions, filigrane, signatures }) {
+  function imprimerDocumentVente({ titre, numero, date, refs, client, entetes, lignes, totaux, mentions, filigrane, signatures, montant }) {
     const s = APP_DATA.settings || {};
-    const couleur = s.facture_couleur || '#0E3A4A';
     const cl = APP_DATA.clients.find(c => c.id === client.id) || {};
+    const logo = logoEntreprise();
+    // refs : [['Commande', 'BC-0004'], …] → colonnes supplémentaires à côté de N° et Date.
+    const colonnes = [['N°', esc(numero)], ['Date', fmtDate(date)], ...(refs || [])];
+    const net = (totaux || []).find(t => t[2]);
+    const autres = (totaux || []).filter(t => !t[2]);
     const w = window.open('', `doc_${numero}_${Date.now()}`);
     if (!w) { notifier('Autorisez les pop-ups pour imprimer.'); return; }
     w.document.open();
-    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(titre)} ${esc(numero)}</title><style>
-      @page { size: A4; margin: 12mm; } * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12.5px; color: #1a1a1a; margin: 0; position: relative; }
-      .tete { display: flex; justify-content: space-between; gap: 20px; border-bottom: 2px solid ${couleur}; padding-bottom: 10px; margin-bottom: 14px; }
-      .soc { display: flex; gap: 10px; } .soc img { height: 56px; } .soc b { font-size: 15px; color: ${couleur}; } .soc div { font-size: 11px; line-height: 1.5; }
-      .doc { text-align: right; } .doc h1 { margin: 0; font-size: 20px; color: ${couleur}; letter-spacing: .03em; } .doc div { font-size: 12px; }
-      .client { border: 1px solid #999; border-radius: 6px; padding: 8px 10px; width: 55%; margin-left: auto; margin-bottom: 14px; font-size: 12px; line-height: 1.5; }
-      table { width: 100%; border-collapse: collapse; } th { background: ${couleur}; color: #fff; font-size: 11px; text-align: left; padding: 6px; }
-      td { padding: 6px; border-bottom: 1px solid #ddd; } .num { text-align: right; white-space: nowrap; }
-      .totaux { margin-top: 12px; margin-left: auto; width: 45%; } .totaux div { display: flex; justify-content: space-between; padding: 3px 0; } .totaux .fort { font-weight: bold; font-size: 14px; border-top: 2px solid ${couleur}; padding-top: 6px; }
-      .mentions { margin-top: 14px; font-size: 11px; color: #444; white-space: pre-line; }
-      .sig { display: flex; gap: 20px; margin-top: 26px; } .sig div { flex: 1; border: 1px dashed #888; border-radius: 6px; height: 80px; padding: 6px; font-size: 11px; color: #555; }
-      .fil { position: fixed; top: 38%; left: 0; right: 0; text-align: center; transform: rotate(-24deg); font-size: 76px; font-weight: 900; color: rgba(191,83,47,.13); pointer-events: none; }
-    </style></head><body>
-      ${filigrane ? `<div class="fil">${esc(filigrane)}</div>` : ''}
-      <div class="tete"><div class="soc">${s.entreprise_logo ? `<img src="${s.entreprise_logo}" alt="">` : ''}<div><b>${esc(s.entreprise_nom || 'TinOR')}</b><br>
-        ${esc(s.entreprise_adresse || '')}${s.entreprise_telephone ? '<br>Tél : ' + esc(s.entreprise_telephone) : ''}${s.entreprise_matricule_fiscal ? '<br>MF : ' + esc(s.entreprise_matricule_fiscal) : ''}</div></div>
-        <div class="doc"><h1>${esc(titre)}</h1><div><b>N° ${esc(numero)}</b> · ${fmtDate(date)}</div>${refs.map(r => `<div>${r}</div>`).join('')}</div></div>
-      <div class="client"><b>${esc(client.nom || '')}</b>${cl.matricule_fiscal ? '<br>MF : ' + esc(cl.matricule_fiscal) : ''}${cl.ville ? '<br>' + esc(cl.ville) : ''}${cl.tel ? '<br>Tél : ' + esc(cl.tel) : ''}</div>
-      <table><thead><tr>${entetes.map(([t, num]) => `<th${num ? ' class="num"' : ''}>${t}</th>`).join('')}</tr></thead>
-        <tbody>${lignes.map(l => `<tr>${l.map((v, i) => `<td${entetes[i][1] ? ' class="num"' : ''}>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>
-      ${totaux ? `<div class="totaux">${totaux.map(([k, v, fort]) => `<div${fort ? ' class="fort"' : ''}><span>${k}</span><span>${v}</span></div>`).join('')}</div>` : ''}
-      ${mentions ? `<div class="mentions">${mentions}</div>` : ''}
-      ${signatures ? `<div class="sig">${signatures.map(t => `<div>${t}</div>`).join('')}</div>` : ''}
+    w.document.write(`<html><head><meta charset="UTF-8"><title>${esc(titre)} ${esc(numero)}</title><style>${cssDocumentVente()}
+      .factureDoc { --couleur: ${s.facture_couleur || '#17231D'}; }</style></head><body>
+      ${filigrane ? `<div class="filigrane">${esc(filigrane)}</div>` : ''}
+      <div class="factureDoc">
+        <div class="headRow"><div class="companyBlock">
+          ${logo ? `<img src="${logo}" alt="">` : ''}
+          <div>${s.entreprise_nom ? `<div class="companyName">${esc(s.entreprise_nom)}</div>` : ''}
+            <div class="companyDetail">${esc(s.entreprise_adresse || '')}${s.entreprise_adresse ? '<br>' : ''}
+              ${s.entreprise_telephone ? `Tél : ${esc(s.entreprise_telephone)}` : ''}${s.entreprise_telephone && s.entreprise_email ? ' — ' : ''}${esc(s.entreprise_email || '')}
+              ${s.entreprise_matricule_fiscal ? `<br>MF : ${esc(s.entreprise_matricule_fiscal)}` : ''}</div></div>
+        </div></div>
+        <div class="factureNum">${esc(numero)}</div>
+        <div class="factureTitle">${esc(titre)}</div>
+        <table class="infoRow"><tr>
+          <td style="width:40%; vertical-align:top; padding-right:14px;">
+            <table class="bordered no-border refsTable">
+              <tr>${colonnes.map(([l]) => `<td class="lblCell">${l}</td>`).join('')}</tr>
+              <tr>${colonnes.map(([, v]) => `<td>${v}</td>`).join('')}</tr>
+            </table>
+          </td>
+          <td style="vertical-align:top;"><div class="clientBox">
+            <div class="nom">${esc(client.nom || '')}</div>
+            <div><b>Matricule fiscal :</b> ${esc(cl.matricule_fiscal || '—')}</div>
+            <div><b>Adresse :</b> ${esc(cl.ville || '—')}</div>
+            <div><b>Téléphone :</b> ${esc(cl.tel || '—')}</div>
+          </div></td>
+        </tr></table>
+        <div class="lignesWrap"><table>
+          <thead class="lignes"><tr>${entetes.map(([t, num], i) => `<th${num ? ' class="num"' : ''}${i === 0 ? ' style="width:34%;"' : ''}>${t}</th>`).join('')}</tr></thead>
+          <tbody class="lignes">${lignes.map(l => `<tr>${l.map((v, i) => `<td${entetes[i][1] ? ' class="num"' : ''}>${v}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+        <div class="lignesFoot"><span>${lignes.length} ligne${lignes.length > 1 ? 's' : ''}</span><span></span></div>
+        ${totaux ? `<table class="bottomGrid"><tr>
+          <td style="width:34%; vertical-align:top; padding-right:10px;"><div class="mentionsBox">${mentions || ''}</div></td>
+          <td style="width:33%; vertical-align:top; padding-right:10px;">${autres.length ? `<table class="totauxTable">${autres.map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`).join('')}</table>` : ''}</td>
+          <td style="width:33%; vertical-align:top;">${net ? `<div class="netAPayer"><div class="lbl">${net[0]}</div><div class="val">${net[1]}</div></div>` : ''}</td>
+        </tr></table>` : (mentions ? `<div class="mentionsBox" style="margin-top:16px;">${mentions}</div>` : '')}
+        ${montant != null ? `<div class="lettres">Arrêté le présent document à la somme de :<br><b>${montantEnLettres(montant)}</b></div>` : ''}
+        ${signatures ? `<div class="signatures">${signatures.map(t => `<div>${t}</div>`).join('')}</div>` : ''}
+        <div class="pageFooter"><span>${esc(titre)} N° ${esc(numero)} pour ${esc(client.nom || '')}</span><span>Page 1/1</span></div>
+      </div>
     </body></html>`);
     w.document.close();
     setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 300);
@@ -9864,17 +9901,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function imprimerBonCommande(id) {
     try {
       const c = await apiFetch(`/commandes/${id}`);
-      imprimerDocumentVente({ titre: 'BON DE COMMANDE', numero: c.numero, date: c.date_iso, refs: [], client: { id: c.client_id, nom: c.client_nom },
+      imprimerDocumentVente({ titre: 'Bon de commande', numero: c.numero, date: c.date_iso, refs: [], client: { id: c.client_id, nom: c.client_nom },
         entetes: [['Produit'], ['Qté', 1], ['Prix TTC', 1], ['Remise', 1], ['Total TTC', 1]],
-        lignes: (c.lignes || []).map(l => [esc(l.produit_nom) + (l.free_units ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), Number(l.qty), fmtDT(l.unit_price), l.remise_pct ? `${Number(l.remise_pct)} %` : '—', fmtDT(l.total)]),
-        totaux: [['Total TTC', fmtDT(c.total), true]], mentions: c.notes ? esc(c.notes) : '',
+        lignes: (c.lignes || []).map(l => [esc(l.produit_nom) + (l.free_units ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), Number(l.qty), fmtDT(l.unit_price).replace(' DT', ''), l.remise_pct ? `${Number(l.remise_pct)} %` : '—', fmtDT(l.total).replace(' DT', '')]),
+        totaux: [['Net à payer', fmtDT(c.total).replace(' DT', ''), true]], montant: c.total, mentions: c.notes ? esc(c.notes) : 'Remarques',
         signatures: ['Pour Les Jardins de Jerba', 'Bon pour accord — le client (date, signature)'] });
     } catch (err) { notifier(err.message, 'erreur'); }
   }
   async function imprimerLivraison(id) {
     try {
       const b = await apiFetch(`/livraisons/${id}`);
-      imprimerDocumentVente({ titre: 'BON DE LIVRAISON', numero: b.numero, date: b.date_livraison, refs: [`Commande ${esc(b.commande_numero)}`], client: { id: b.client_id, nom: b.client_nom },
+      imprimerDocumentVente({ titre: 'Bon de livraison', numero: b.numero, date: b.date_livraison, refs: [['Commande', esc(b.commande_numero)]], client: { id: b.client_id, nom: b.client_nom },
         entetes: [['Produit'], ['Lot'], ['Commandé', 1], ['Livré', 1], ['Reste à livrer', 1]],
         lignes: b.lignes.map(l => [esc(l.produit_nom) + (l.free_units && Number(l.qty_livree) >= Number(l.qty_commandee) ? ` (+${l.free_units} offert${l.free_units > 1 ? 's' : ''})` : ''), esc(l.numero_lot || '—'),
           Number(l.qty_commandee), `<b>${Number(l.qty)}</b> ${esc(l.unite || '')}`, Math.max(0, Math.round((Number(l.qty_commandee) - Number(l.qty_livree)) * 100) / 100)]),
@@ -9885,11 +9922,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function imprimerProforma(id) {
     try {
       const p = await apiFetch(`/proformas/${id}`);
-      imprimerDocumentVente({ titre: 'FACTURE PRO FORMA', numero: p.numero, date: p.date_proforma, refs: [`Commande ${esc(p.commande_numero)}`], client: { id: p.client_id, nom: p.client_nom },
+      imprimerDocumentVente({ titre: 'Facture pro forma', numero: p.numero, date: p.date_proforma, refs: [['Commande', esc(p.commande_numero)]], client: { id: p.client_id, nom: p.client_nom },
         entetes: [['Désignation'], ['Qté', 1], ['Prix TTC', 1], ['Total TTC', 1]],
-        lignes: p.lignes.map(l => [esc(l.designation), Number(l.qty), fmtDT(l.unit_price), fmtDT(l.total)]),
-        totaux: [['Total HT', fmtDT(p.total_ht)], ...(Number(p.fodec_montant) ? [['FODEC', fmtDT(p.fodec_montant)]] : []), [`TVA (${Number(p.tva_rate)} %)`, fmtDT(p.montant_tva)],
-          ...(Number(p.droit_timbre) ? [['Droit de timbre', fmtDT(p.droit_timbre)]] : []), ['Total TTC', fmtDT(p.total_ttc), true]],
+        lignes: p.lignes.map(l => [esc(l.designation), Number(l.qty), fmtDT(l.unit_price).replace(' DT', ''), fmtDT(l.total).replace(' DT', '')]),
+        totaux: [['Total HT', fmtDT(p.total_ht).replace(' DT', '')], ['FODEC', fmtDT(p.fodec_montant).replace(' DT', '')], ['Total TVA', fmtDT(p.montant_tva).replace(' DT', '')],
+          ['Timbre', fmtDT(p.droit_timbre).replace(' DT', '')], ['Net à payer', fmtDT(p.total_ttc).replace(' DT', ''), true]], montant: p.total_ttc,
         mentions: `FACTURE EN ATTENTE — PRO FORMA, SANS VALEUR COMPTABLE.\nLa facture définitive (numéro FAC-…) sera émise à la validation.${p.notes ? '\n' + esc(p.notes) : ''}`,
         filigrane: p.statut === 'validee' ? '' : 'PRO FORMA' });
     } catch (err) { notifier(err.message, 'erreur'); }
