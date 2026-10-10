@@ -19,7 +19,8 @@ function createApp(pool) {
   app.use(express.static(require('path').join(__dirname, '..', 'admin'), { index: 'tinor_admin.html' }));
 
   // version : génération d'API (détection par la console) ; release : numéro de la version livrée.
-  app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version }));
+  app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version,
+    environnement: require('./env').environnement() })); // « TEST » → bandeau orange dans la console
 
   app.use('/api/auth', require('./routes/auth')(pool));
   // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.
@@ -59,6 +60,7 @@ function createApp(pool) {
   app.use('/api/grille-huiles', requireAuth, require('./routes/grilleHuiles')(pool));
   app.use('/api/alertes', requireAuth, require('./routes/alertes')(pool));
   app.use('/api/inventaires', requireAuth, require('./routes/inventaires')(pool));
+  app.use('/api/reprises', requireAuth, require('./routes/reprises')(pool)); // reprise du stock existant (n° de lot gardés)
   app.use('/api/controle-stock', requireAuth, require('./routes/controleStock')(pool));
 
   app.use((err, req, res, next) => {

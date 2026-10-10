@@ -1,5 +1,5 @@
 // Données de référence minimales pour démarrer — usage : npm run seed
-require('dotenv').config();
+require('../src/env'); // .env (RÉEL) ou .env.test (TEST, option --test)
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
@@ -8,7 +8,7 @@ const CHAMPS_COMMUNS = [
   { nom: 'Produit', type_champ: 'liste', obligatoire: 1, verrouille: 1, ordre: 1 },
   { nom: 'Date', type_champ: 'date', obligatoire: 1, verrouille: 1, ordre: 2 },
 ];
-const TYPES_LOT = ['ACHAT', 'RECEPTION_MP', 'PRESSE', 'FILTRATION', 'CONDITIONNEMENT', 'PRODUCTION_RECETTE', 'INVENTAIRE', 'AUTRE'];
+const TYPES_LOT = ['ACHAT', 'RECEPTION_MP', 'PRESSE', 'FILTRATION', 'CONDITIONNEMENT', 'PRODUCTION_RECETTE', 'INVENTAIRE', 'AUTRE', 'REPRISE'];
 
 async function main() {
   const conn = process.env.DATABASE_URL

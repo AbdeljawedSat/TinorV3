@@ -418,3 +418,25 @@ Paramètres ; s'il n'y en a pas, le logo Les Jardins de Jerba de l'application e
 - **Traçabilité sur tous les niveaux** : un lot conditionné remonte au lot filtré, au lot de
   presse puis au lot de graines (MP) ; un lot de graines descend jusqu'aux produits conditionnés.
   Chaque ligne indique son niveau et le lot voisin (« utilisé dans » / « issu de »).
+
+## Démarrage avec les données réelles (V3.3)
+
+Voir **DEMARRAGE_REEL.md** (mode d'emploi pas à pas).
+
+- **Deux versions, un seul programme** : RÉEL (`.env`, port 3001, base vide créée par
+  `npm run creer:reel`) et TEST (`.env.test`, port 3002, base de démonstration). Raccourcis
+  `TinOR.bat` / `TinOR Test.bat`, scripts `start:test`, `migrate:test`, `reset:test`,
+  `backup:test`. La version TEST affiche un bandeau orange permanent ; l'écran de connexion
+  indique la version. La base RÉEL ne peut pas être remise à zéro. Sur le téléphone, passer
+  d'un serveur à l'autre est refusé tant que des opérations hors ligne n'ont pas été envoyées.
+- **Reprise du stock** (Stock › Reprise du stock) : modèle Excel, dépôt d'un fichier Excel ou
+  CSV, aperçu contrôlé ligne par ligne (produit, n° en double ou déjà existant, quantité, dates
+  JJ/MM/AAAA ou MM/AAAA, local, bio), correction du produit à l'écran ou ligne ignorée, import
+  tout ou rien. Les **numéros de lot sont gardés tels quels** (jusqu'à 60 caractères), origine
+  « REPRISE », mouvement « Stock initial » à la date de reprise ; annulation possible tant
+  qu'aucun lot n'a servi.
+- **Numérotation « Jardins de Jerba »** (Paramètres) : pépins = lot fournisseur ; presse
+  `XX-lotMP-AAAAMMJJH` ; filtré `XX-lotMP-AAAAMMJJ` ; flacons `yy x1x1 x2x2` (yy annuel). Champ
+  « Lot fournisseur » ajouté aux lignes de réception.
+- **Pépins** reconnus comme graines : « Pépins de figue de barbarie » ↔ « Huile de pépins de
+  figue de barbarie — Vrac / Filtrée / Flacon ».

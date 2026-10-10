@@ -26,13 +26,91 @@ const PREFIXE_ORIGINE = {
   AUTRE: 'X',
 };
 
-async function nextLotNumber(pool, produitId, origine) {
+// ---------- Numérotation « Jardins de Jerba » (protocole maison) ----------
+//   Matière première : n° du lot fournisseur, tel quel           GJ01/2023 · 212
+//   Presse           : XX-lotMP-AAAAMMJJH (XX = n° de pressage)  02-GJ01/2023-20230225H
+//   Filtration       : même XX et lot MP, date de filtration      02-GJ01/2023-20241230
+//   Produit fini     : yy x1x1 x2x2 (yy = n° du lot fini, repart  090123
+//                      à 01 chaque année ; x1x1 / x2x2 = XX des deux huiles
+//                      mélangées, x1x1 répété s'il n'y a qu'une huile)
+// Compteurs dans `sequences` (lot_jj_presse ; lot_jj_fini_<année>) : la reprise du
+// stock les remet après les plus grands numéros repris. Un numéro déjà pris reçoit
+// le suffixe -2, -3… Sans les informations nécessaires (pas de lot fournisseur,
+// source dans un autre format…), la numérotation standard s'applique.
+const pad2 = (n) => String(n).padStart(2, '0');
+const jourCompact = (d) => String(d || new Date().toISOString()).slice(0, 10).replace(/-/g, '');
+const RE_PRESSE_JJ = /^(\d+)-(.+)-\d{8}H(?:-\d+)?$/;
+const RE_FILTRE_JJ = /^(\d+)-(.+)-\d{8}(?:-\d+)?$/;
+const RE_FINI_JJ = /^(\d{2})\d{4,}(?:-\d+)?$/;
+
+async function compteurSuivant(pool, nom) {
+  const upd = await pool.query('UPDATE sequences SET `last_value` = `last_value` + 1 WHERE name = $1', [nom]);
+  if (!upd.affectedRows) await pool.query('INSERT INTO sequences (name, `last_value`) VALUES ($1, 1)', [nom]);
+  return Number((await pool.query('SELECT `last_value` AS v FROM sequences WHERE name = $1', [nom])).rows[0].v);
+}
+// Un compteur ne recule jamais : après une reprise, il repart au-delà du plus grand numéro repris.
+async function compteurAuMoins(pool, nom, valeur) {
+  const upd = await pool.query('UPDATE sequences SET `last_value` = GREATEST(`last_value`, $2) WHERE name = $1', [nom, valeur]);
+  if (!upd.affectedRows) await pool.query('INSERT INTO sequences (name, `last_value`) VALUES ($1, $2)', [nom, valeur]);
+}
+async function numeroLibre(pool, base) {
+  let numero = base, i = 2;
+  while ((await pool.query('SELECT 1 FROM lots WHERE numero_lot = $1', [numero])).rows.length) numero = `${base}-${i++}`;
+  return numero;
+}
+// Met les compteurs Jardins de Jerba au-delà d'un numéro repris, selon son étape
+// (presse / filtration : XX ; produit fini : yy de l'année du lot).
+async function recalerCompteursJJ(pool, { numero, etape, date }) {
+  if (etape === 'PRESSE' || etape === 'FILTRATION') {
+    const p = RE_PRESSE_JJ.exec(numero) || RE_FILTRE_JJ.exec(numero);
+    if (p) await compteurAuMoins(pool, 'lot_jj_presse', Number(p[1]));
+  } else if (etape === 'CONDITIONNEMENT' && date) {
+    const f = RE_FINI_JJ.exec(numero);
+    if (f) await compteurAuMoins(pool, `lot_jj_fini_${String(date).slice(0, 4)}`, Number(f[1]));
+  }
+}
+async function numeroJardinsJerba(pool, origine, ctx = {}) {
+  if (origine === 'RECEPTION_MP' || origine === 'ACHAT') {
+    const f = String(ctx.lot_fournisseur || '').trim();
+    return f ? numeroLibre(pool, f) : null;
+  }
+  const ids = (ctx.sources || []).filter(s => s && s.lot_id);
+  if (!ids.length) return null;
+  const sources = [];
+  for (const s of ids) {
+    const l = (await pool.query('SELECT numero_lot FROM lots WHERE id = $1', [s.lot_id])).rows[0];
+    if (l) sources.push({ numero: l.numero_lot, quantite: Number(s.quantite) || 0 });
+  }
+  if (!sources.length) return null;
+  const principal = [...sources].sort((a, b) => b.quantite - a.quantite)[0];
+  if (origine === 'PRESSE') {
+    const xx = await compteurSuivant(pool, 'lot_jj_presse');
+    return numeroLibre(pool, `${pad2(xx)}-${principal.numero}-${jourCompact(ctx.date)}H`);
+  }
+  if (origine === 'FILTRATION') {
+    const m = RE_PRESSE_JJ.exec(principal.numero);
+    return m ? numeroLibre(pool, `${m[1]}-${m[2]}-${jourCompact(ctx.date)}`) : null;
+  }
+  if (origine === 'CONDITIONNEMENT') {
+    const xs = sources.map(s => (/^(\d+)-/.exec(s.numero) || [])[1]).filter(Boolean);
+    if (!xs.length) return null;
+    const yy = await compteurSuivant(pool, `lot_jj_fini_${jourCompact(ctx.date).slice(0, 4)}`);
+    return numeroLibre(pool, `${pad2(yy)}${pad2(xs[0])}${pad2(xs[1] || xs[0])}`);
+  }
+  return null;
+}
+
+async function nextLotNumber(pool, produitId, origine, ctx = {}) {
   const prod = await pool.query('SELECT code FROM produits WHERE id = $1', [produitId]);
   if (!prod.rows[0]) throw Object.assign(new Error('Produit introuvable.'), { status: 400 });
 
   const settingsRes = await pool.query('SELECT lot_format_style, lot_seq_par_origine FROM settings WHERE id = 1');
   const settings = settingsRes.rows[0] || {};
   const formatStyle = settings.lot_format_style || 'code_origine_seq';
+  if (formatStyle === 'jardins_jerba') {
+    const numero = await numeroJardinsJerba(pool, origine, ctx);
+    if (numero) return numero;
+  }
   const seqParOrigine = !!settings.lot_seq_par_origine;
 
   // Clé de séquence : '' = partagée entre toutes les origines pour ce produit
@@ -85,8 +163,9 @@ async function decrementerLot(pool, lotId, quantite) {
 }
 
 // Crée un lot générique + sa première entrée d'historique de statut. Renvoie l'id du lot.
-async function createLot(pool, { produit_id, origine, quantite, employe_id, motif, extra = {} }) {
-  const numeroLot = await nextLotNumber(pool, produit_id, origine);
+// numerotation : { date, sources: [{ lot_id, quantite }] } — utilisé par la numérotation Jardins de Jerba.
+async function createLot(pool, { produit_id, origine, quantite, employe_id, motif, extra = {}, numerotation = {} }) {
+  const numeroLot = await nextLotNumber(pool, produit_id, origine, { lot_fournisseur: extra.lot_fournisseur, ...numerotation });
   const insertRes = await pool.query(
     `INSERT INTO lots
       (produit_id, numero_lot, origine, fournisseur_id, lot_fournisseur, certificat_bio_id, bio_status,
@@ -146,4 +225,4 @@ async function recordEntree(pool, { produitId, lotId, quantite, typeMouvement, e
 const LOT_DISPONIBLE = `statut = 'LIBERE' AND (date_expiration IS NULL OR date_expiration >= CURDATE())`;
 const ORDRE_FEFO = `(date_expiration IS NULL), date_expiration ASC, created_at ASC`;
 
-module.exports = { nextNumero, nextLotNumber, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };
+module.exports = { nextNumero, nextLotNumber, recalerCompteursJJ, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };

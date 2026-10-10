@@ -72,6 +72,7 @@ module.exports = function (pool) {
         return res.status(400).json({ error: `Le produit obtenu d'une filtration doit être une huile filtrée (ex. « Huile de Sésame — Filtrée ») : « ${produitObtenu.nom} » ne l'est pas.` });
       }
       const huilesSources = new Set();
+      const lotsSources = []; // pour la numérotation (lot de presse principal)
       let totalUtilise = 0;
       for (const s of sources) {
         if (!s.lot_presse_id || !s.quantite_utilisee) {
@@ -92,6 +93,7 @@ module.exports = function (pool) {
           return res.status(409).json({ error: `Stock insuffisant sur le lot de presse ${s.lot_presse_id} (disponible ${lotRes.rows[0].quantite_actuelle}, demandé ${s.quantite_utilisee}).` });
         }
         totalUtilise += Number(s.quantite_utilisee);
+        lotsSources.push({ lot_id: presseRes.rows[0].lot_id, quantite: s.quantite_utilisee });
       }
 
       if (melange && huilesSources.size < 2) {
@@ -106,6 +108,7 @@ module.exports = function (pool) {
       const { lotId, numeroLot } = await createLot(pool, {
         produit_id, origine: 'FILTRATION', quantite: quantite_produite, employe_id, motif: 'Création via filtration',
         extra: { champs_perso },
+        numerotation: { date, sources: lotsSources },
       });
 
       const rendement = totalUtilise ? quantite_produite / totalUtilise : null;

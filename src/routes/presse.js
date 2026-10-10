@@ -152,6 +152,7 @@ module.exports = function (pool) {
         const { lotId, numeroLot } = await createLot(pool, {
           produit_id: h.produit.id, origine: 'PRESSE', quantite: h.huile, employe_id, motif: 'Création via pressage',
           extra: { champs_perso },
+          numerotation: { date, sources: (sources.length ? graines.get(h.cle).lots : []).map(l => ({ lot_id: l.id, quantite: l.quantite })) },
         });
         await pool.query(
           `INSERT INTO lots_presse

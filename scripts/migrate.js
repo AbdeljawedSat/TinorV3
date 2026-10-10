@@ -1,6 +1,6 @@
 // Exécute tinor_erp_v3_schema.sql sur la base MariaDB configurée.
 // Usage : npm run migrate
-require('dotenv').config();
+require('../src/env'); // .env (RÉEL) ou .env.test (TEST, option --test)
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');

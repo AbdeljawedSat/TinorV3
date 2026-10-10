@@ -11,6 +11,7 @@ async function colonneExiste(conn, table, colonne) {
 }
 
 async function appliquerMisesAJour(conn, journal = console.log) {
+  await miseAJourLots(conn, journal);
   // V3.3 — avoirs : une facture émise ne s'annule plus, elle se corrige par un avoir.
   const [av] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'avoirs'");
   if (!av[0].n) {
@@ -204,5 +205,71 @@ CREATE TABLE IF NOT EXISTS avoir_lignes (
   INDEX idx_avoir_lignes_cmd (commande_ligne_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
+
+
+// Contrainte CHECK remplacée par une version élargie (MariaDB : contrainte posée
+// sur la colonne → on redéfinit la colonne si DROP CONSTRAINT n'est pas possible).
+async function remplacerCheck(conn, table, colonne, definition, nom, clause, estAncienne) {
+  const [checks] = await conn.query(`
+    SELECT tc.CONSTRAINT_NAME AS nom, cc.CHECK_CLAUSE AS clause
+    FROM information_schema.TABLE_CONSTRAINTS tc
+    JOIN information_schema.CHECK_CONSTRAINTS cc
+      ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+    WHERE tc.TABLE_SCHEMA = DATABASE() AND tc.TABLE_NAME = ? AND tc.CONSTRAINT_TYPE = 'CHECK'`, [table]);
+  const anciennes = checks.filter(c => estAncienne(c.clause));
+  if (!anciennes.length) return false;
+  for (const a of anciennes) {
+    try { await conn.query(`ALTER TABLE ${table} DROP CONSTRAINT \`${a.nom}\``); }
+    catch { await conn.query(`ALTER TABLE ${table} MODIFY ${colonne} ${definition}`); }
+  }
+  await conn.query(`ALTER TABLE ${table} ADD CONSTRAINT ${nom} CHECK (${clause})`);
+  return true;
+}
+
+// V3.3 — numérotation Jardins de Jerba et reprise du stock existant :
+// numéros de lot jusqu'à 60 caractères, origine « REPRISE », mouvement « REPRISE »,
+// style de numérotation « jardins_jerba », table des reprises.
+async function miseAJourLots(conn, journal) {
+  for (const table of ['lots', 'lots_presse', 'lots_filtration']) {
+    const [c] = await conn.query(
+      "SELECT CHARACTER_MAXIMUM_LENGTH AS n FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = 'numero_lot'", [table]);
+    if (c[0] && Number(c[0].n) < 60) {
+      await conn.query(`ALTER TABLE ${table} MODIFY numero_lot VARCHAR(60) NOT NULL`);
+      journal(`✓ Mise à jour : ${table}.numero_lot jusqu'à 60 caractères.`);
+    }
+  }
+  const ORIGINES = "'ACHAT','RECEPTION_MP','PRESSE','FILTRATION','CONDITIONNEMENT','PRODUCTION_RECETTE','INVENTAIRE','AUTRE','REPRISE'";
+  if (await remplacerCheck(conn, 'lots', 'origine', 'VARCHAR(20) NOT NULL', 'lots_origine_chk', `origine IN (${ORIGINES})`,
+    (cl) => /RECEPTION_MP/.test(cl) && !/REPRISE/.test(cl))) journal('✓ Mise à jour : lots d\'origine « REPRISE » acceptés.');
+  if (await remplacerCheck(conn, 'lot_type_champs', 'type_lot', 'VARCHAR(20) NOT NULL', 'lot_type_champs_type_chk', `type_lot IN (${ORIGINES})`,
+    (cl) => /RECEPTION_MP/.test(cl) && !/REPRISE/.test(cl))) journal('✓ Mise à jour : champs personnalisés pour les lots repris.');
+  if (await remplacerCheck(conn, 'stock_mouvements', 'type_mouvement', 'VARCHAR(20) NOT NULL', 'stock_mouvements_type_chk',
+    "type_mouvement IN ('ACHAT','RECEPTION','VENTE','PRODUCTION','CONDITIONNEMENT','CONSOMMATION','TRANSFERT','AJUSTEMENT','INVENTAIRE','RETOUR_CLIENT','RETOUR_FOURNISSEUR','PERTE','CASSE','DESTRUCTION','AUTRE','REPRISE')",
+    (cl) => /CONSOMMATION/.test(cl) && !/REPRISE/.test(cl))) journal('✓ Mise à jour : mouvement « REPRISE » (stock initial) accepté.');
+  if (await remplacerCheck(conn, 'settings', 'lot_format_style', "VARCHAR(20) NOT NULL DEFAULT 'code_origine_seq'", 'settings_lot_format_chk',
+    "lot_format_style IN ('code_origine_seq','origine_code_seq','jardins_jerba')",
+    (cl) => /code_origine_seq/.test(cl) && !/jardins_jerba/.test(cl))) journal('✓ Mise à jour : numérotation « Jardins de Jerba » disponible.');
+  const [rp] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'reprises'");
+  if (!rp[0].n) {
+    await conn.query(SQL_REPRISES);
+    journal('✓ Mise à jour : table des reprises de stock créée.');
+  }
+  if (!(await colonneExiste(conn, 'lots', 'reprise_id'))) {
+    await conn.query('ALTER TABLE lots ADD COLUMN reprise_id INT NULL, ADD INDEX idx_lots_reprise (reprise_id)');
+    journal('✓ Mise à jour : lots.reprise_id ajoutée.');
+  }
+}
+
+const SQL_REPRISES = `CREATE TABLE IF NOT EXISTS reprises (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  numero        VARCHAR(20) NOT NULL UNIQUE,
+  date_reprise  DATE NOT NULL,
+  fichier       VARCHAR(255) NULL,
+  nb_lots       INT NOT NULL DEFAULT 0,
+  employe_id    INT NULL,
+  annulee_le    DATETIME NULL,
+  annule_motif  VARCHAR(255) NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`;
 
 module.exports = { appliquerMisesAJour };

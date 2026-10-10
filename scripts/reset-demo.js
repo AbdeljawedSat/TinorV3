@@ -1,7 +1,7 @@
 // Efface le contenu de toutes les tables et charge les données de démonstration
 // (base/tinor_v3_reinitialiser_demo.sql). La structure n'est pas modifiée.
 // Usage : npm run reset:demo -- --confirmer
-require('dotenv').config({ quiet: true });
+require('../src/env'); // .env (RÉEL) ou .env.test (TEST, option --test)
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -10,6 +10,12 @@ const { appliquerMisesAJour } = require('./mises-a-jour');
 async function main() {
   const cible = process.env.DATABASE_URL ? '(base configurée via DATABASE_URL)'
     : `${process.env.DB_HOST || '127.0.0.1'}:${process.env.DB_PORT || 3306}/${process.env.DB_NAME || 'tinor_v3'}`;
+  // La version RÉEL ne s'efface jamais : les données de démonstration vont dans la version TEST.
+  if (require('../src/env').environnement() === 'REEL') {
+    console.log(`✗ Refusé : ${cible} est la base RÉELLE (TINOR_ENVIRONNEMENT=REEL) — elle ne peut pas être remise à zéro.`);
+    console.log('  Pour la version d\'essai : npm run reset:test');
+    process.exit(1);
+  }
   if (!process.argv.includes('--confirmer')) {
     console.log(`⚠ Cette commande EFFACE tout le contenu de la base ${cible}`);
     console.log('  (produits, lots, commandes, factures, utilisateurs…) puis charge les données de démonstration.');

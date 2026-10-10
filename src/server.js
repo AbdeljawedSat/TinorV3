@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./env'); // .env (RÉEL) ou .env.test (TEST, option --test)
 const createApp = require('./app');
 const pool = require('./db/pool');
 

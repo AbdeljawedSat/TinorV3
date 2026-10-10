@@ -9,7 +9,7 @@
 // scripts/README_SAUVEGARDE.md
 // ============================================================================
 
-require('dotenv').config();
+require('../src/env'); // .env (RÉEL) ou .env.test (TEST, option --test)
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');

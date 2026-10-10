@@ -29,6 +29,19 @@ CREATE TABLE IF NOT EXISTS operations_sync (
   termine_le  DATETIME NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 TRUNCATE TABLE operations_sync;
+-- Reprises du stock existant (V3.3)
+CREATE TABLE IF NOT EXISTS reprises (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  numero        VARCHAR(20) NOT NULL UNIQUE,
+  date_reprise  DATE NOT NULL,
+  fichier       VARCHAR(255) NULL,
+  nb_lots       INT NOT NULL DEFAULT 0,
+  employe_id    INT NULL,
+  annulee_le    DATETIME NULL,
+  annule_motif  VARCHAR(255) NULL,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+TRUNCATE TABLE reprises;
 
 -- Chaîne de vente (V3.3) : bons de livraison (une commande peut être livrée en
 -- plusieurs fois) et factures en attente (pro forma, sans numéro légal).

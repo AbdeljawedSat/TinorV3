@@ -76,7 +76,7 @@ module.exports = function (pool) {
           return res.status(400).json({ error: `Produit ${l.produit_id} introuvable.` });
         }
         const origineLigne = (achat_id || produitRes.rows[0].type_article !== 'MATIERE_PREMIERE') ? 'ACHAT' : 'RECEPTION_MP';
-        const numeroLot = await nextLotNumber(pool, l.produit_id, origineLigne);
+        const numeroLot = await nextLotNumber(pool, l.produit_id, origineLigne, { lot_fournisseur: l.lot_fournisseur, date: date_reception });
         const lotRes = await pool.query(
           `INSERT INTO lots
             (produit_id, numero_lot, origine, fournisseur_id, lot_fournisseur, certificat_bio_id, bio_status,

@@ -6,13 +6,19 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "start:test": "node src/server.js --test",
+    "dev:test": "node --watch src/server.js --test",
     "migrate": "node scripts/migrate.js",
+    "migrate:test": "node scripts/migrate.js --test",
     "seed": "node scripts/seed.js",
     "setup": "node scripts/init-env.js && npm run migrate && npm run seed",
     "demo": "node scripts/seed_test_complet.js",
     "reset:demo": "node scripts/reset-demo.js",
+    "reset:test": "node scripts/reset-demo.js --test --confirmer",
     "backup": "node scripts/backup.js",
-    "test:stock": "node test/stock/run.js"
+    "backup:test": "node scripts/backup.js --test",
+    "test:stock": "node test/stock/run.js",
+    "creer:reel": "node scripts/creer-reel.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

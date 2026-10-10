@@ -196,9 +196,18 @@ module.exports = function (pool) {
         consommablesResolus.push({ produit_id: c.produit_id, lot_id: lot.id, quantite: c.quantite });
       }
 
+      // Lots sources dans l'ordre saisi (huile 1, huile 2) : numérotation des produits finis.
+      const lotsSources = [];
+      for (const s of sources) {
+        const id = s.lot_presse_id ? (await pool.query('SELECT lot_id FROM lots_presse WHERE id = $1', [s.lot_presse_id])).rows[0]?.lot_id
+          : s.lot_filtration_id ? (await pool.query('SELECT lot_id FROM lots_filtration WHERE id = $1', [s.lot_filtration_id])).rows[0]?.lot_id
+          : s.lot_id;
+        if (id) lotsSources.push({ lot_id: id, quantite: s.quantite_utilisee });
+      }
       const { lotId, numeroLot } = await createLot(pool, {
         produit_id, origine: 'CONDITIONNEMENT', quantite: qty, employe_id, motif: 'Création via conditionnement',
         extra: { champs_perso },
+        numerotation: { date, sources: lotsSources },
       });
 
       // Le format est figé ici, au moment précis de l'opération — si aucun
@@ -260,7 +269,7 @@ module.exports = function (pool) {
       });
 
       const result = await pool.query('SELECT * FROM conditionnements WHERE id = $1', [conditionnementId]);
-      res.status(201).json(result.rows[0]);
+      res.status(201).json({ ...result.rows[0], numero_lot: numeroLot });
     } catch (err) { next(err); }
   }));
 

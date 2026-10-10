@@ -12,16 +12,22 @@ function normaliser(nom) {
     .toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
 }
 
-// « Graines de Sésame » / « Graine d'Amande » → « sesame » / « amande »
+// « pépins de figue de barbarie » → « figue de barbarie » : graines et pépins
+// désignent la même matière (« Pépins de figue de barbarie » ↔ « Huile de pépins
+// de figue de barbarie — Vrac »).
+const sansPepins = (cle) => (cle ? cle.replace(/^pepins?\s*(?:de\s+|d')/, '').trim() : cle);
+
+// « Graines de Sésame » / « Graine d'Amande » / « Pépins de figue de barbarie »
+//   → « sesame » / « amande » / « figue de barbarie »
 function cleGraine(nom) {
-  const m = normaliser(nom).match(/^graines?\s*(?:de\s+|d')(.+)$/);
-  return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+  const m = normaliser(nom).match(/^(?:graines?|pepins?)\s*(?:de\s+|d')(.+)$/);
+  return m ? sansPepins(m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim()) : null;
 }
 
 // « Huile de Sésame — Vrac » / « Huile d'Argan (vrac) » → « sesame » / « argan »
 function cleHuileVrac(nom) {
   const m = normaliser(nom).match(/^huiles?\s*(?:de\s+|d')(.+)$/);
-  return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+  return m ? sansPepins(m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim()) : null;
 }
 
 function estGraine(produit) {
@@ -55,7 +61,7 @@ function estHuileMelangeVrac(produit) {
 //   « Huile Mélange Sésame-Nigelle — Vrac » → « melange sesame-nigelle »
 function cleHuile(nom) {
   const m = normaliser(nom).match(/^huiles?\s*(?:de\s+|d')?(.+)$/);
-  return m ? m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim() : null;
+  return m ? sansPepins(m[1].split(/\s+[-–—]\s+|\s*\(/)[0].trim()) : null;
 }
 
 module.exports = { normaliser, cleGraine, cleHuileVrac, cleHuile, estGraine, estHuileVrac, estHuileFiltree, estHuileMelangeFiltree, estHuileMelangeVrac, estNomMelange };
