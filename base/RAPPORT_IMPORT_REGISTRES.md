@@ -49,8 +49,7 @@ Les 16 substitutions sont listées à l'exécution du script ; le n° saisi est 
 
 ## Points à trancher avec vous
 
-1. **Lot 100106** : le registre de stock indique 19×30 ml et 51×10 ml vendus (il resterait 7 et 8 flacons), le registre des ventes du 19/07/2026
-   indique 26 et 59 vendus. J'ai suivi le registre des ventes (stock 0). Si le registre de stock est juste : remettre 7 flacons 30 ml et 8 flacons 10 ml.
+1. ~~Lot 100106~~ **Réglé** : le registre de stock mis à jour indique 26 flacons de 30 ml et 59 de 10 ml vendus, comme le registre des ventes du 19/07/2026 → stock 0. (Les colonnes « restant 590 », « 192 » et « 360 » de ces lignes ne sont pas reprises : elles ne correspondent à aucune quantité de flacons.)
 2. **Lot 100106** : mélange daté du 20/05/2026 mais flaconné les 10-11/05/2026 → date de flaconnage retenue.
 3. **Vente n°6 (19/08/2025, lot 082415)** : « 6×30 + 2×10 » alors que le lot n'a que 4 flacons de 30 ml (sortis le 04/05/2025). Enregistrée en 20 flacons de 10 ml (mêmes 200 ml).
 4. **Sortie du 04/05/2025** (4×30 ml du lot 082415) : présente au registre mélange, absente du registre des ventes ; client inconnu.
