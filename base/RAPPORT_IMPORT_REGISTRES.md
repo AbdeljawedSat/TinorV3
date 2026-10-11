@@ -58,6 +58,6 @@ Les 16 substitutions sont listées à l'exécution du script ; le n° saisi est 
 7. **Péremption** : colonne « Date d'expiration » = 3 pour tous → interprétée comme 3 ans après la production. À confirmer.
 8. **Intermédiaires non modélisés** : flacon de 55 ml (lot 030808, reconditionné en 1×30 + 2×10 le 09/05/2026) et bidon de 1000 ml (372 ml, lot 090808).
 9. **Clients** : `artisanet`/`artizanet` regroupés ; `Berntrard`/`bernard` et `client Passage`/`client passaget`/`passaget claude` laissés distincts. Type (particulier/revendeur) à compléter.
-10. **Absent des registres, donc non importé** : commandes/factures (prix de vente ajoutés ensuite : 20 DT le flacon 10 ml, 62 DT le 30 ml ; les sorties restent de simples sorties de stock) (pas de commandes/factures créées, seulement des sorties de stock), bio/certificat (lots « à vérifier »),
+10. **Absent des registres, donc non importé** : commandes/factures (prix de vente ajoutés ensuite : 20 DT le flacon 10 ml, 76 DT le 30 ml avec une remise « Remise 19 % » créée ; les sorties restent de simples sorties de stock) (pas de commandes/factures créées, seulement des sorties de stock), bio/certificat (lots « à vérifier »),
     fournisseurs, employés. N° de vente répété (n°18 ×5) et valeur isolée « 2730 » ignorés.
 11. **Numérotation** : le registre ne repart pas à 01 chaque année (04…10 sur 2025-2026) ; compteurs réglés sur 03 / 09 / 10, le prochain lot fini de 2026 sera `11…`.
