@@ -250,8 +250,8 @@ async function main() {
     const pVrac = await produit('02', 'Huile de pépins de figue de barbarie — Vrac', catHuile, unite.litre, 'PRODUIT_FABRIQUE', { fabriquable: true });
     const pFiltree = await produit('03', 'Huile de pépins de figue de barbarie — Filtrée', catHuile, unite.litre, 'PRODUIT_FABRIQUE', { fabriquable: true, source: pVrac });
     const pFlacon = {};
-    pFlacon[10] = await produit('04', 'Huile de pépins de figue de barbarie — Flacon 10ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[10], source: pVrac, vendable: true, fabriquable: true, prix: 20 });
-    pFlacon[30] = await produit('05', 'Huile de pépins de figue de barbarie — Flacon 30ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[30], source: pVrac, vendable: true, fabriquable: true, prix: 76 });
+    pFlacon[10] = await produit('04', 'Huile de pépins de figue de barbarie — Flacon 10ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[10], source: pVrac, vendable: true, fabriquable: true, prix: 24.7 });
+    pFlacon[30] = await produit('05', 'Huile de pépins de figue de barbarie — Flacon 30ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[30], source: pVrac, vendable: true, fabriquable: true, prix: 76.5 });
     await run("UPDATE sequences SET `last_value` = 5 WHERE name = 'produit_code_seq'");
     await run("INSERT INTO remises (nom, type, pourcentage, categorie) VALUES ('Remise 19 %', 'pourcentage', 19, 'client')");
 
