@@ -14,8 +14,8 @@ Générateur reproductible : `node scripts/importer-registres.js` (sur une base 
 | Filtrations | 23 | filtre utilisé, déchet, rendement, lien vers le lot de presse |
 | Lots finis (mélanges) | 10 | deux huiles filtrées par lot, au prorata exact des ml du registre |
 | Lots de flacons | 15 | 19 opérations de flaconnage ; un lot par format (2ᵉ format = suffixe `-2`, règle de l'application) |
-| Sorties | 22 | mouvements de stock « VENTE » (client, paiement, destination en note) |
-| Clients | 15 | pris des noms du registre des ventes |
+| Ventes | 22 | chacune = bon de commande `BC-…` + bon de livraison `BL-…` + facture `FAC-…` + paiement espèces, **reconstitués au tarif actuel** (24,7 DT / 76,5 DT, remise 19 %, TVA 19 %, FODEC 1 %, timbre 1 DT dès 1 000 DT) ; total 13 454,850 DT HT / 16 177,380 DT TTC. Dates de facture = dates du registre. Chaque ligne est à corriger une à une dans TinOR |
+| Clients | 16 | noms du registre des ventes + « Client à identifier » (sortie du 04/05/2025 sans client) |
 | Mouvements de stock | 199 | traçabilité complète pépins → flacon vendu |
 
 ## Évaluation (faite sur une vraie base MariaDB 10.11, puis lue par l'API de TinOR)

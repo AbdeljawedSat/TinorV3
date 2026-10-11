@@ -367,16 +367,49 @@ async function main() {
       await entree(pFlacon[op.fmt], lotId, op.nb, op.date, 'CONDITIONNEMENT', `${base}-IN`, groupe, 'conditionnement', cond);
     } });
 
-    for (const [reg, date, client, lignes, rem] of VENTES) for (const [lot, fmt, nb] of lignes) evenements.push({ date, ordre: 4, tri: `${reg}-${lot}-${fmt}`, fait: async () => {
-      const lf = lotsFlacons.get(`${lot}|${fmt}`); const lotId = lotIdParNumero.get(lf.numero);
-      await run('UPDATE lots SET quantite_actuelle = quantite_actuelle - ? WHERE id = ? AND quantite_actuelle >= ?', [nb, lotId, nb]);
-      const q = (await un('SELECT quantite_actuelle q FROM lots WHERE id = ?', [lotId])).q;
-      if (Number(q) <= 0) await histEpuise(lotId, date, 'Stock épuisé après vente');
+    // Chaque sortie du registre devient : bon de commande → bon de livraison → facture → paiement espèces,
+    // au tarif actuel (prix de détail + remise 19 %). Le stock est déjà sorti : les mouvements VENTE sont rattachés à la commande.
+    const PRIX = { 10: 24.7, 30: 76.5 };
+    const remise = await un("SELECT id, nom, pourcentage FROM remises WHERE nom = 'Remise 19 %'");
+    const parametres = await un('SELECT tva, fodec_rate, droit_timbre, timbre_seuil FROM settings WHERE id = 1');
+    const { computeFactureTotalsDepuisLignes } = require('../src/services/pricing');
+    const num = (prefixe, n) => `${prefixe}-${String(n).padStart(4, '0')}`;
+    let nbBc = 0;
+    const idInconnu = (await run(`INSERT INTO clients (nom, ville, type, notes) VALUES ('Client à identifier', 'Djerba', 'particulier', 'Sortie du 04/05/2025 sans client au registre : à rattacher au bon client')`)).insertId;
+    for (const [reg, date, client, lignes, rem] of VENTES) evenements.push({ date, ordre: 4, tri: `${String(reg).padStart(3, '0')}`, fait: async () => {
       const nom = client ? (NOM_CLIENT[client] || client) : null;
+      const clientId = nom ? clients.get(nom.toLowerCase()) : idInconnu;
       const note = [`Vente registre n° ${reg}`, nom ? `client : ${nom}` : 'client non renseigné', client ? 'paiement : espèces · livraison : Djerba' : null, rem].filter(Boolean).join(' · ');
-      await run(`INSERT INTO stock_mouvements (numero, date_mouvement, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
-                 VALUES (?,?, 'VENTE','SORTIE',?,?,?, 'registre_ventes', ?, ?)`,
-        [numMvt(), `${date} 00:00:00`, pFlacon[fmt], lotId, nb, nom ? clients.get(nom.toLowerCase()) : null, note]);
+      const ligs = lignes.map(([lot, fmt, nb]) => {
+        const lf = lotsFlacons.get(`${lot}|${fmt}`);
+        const unit = Math.round(PRIX[fmt] * (1 - remise.pourcentage / 100) * 1000) / 1000;
+        return { lot, fmt, nb, numero: lf.numero, lotId: lotIdParNumero.get(lf.numero), prod: pFlacon[fmt], detail: PRIX[fmt], unit, total: Math.round(unit * nb * 1000) / 1000 };
+      });
+      const total = Math.round(ligs.reduce((t, l) => t + l.total, 0) * 1000) / 1000;
+      ++nbBc;
+      const cmd = (await run(`INSERT INTO commandes (numero, client_id, date_iso, statut, notes, total, created_at) VALUES (?,?,?, 'payee', ?,?,?)`,
+        [num('BC', nbBc), clientId, `${date} 00:00:00`, note, total, `${date} 00:00:00`])).insertId;
+      const bl = (await run(`INSERT INTO bons_livraison (numero, commande_id, client_id, date_livraison, notes, created_at) VALUES (?,?,?,?,?,?)`,
+        [num('BL', nbBc), cmd, clientId, date, 'Repris du registre des ventes', `${date} 00:00:00`])).insertId;
+      const fac = computeFactureTotalsDepuisLignes(ligs.map(l => ({ unitPrice: l.unit, qty: l.nb })), Number(parametres.tva), Number(parametres.fodec_rate), Number(parametres.droit_timbre), Number(parametres.timbre_seuil));
+      const r3 = (x) => Math.round(x * 1000) / 1000;
+      const facId = (await run(`INSERT INTO factures (numero, commande_id, commande_numero, client_id, client_nom, date_emission, tva_rate, fodec_montant, droit_timbre, total_ht, montant_tva, total_ttc, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`, [num('FAC', nbBc), cmd, num('BC', nbBc), clientId, nom || 'Client à identifier', date, parametres.tva, r3(fac.fodecMontant), fac.droitTimbre, r3(fac.totalHT), r3(fac.montantTVA), r3(fac.totalTTC), `${date} 00:00:00`])).insertId;
+      for (const l of ligs) {
+        const lotId = l.lotId;
+        await run('UPDATE lots SET quantite_actuelle = quantite_actuelle - ? WHERE id = ? AND quantite_actuelle >= ?', [l.nb, lotId, l.nb]);
+        const q = (await un('SELECT quantite_actuelle q FROM lots WHERE id = ?', [lotId])).q;
+        if (Number(q) <= 0) await histEpuise(lotId, date, 'Stock épuisé après vente');
+        const cl = (await run(`INSERT INTO commande_lignes (commande_id, produit_id, lot_id, qty, qty_livree, prix_detail, unit_price, total, remise_id, remise_nom, remise_pct, remise_type)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?, 'pourcentage')`, [cmd, l.prod, lotId, l.nb, l.nb, l.detail, l.unit, l.total, remise.id, remise.nom, remise.pourcentage])).insertId;
+        await run('INSERT INTO bl_lignes (bl_id, commande_ligne_id, produit_id, lot_id, qty) VALUES (?,?,?,?,?)', [bl, cl, l.prod, lotId, l.nb]);
+        const nomProduit = (await un('SELECT nom FROM produits WHERE id = ?', [l.prod])).nom;
+        await run(`INSERT INTO facture_lignes (facture_id, designation, prix_detail, unit_price, qty, total, remise_nom, remise_pct) VALUES (?,?,?,?,?,?,?,?)`,
+          [facId, `${nomProduit} (lot ${l.numero})`, l.detail, l.unit, l.nb, l.total, remise.nom, remise.pourcentage]);
+        await run(`INSERT INTO stock_mouvements (numero, date_mouvement, type_mouvement, sens, produit_id, lot_id, quantite, source_type, source_id, note)
+                   VALUES (?,?, 'VENTE','SORTIE',?,?,?, 'commande', ?, ?)`, [numMvt(), `${date} 00:00:00`, l.prod, lotId, l.nb, cmd, note]);
+      }
+      await run(`INSERT INTO paiements (facture_id, date_paiement, montant, mode, notes) VALUES (?,?,?, 'especes', 'Espèces — repris du registre des ventes')`, [facId, date, r3(fac.totalTTC)]);
     } });
 
     evenements.sort((a, b) => a.date.localeCompare(b.date) || a.ordre - b.ordre || a.tri.localeCompare(b.tri));
@@ -386,11 +419,11 @@ async function main() {
     const maxXX = Math.max(...presse.map(p => Number(p.numero.split('-')[0])));
     const fini = {}; for (const f of lotsFinis.values()) { const a = f.date.slice(0, 4); fini[a] = Math.max(fini[a] || 0, Number(f.lot.slice(0, 2))); }
     const seq = async (nom, v) => run('INSERT INTO sequences (name, `last_value`) VALUES (?,?) ON DUPLICATE KEY UPDATE `last_value` = GREATEST(`last_value`, VALUES(`last_value`))', [nom, v]);
-    await seq('mouvement_seq', nbMvt); await seq('lot_jj_presse', maxXX);
+    await seq('mouvement_seq', nbMvt); await seq('commande_seq', nbBc); await seq('bl_seq', nbBc); await seq('facture_seq', nbBc); await seq('lot_jj_presse', maxXX);
     for (const [a, v] of Object.entries(fini)) await seq(`lot_jj_fini_${a}`, v);
 
     await cx.commit();
-    console.log(`✓ Import terminé : ${pepins.size} lots de pépins, ${presse.length} pressages, ${lotsFiltres.size} filtrations, ${lotsFinis.size} lots finis, ${lotsFlacons.size} lots de flacons, ${nbMvt} mouvements, ${clients.size} clients.`);
+    console.log(`✓ Import terminé : ${pepins.size} lots de pépins, ${presse.length} pressages, ${lotsFiltres.size} filtrations, ${lotsFinis.size} lots finis, ${lotsFlacons.size} lots de flacons, ${nbMvt} mouvements, ${clients.size + 1} clients, ${nbBc} commandes/BL/factures/paiements.`);
     console.log(`Corrections appliquées (${anomalies.length}) :\n - ${anomalies.join('\n - ')}`);
   } catch (e) { await cx.rollback(); console.error('✗ Import annulé :', e.message); process.exitCode = 1; } finally { await cx.end(); }
 }
