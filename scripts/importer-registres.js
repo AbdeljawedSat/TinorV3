@@ -243,15 +243,15 @@ async function main() {
 
     // ---- Produits
     const produit = async (code, nom, cat, uni, type, extra = {}) => (await run(
-      `INSERT INTO produits (code, nom, categorie_id, unite_id, format_id, type_article, produit_source_id, vendable, achetable, fabriquable, stockable, bio_eligible, tva)
-       VALUES (?,?,?,?,?,?,?,?,?,?,1,1,19)`,
-      [code, nom, cat, uni, extra.format || null, type, extra.source || null, extra.vendable ? 1 : 0, extra.achetable ? 1 : 0, extra.fabriquable ? 1 : 0])).insertId;
+      `INSERT INTO produits (code, nom, categorie_id, unite_id, format_id, type_article, produit_source_id, vendable, achetable, fabriquable, stockable, bio_eligible, tva, prix_vente)
+       VALUES (?,?,?,?,?,?,?,?,?,?,1,1,19,?)`,
+      [code, nom, cat, uni, extra.format || null, type, extra.source || null, extra.vendable ? 1 : 0, extra.achetable ? 1 : 0, extra.fabriquable ? 1 : 0, extra.prix || null])).insertId;
     const pPepins = await produit('01', 'Pépins de figue de barbarie', catMp, unite.kg, 'MATIERE_PREMIERE', { achetable: true });
     const pVrac = await produit('02', 'Huile de pépins de figue de barbarie — Vrac', catHuile, unite.litre, 'PRODUIT_FABRIQUE', { fabriquable: true });
     const pFiltree = await produit('03', 'Huile de pépins de figue de barbarie — Filtrée', catHuile, unite.litre, 'PRODUIT_FABRIQUE', { fabriquable: true, source: pVrac });
     const pFlacon = {};
-    pFlacon[10] = await produit('04', 'Huile de pépins de figue de barbarie — Flacon 10ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[10], source: pVrac, vendable: true, fabriquable: true });
-    pFlacon[30] = await produit('05', 'Huile de pépins de figue de barbarie — Flacon 30ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[30], source: pVrac, vendable: true, fabriquable: true });
+    pFlacon[10] = await produit('04', 'Huile de pépins de figue de barbarie — Flacon 10ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[10], source: pVrac, vendable: true, fabriquable: true, prix: 20 });
+    pFlacon[30] = await produit('05', 'Huile de pépins de figue de barbarie — Flacon 30ml', catHuile, unite.unite, 'PRODUIT_FABRIQUE', { format: format[30], source: pVrac, vendable: true, fabriquable: true, prix: 62 });
     await run("UPDATE sequences SET `last_value` = 5 WHERE name = 'produit_code_seq'");
 
     // ---- Clients
