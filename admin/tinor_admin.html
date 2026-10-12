@@ -7046,6 +7046,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if (p.format_id) return 'conditionne';
       return nomFiltre(p.nom) ? 'filtre' : 'vrac';
     }
+    if (lot.origine === 'AUTRE') { // ex. lot fini en vrac issu d'un mélange (import des registres)
+      if (p.type_article === 'MATIERE_PREMIERE') return 'matiere';
+      if (p.format_id) return 'conditionne';
+      return nomFiltre(p.nom) ? 'filtre' : 'vrac';
+    }
     if (lot.origine === 'ACHAT') {
       if (p.type_article === 'MATIERE_PREMIERE') return 'matiere';
       return p.format_id ? 'conditionne' : 'vrac'; // acheté déjà conditionné vs acheté en gros

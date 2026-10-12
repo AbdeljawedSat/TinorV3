@@ -452,3 +452,18 @@ Voir **DEMARRAGE_REEL.md** (mode d'emploi pas à pas).
   - les produits qui ne sont pas de l'huile (savons…) sont listés à part, hors des totaux ;
   - les exports Excel / Word / PDF reprennent la même grille.
 - Les lots repris (Reprise du stock) apparaissent dans les onglets Matière première / Vrac / Filtré / Conditionné selon leur étape.
+
+## Import des registres Excel Jardins de Jerba, avec l'historique (V3.3)
+
+Remplit la base avec les registres tenus sur Excel (presse, filtration, mélange, stock produit fini, mouvement), en gardant les n° de lot et les dates d'origine :
+
+```
+npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx"              (vérification : rien n'est écrit)
+npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import)
+```
+
+- La chaîne complète est créée : graines (lot fournisseur) → presse → filtration → mélange (lot fini `yy x1x1 x2x2`, en vrac) → flacons 10 / 30 ml (un lot par lot fini et par format, ex. `082415-10ML`) → ventes datées. Les pertes notées au registre (« 2 pert ») sont aussi enregistrées.
+- Les fautes de frappe sont corrigées automatiquement : JG01, minuscules, 0 de tête perdu par Excel, n° filtré différent du lot presse, source de mélange mal écrite. Les bouteilles de reste (55 ml, 1000 ml) ne sont pas comptées comme des flacons. Les cas que le programme ne peut pas deviner sont dans `scripts/registres/corrections.json`.
+- Chaque lancement produit le rapport `…_rapport_import.xlsx` : anomalies et correction appliquée, plan d'import, stock obtenu.
+- L'import se fait en une transaction (tout ou rien). Un lot déjà présent dans TinOR n'est ni recréé ni modifié, donc on peut relancer sans risque de doublon.
+- Les ventes sont des sorties de stock datées, avec le client en note. Aucune facture n'est créée, car le prix n'est pas au registre.

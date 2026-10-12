@@ -18,6 +18,7 @@
     "backup": "node scripts/backup.js",
     "backup:test": "node scripts/backup.js --test",
     "test:stock": "node test/stock/run.js",
+    "importer:registres": "node scripts/importer-registres.js",
     "creer:reel": "node scripts/creer-reel.js"
   },
   "dependencies": {
