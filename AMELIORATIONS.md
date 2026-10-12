@@ -486,3 +486,14 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - **PC (navigateur)** : si la fenêtre ouverte est plus ancienne que celle du serveur, un bandeau bleu « Fenêtre pas à jour » apparaît. Le bouton « Mettre à jour » vide le cache et recharge la page.
 - **Téléphone (application Android)** : la console est embarquée dans l'APK. Si le serveur a une version plus récente, le bandeau « Application pas à jour » donne le lien de la dernière version (TinOR.apk sur GitHub). La compilation Android vérifie que l'APK porte la bonne version.
 - **Serveur pas redémarré** après `git pull` : un écran nouveau (ex. Mélange) l'indique, avec la marche à suivre (fermer la fenêtre noire, relancer TinOR.bat).
+
+## Import des registres en SQL (V3.3)
+
+- `base/import_registres_jj.sql` contient tout l'import des registres en SQL : fournisseurs, produits, lots, réceptions, pressages, filtrations, mélanges, conditionnements, mouvements et ventes datés. On l'exécute une fois dans la base RÉEL (HeidiSQL, phpMyAdmin ou `mysql`), quand `npm run importer:registres` n'est pas utilisable.
+- Il s'adapte à la base cible :
+  - les identifiants sont décalés après ceux existants ;
+  - produits et fournisseurs sont retrouvés par leur nom, ou créés s'ils manquent ;
+  - unités, catégorie, formats et local sont retrouvés par leur code ;
+  - les n° de réception et de mouvement suivent les compteurs de la base.
+- Tout se fait en une seule transaction. Si un lot des registres existe déjà, le script s'arrête sans rien modifier.
+- Pour le refaire après une correction du fichier Excel : faire l'import dans une base neuve, puis lancer `node scripts/registres-en-sql.js` (voir l'en-tête du script).
