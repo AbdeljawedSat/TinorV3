@@ -204,11 +204,37 @@ module.exports = function (pool) {
           : s.lot_id;
         if (id) lotsSources.push({ lot_id: id, quantite: s.quantite_utilisee });
       }
-      const { lotId, numeroLot } = await createLot(pool, {
-        produit_id, origine: 'CONDITIONNEMENT', quantite: qty, employe_id, motif: 'Création via conditionnement',
-        extra: { champs_perso },
-        numerotation: { date, sources: lotsSources },
-      });
+      // Flacons d'un mélange (lot fini) : n° du mélange + format (« 110409-10ML »). Un nouveau
+      // conditionnement du même lot fini dans le même format s'ajoute à ce lot.
+      let lotId, numeroLot;
+      const melangeSource = lotsSources.length === 1 ? (await pool.query(
+        `SELECT numero_lot FROM lots WHERE id = $1 AND JSON_VALUE(champs_perso, '$.etape') = 'MELANGE'`, [lotsSources[0].lot_id])).rows[0] : null;
+      if (melangeSource) {
+        const fmt = (await pool.query('SELECT volume, poids FROM formats WHERE id = (SELECT COALESCE($1, format_id) FROM produits WHERE id = $2)', [format_id || null, produit_id])).rows[0] || {};
+        const suffixe = fmt.volume ? `${Number(fmt.volume)}ML` : fmt.poids ? `${Number(fmt.poids)}G` : 'U';
+        numeroLot = `${melangeSource.numero_lot}-${suffixe}`;
+        const existant = (await pool.query('SELECT id, produit_id FROM lots WHERE numero_lot = $1 FOR UPDATE', [numeroLot])).rows[0];
+        if (existant && existant.produit_id !== Number(produit_id)) {
+          return res.status(400).json({ error: `Le lot ${numeroLot} existe déjà pour un autre produit.` });
+        }
+        if (existant) {
+          lotId = existant.id;
+          await pool.query(
+            `UPDATE lots SET quantite_initiale = quantite_initiale + $1, quantite_actuelle = quantite_actuelle + $1,
+               statut = CASE WHEN statut = 'EPUISE' THEN 'LIBERE' ELSE statut END WHERE id = $2`, [qty, lotId]);
+        } else {
+          ({ lotId } = await createLot(pool, {
+            produit_id, origine: 'CONDITIONNEMENT', quantite: qty, employe_id, motif: 'Création via conditionnement', numero: numeroLot,
+            extra: { champs_perso: { ...(champs_perso || {}), lot_fini: melangeSource.numero_lot } },
+          }));
+        }
+      } else {
+        ({ lotId, numeroLot } = await createLot(pool, {
+          produit_id, origine: 'CONDITIONNEMENT', quantite: qty, employe_id, motif: 'Création via conditionnement',
+          extra: { champs_perso },
+          numerotation: { date, sources: lotsSources },
+        }));
+      }
 
       // Le format est figé ici, au moment précis de l'opération — si aucun
       // n'est fourni explicitement, on prend celui du produit À CET INSTANT

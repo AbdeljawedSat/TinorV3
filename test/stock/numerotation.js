@@ -1,5 +1,5 @@
 // Numérotation « Jardins de Jerba » : graines = lot fournisseur, presse XX-lotMP-AAAAMMJJH,
-// filtré XX-lotMP-AAAAMMJJ, produit fini yy x1x1 x2x2 (yy annuel, x2x2 = x1x1 sans mélange).
+// filtré XX-lotMP-AAAAMMJJ, produit fini yy x1x1 x2x2 (yy continu, x2x2 = x1x1 sans mélange).
 // Prérequis : API démarrée sur une base de TEST (npm run reset:demo -- --confirmer).
 const { api, login, check } = require('./api');
 
@@ -50,7 +50,7 @@ const { api, login, check } = require('./api');
     const c2 = await conditionner('2025-01-10', [{ lot_filtration_id: f2.data.id, quantite_utilisee: 2 }]);
     check(c2.data.numero_lot === `${String(Number(yy1) + 1).padStart(2, '0')}${x2}${x2}`, `une seule huile → x1x1 répété : ${c2.data.numero_lot}`);
     const c3 = await conditionner('2026-01-03', [{ lot_filtration_id: f1b.data.id, quantite_utilisee: 2 }]);
-    check(c3.data.numero_lot.startsWith('01'), `nouvelle année → yy repart à 01 : ${c3.data.numero_lot}`);
+    check(c3.data.numero_lot.startsWith(String(Number(yy1) + 2).padStart(2, '0')), `nouvelle année → yy continue : ${c3.data.numero_lot}`);
 
     console.log('AO. Traçabilité du flacon jusqu\'aux deux lots de graines');
     const t = (await api(`/lots/${encodeURIComponent(c1.data.numero_lot)}/tracabilite`)).data;

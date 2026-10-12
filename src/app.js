@@ -47,6 +47,7 @@ function createApp(pool) {
   app.use('/api/proformas', requireAuth, require('./routes/proformas')(pool));
   app.use('/api/presse', requireAuth, require('./routes/presse')(pool));
   app.use('/api/filtration', requireAuth, require('./routes/filtration')(pool));
+  app.use('/api/melanges', requireAuth, require('./routes/melanges')(pool));
   app.use('/api/conditionnement', requireAuth, require('./routes/conditionnement')(pool));
   app.use('/api/recettes', requireAuth, require('./routes/recettes')(pool));
   app.use('/api/ordres-production', requireAuth, require('./routes/ordresProduction')(pool));

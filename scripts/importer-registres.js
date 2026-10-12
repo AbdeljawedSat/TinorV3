@@ -207,7 +207,7 @@ async function main() {
         champs: { etape: 'MELANGE', huiles: m.sources.map(s => `${s.lot} (${s.ml} ml)`) }, note: `Lot fini — mélange n° ${m.n} du registre` });
       for (const s of m.sources) await consommer({ source: s.lot, fils: l, quantite: s.ml / 1000, date: m.date, type: 'CONSOMMATION', ref: ['melange', l.id], note: `Mélange ${m.numero}` });
       await entree(l, pFiltre.id, m.ml / 1000, m.date, 'PRODUCTION', ['melange', l.id], 'Import registres — mélange');
-      await recalerCompteursJJ(conn, { numero: m.numero, etape: 'CONDITIONNEMENT', date: m.date });
+      await recalerCompteursJJ(conn, { numero: m.numero, etape: 'MELANGE', date: m.date });
       journal.push(['Mélange', `${m.numero} : ${m.sources.map(s => `${s.lot} ${s.ml} ml`).join(' + ')} = ${m.ml} ml`]);
     }
     // 5. Conditionnements : un lot de flacons par lot fini et par format (« 082415-10ML »)

@@ -469,3 +469,13 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Les ventes sont des sorties de stock datées, avec le client en note. Aucune facture n'est créée, car le prix n'est pas au registre.
 - **Fournisseurs des graines** : ils sont réglés dans `scripts/registres/corrections.json`, partie `fournisseurs` (GJ01/2023 → Eco-Land, Kesra ; 2312, 2313, 2314 → Napoliss, Sousse). L'import crée chaque fournisseur avec son adresse, plus une réception par lot de graines (écran Achats › Réceptions MP). Chaque pressage déduit les kg de pépins du lot fournisseur utilisé.
 - **Quantités reçues** : elles se règlent dans `quantites_recues_kg` (ex. `"GJ01/2023": 500`), et le reste en stock = reçu − pressé. Sans valeur, la quantité reçue est égale à la quantité pressée, donc le stock vaut 0.
+
+## Étape « Mélange » : lots finis à la façon des registres (V3.3)
+
+- Nouvel écran **Production › Mélange (lot fini)**. On y choisit une ou deux huiles filtrées, avec leur quantité en ml.
+- TinOR donne le n° du lot fini `yy x1x1 x2x2` : yy est le compteur des lots finis, x1x1 et x2x2 sont les compteurs XX des deux huiles (x1x1 répété s'il n'y a qu'une huile). Exemple : `110409`.
+- **yy continue d'une année à l'autre** : il n'y a plus de retour à 01 en janvier. Après l'import des registres, le prochain lot fini commence par 11.
+- **Flacons** : on clique sur « Mettre en flacons » ou on choisit le lot fini comme source dans Conditionnement. Les flacons portent le n° du mélange + le format (`110409-10ML`, `110409-30ML`). Un nouveau conditionnement du même lot dans le même format s'ajoute au même lot de flacons.
+- La liste montre, pour chaque mélange, les huiles utilisées, la quantité mélangée, le reste à conditionner et les lots de flacons.
+- Le mélange fonctionne aussi hors ligne (file de synchronisation).
+- **Presse et filtration** : numérotation V3.3 inchangée (`XX-lotfournisseur-AAAAMMJJH` / `…-AAAAMMJJ`). Elle sera revue plus tard, quand le stock des registres sera écoulé.
