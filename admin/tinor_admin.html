@@ -701,6 +701,8 @@
   .modeConnexionLogin{margin:0 0 10px; }
   @media (max-width:700px){ .topbar .modeConnexion{margin-left:6px;} .topbar .modeConnexion button{padding:5px 8px; font-size:11px;} }
   /* Version TEST : bandeau orange permanent */
+  #consoleMajBanner{background:#1F4E79; color:#fff; font-size:12.5px; font-weight:600; text-align:center; padding:7px 10px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;}
+  #consoleMajBanner a, #consoleMajBanner button{background:#fff; color:#1F4E79; border:0; border-radius:6px; padding:4px 10px; font-weight:800; font-size:12px; text-decoration:none; cursor:pointer;}
   #modeTestBanner{background:repeating-linear-gradient(135deg,#D98A1C 0 18px,#C97A10 18px 36px); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.03em; text-align:center; padding:6px 10px;}
   body.modeTest .brand .tag::after{content:' · TEST'; color:#D98A1C; font-weight:800;}
   #loginEnvBadge{display:none; margin:0 auto 10px; width:max-content; background:#D98A1C; color:#fff; font-weight:800; font-size:12px; border-radius:20px; padding:3px 12px;}
@@ -967,6 +969,7 @@
 
   <!-- ============ MAIN ============ -->
   <div class="main">
+    <div id="consoleMajBanner" style="display:none;"></div>
     <div id="modeTestBanner" style="display:none;">⚠ MODE TEST — données d'essai, sans valeur réelle (version TEST de TinOR)</div>
     <!-- Dans le flux de la page (pas fixé par-dessus) : ne masque jamais les fenêtres ni leur bouton ✕. -->
     <div id="loadErrorBanner" role="alert" style="display:none; align-items:center; gap:10px; background:var(--warn); color:#fff; padding:7px 10px 7px 16px; font-size:12px;">
@@ -3362,7 +3365,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       document.getElementById('modeTestBanner').style.display = test ? '' : 'none';
       const badge = document.getElementById('loginEnvBadge');
       if (badge) { badge.textContent = test ? 'VERSION TEST' : 'VERSION RÉELLE'; badge.style.display = h.environnement ? 'block' : 'none'; badge.style.background = test ? '#D98A1C' : '#2F6B2F'; }
+      majVersionConsole(h.console);
     } catch { /* hors ligne : on garde l'affichage précédent */ }
+  }
+
+  // ---------- Fenêtre à jour ? ----------
+  // Empreinte de cette page (posée par le serveur ou par le build Android) comparée à celle
+  // du serveur : différente → fenêtre ancienne (cache du navigateur) ou application Android
+  // plus ancienne que le serveur.
+  const CONSOLE_VERSION = '__TINOR_CONSOLE__';
+  function majVersionConsole(serveur) {
+    const el = document.getElementById('consoleMajBanner');
+    const empreinte = (v) => /^[0-9a-f]{10}$/.test(v || '');
+    const perimee = empreinte(CONSOLE_VERSION) && empreinte(serveur) && serveur !== CONSOLE_VERSION;
+    el.style.display = perimee ? '' : 'none';
+    if (!perimee) return;
+    if (window.TinorAndroid) {
+      el.innerHTML = `<span>📲 Application pas à jour : le serveur a une version plus récente de TinOR.</span>
+        <a href="https://github.com/AbdeljawedSat/TinorV3/releases/latest">Installer la dernière version</a>`;
+    } else {
+      el.innerHTML = `<span>🔄 Fenêtre pas à jour : une nouvelle version de TinOR est installée sur le serveur.</span><button type="button" id="consoleMajBtn">Mettre à jour</button>`;
+      document.getElementById('consoleMajBtn').addEventListener('click', async () => {
+        try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); } catch {}
+        try { for (const c of await caches.keys()) await caches.delete(c); } catch {}
+        location.reload();
+      });
+    }
   }
 
   // Écran de connexion : la version (RÉEL / TEST) du serveur est affichée avant même de se connecter.
@@ -4822,7 +4850,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   APP_DATA.melanges = [];
   const estLotMelange = (l) => { try { return (typeof l.champs_perso === 'string' ? JSON.parse(l.champs_perso) : l.champs_perso || {}).etape === 'MELANGE'; } catch { return false; } };
   async function chargerMelanges() {
-    try { APP_DATA.melanges = await apiFetch('/melanges'); } catch { APP_DATA.melanges = APP_DATA.melanges || []; }
+    try { APP_DATA.melanges = await apiFetch('/melanges'); } catch (e) {
+      if (!HL.horsLigne) {
+        document.getElementById('melangesBody').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--danger);">Le serveur ne connaît pas encore cet écran (${esc(e.message)}).<br>Serveur pas à jour : après « git pull », fermez la fenêtre noire de TinOR puis relancez TinOR.bat.</td></tr>`;
+        return;
+      }
+      APP_DATA.melanges = APP_DATA.melanges || [];
+    }
     renderMelanges();
   }
   const enMl = (q) => `${Math.round(Number(q) * 1000).toLocaleString('fr-TN')} ml`;

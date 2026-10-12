@@ -479,3 +479,10 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - La liste montre, pour chaque mélange, les huiles utilisées, la quantité mélangée, le reste à conditionner et les lots de flacons.
 - Le mélange fonctionne aussi hors ligne (file de synchronisation).
 - **Presse et filtration** : numérotation V3.3 inchangée (`XX-lotfournisseur-AAAAMMJJH` / `…-AAAAMMJJ`). Elle sera revue plus tard, quand le stock des registres sera écoulé.
+
+## Fenêtre toujours à jour (V3.3)
+
+- Le serveur sert la console avec sa version (empreinte du fichier) et sans cache non vérifié. `/api/health` donne aussi cette version (`console`).
+- **PC (navigateur)** : si la fenêtre ouverte est plus ancienne que celle du serveur, un bandeau bleu « Fenêtre pas à jour » apparaît. Le bouton « Mettre à jour » vide le cache et recharge la page.
+- **Téléphone (application Android)** : la console est embarquée dans l'APK. Si le serveur a une version plus récente, le bandeau « Application pas à jour » donne le lien de la dernière version (TinOR.apk sur GitHub). La compilation Android vérifie que l'APK porte la bonne version.
+- **Serveur pas redémarré** après `git pull` : un écran nouveau (ex. Mélange) l'indique, avec la marche à suivre (fermer la fenêtre noire, relancer TinOR.bat).

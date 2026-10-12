@@ -3,6 +3,21 @@ const cors = require('cors');
 const { requireAuth } = require('./middleware/auth');
 const { idempotence } = require('./middleware/idempotence');
 
+// Console (admin/tinor_admin.html) : relue quand le fichier change (mise à jour par git pull).
+// version = 10 premiers caractères du SHA-1 du fichier, calculée de la même façon au build Android.
+const CONSOLE_FICHIER = require('path').join(__dirname, '..', 'admin', 'tinor_admin.html');
+let consoleEnCache = { mtime: 0 };
+function consoleActuelle() {
+  const fs = require('fs');
+  const mtime = fs.statSync(CONSOLE_FICHIER).mtimeMs;
+  if (mtime !== consoleEnCache.mtime) {
+    const brut = fs.readFileSync(CONSOLE_FICHIER);
+    const version = require('crypto').createHash('sha1').update(brut).digest('hex').slice(0, 10);
+    consoleEnCache = { mtime, version, html: brut.toString('utf8').replace("'__TINOR_CONSOLE__'", `'${version}'`) };
+  }
+  return consoleEnCache;
+}
+
 function createApp(pool) {
   const app = express();
   // Chrome / WebView récents : une page https (application Android) qui appelle
@@ -16,11 +31,22 @@ function createApp(pool) {
 
   // Console d'administration servie par l'API : https://<domaine>/ ouvre la
   // console, déjà reliée à cette API, et installable comme application.
-  app.use(express.static(require('path').join(__dirname, '..', 'admin'), { index: 'tinor_admin.html' }));
+  // La page est servie avec sa version (empreinte du fichier) : la console compare avec
+  // /api/health → « console » et signale une fenêtre pas à jour (cache du navigateur,
+  // application Android plus ancienne que le serveur). Jamais gardée en cache sans vérification.
+  app.get(['/', '/tinor_admin.html'], (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(consoleActuelle().html);
+  });
+  app.use(express.static(require('path').join(__dirname, '..', 'admin'), {
+    index: 'tinor_admin.html',
+    setHeaders: (res, fichier) => { if (/\.(html|js|json)$/.test(fichier)) res.set('Cache-Control', 'no-cache'); },
+  }));
 
   // version : génération d'API (détection par la console) ; release : numéro de la version livrée.
   app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version,
-    environnement: require('./env').environnement() })); // « TEST » → bandeau orange dans la console
+    environnement: require('./env').environnement(), // « TEST » → bandeau orange dans la console
+    console: (() => { try { return consoleActuelle().version; } catch { return null; } })() }));
 
   app.use('/api/auth', require('./routes/auth')(pool));
   // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.
