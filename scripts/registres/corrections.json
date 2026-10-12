@@ -51,6 +51,10 @@
     }
   ],
   "quantites_recues_kg": {
-    "_lisez_moi": "Quantité de pépins reçue par lot fournisseur (kg). Sans valeur : quantité reçue = quantité pressée (stock 0)."
+    "_lisez_moi": "Quantité de pépins reçue par lot fournisseur (kg). Sans valeur : quantité reçue = quantité pressée (stock 0).",
+    "GJ01/2023": 400,
+    "2312": 200,
+    "2313": 150,
+    "2314": 50
   }
 }
