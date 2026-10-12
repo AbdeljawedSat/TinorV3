@@ -467,3 +467,5 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Chaque lancement produit le rapport `…_rapport_import.xlsx` : anomalies et correction appliquée, plan d'import, stock obtenu.
 - L'import se fait en une transaction (tout ou rien). Un lot déjà présent dans TinOR n'est ni recréé ni modifié, donc on peut relancer sans risque de doublon.
 - Les ventes sont des sorties de stock datées, avec le client en note. Aucune facture n'est créée, car le prix n'est pas au registre.
+- **Fournisseurs des graines** : ils sont réglés dans `scripts/registres/corrections.json`, partie `fournisseurs` (GJ01/2023 → Eco-Land, Kesra ; 2312, 2313, 2314 → Napoliss, Sousse). L'import crée chaque fournisseur avec son adresse, plus une réception par lot de graines (écran Achats › Réceptions MP). Chaque pressage déduit les kg de pépins du lot fournisseur utilisé.
+- **Quantités reçues** : elles se règlent dans `quantites_recues_kg` (ex. `"GJ01/2023": 500`), et le reste en stock = reçu − pressé. Sans valeur, la quantité reçue est égale à la quantité pressée, donc le stock vaut 0.

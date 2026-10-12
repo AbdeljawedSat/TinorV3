@@ -16,9 +16,10 @@ const lancer = (...args) => execFileSync(process.execPath, [path.join(__dirname,
   await login();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'registres-'));
   const fichier = path.join(dir, 'registres.xlsx');
-  const sansCorrection = path.join(dir, 'aucune.json'); fs.writeFileSync(sansCorrection, '{}');
   const suffixe = String(Date.now()).slice(-5);
   const mp = `T${suffixe}`;
+  const sansCorrection = path.join(dir, 'reglages.json');
+  fs.writeFileSync(sansCorrection, JSON.stringify({ fournisseurs: [{ nom: `Fournisseur ${suffixe}`, localisation: 'Sousse, Tunisie', lots: [mp] }], quantites_recues_kg: { [mp]: 100 } }));
   const wb = new ExcelJS.Workbook();
   const presse = wb.addWorksheet('registre de press');
   presse.addRow(['N/L', 'Date', 'Num de lot Fournisseur', 'Qte', 'Num Outille', 'Quantité Produite', 'Num de lot Press']);
@@ -60,6 +61,9 @@ const lancer = (...args) => execFileSync(process.execPath, [path.join(__dirname,
   check(Math.abs(Number(L('990102').quantite_actuelle) - 0.03) < 1e-6, 'lot fini en vrac : 600 − 300 − 270 = 30 ml restants');
   check(Number(L('990102-10ML').quantite_actuelle) === 25 && Number(L('990102-30ML').quantite_actuelle) === 7, 'flacons : 30 − 5 = 25 × 10 ml, 9 − 2 = 7 × 30 ml');
   check(String(L('990102-10ML').date_production || '').startsWith('2024-03-02'), 'date de conditionnement d\'origine');
+  check(Number(L(mp).quantite_actuelle) === 40 && L(mp).fournisseur_id, `graines : 100 kg reçus − 2 × 30 kg pressés = ${Number(L(mp).quantite_actuelle)} kg, fournisseur rattaché`);
+  const four = (await api('/fournisseurs')).data.find(f => f.nom === `Fournisseur ${suffixe}`);
+  check(four && four.localisation === 'Sousse, Tunisie' && L(mp).fournisseur_id === four.id, 'fournisseur créé avec son adresse');
   const conds = (await api('/conditionnement')).data.filter(c => (c.numero_lot || '').startsWith('990102-'));
   check(conds.length === 2, `écran Conditionnement : ${conds.length} conditionnements`);
   const t = (await api(`/lots/${encodeURIComponent('990102-10ML')}/tracabilite`)).data;

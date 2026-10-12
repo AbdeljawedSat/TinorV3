@@ -43,6 +43,7 @@ async function main() {
   const fichierCorrections = (process.argv.find(x => x.startsWith('--corrections=')) || '').slice(14) || path.join(__dirname, 'registres', 'corrections.json');
   const corrections = fs.existsSync(fichierCorrections) ? JSON.parse(fs.readFileSync(fichierCorrections, 'utf8')) : {};
   const a = await analyserRegistres(fichier, corrections);
+  a.fournisseurs = corrections.fournisseurs || [];
   const pool = require('../src/db/pool');
   const base = process.env.DB_NAME;
   console.log(`\nRegistres : ${path.basename(fichier)}  →  base ${base} (${env.test ? 'TEST' : 'RÉEL'})`);
@@ -128,12 +129,40 @@ async function main() {
     };
     const entree = (lot, produit, quantite, date, type, ref, note) => (lot.existant ? null : mvt({ type, sens: 'ENTREE', produit, lot: lot.id, quantite, date, source: ref, note }));
 
-    // 1. Lots de graines (n° du fournisseur) — la quantité reçue n'est pas au registre : quantité pressée.
+    // 1. Fournisseurs et lots de graines (n° du lot fournisseur), avec leur réception.
+    //    Quantité reçue : corrections.json (quantites_recues_kg), sinon quantité pressée.
+    const fournisseurDuLot = new Map();
+    for (const f of corrections.fournisseurs || []) {
+      let four = await un('SELECT id FROM fournisseurs WHERE LOWER(nom) = LOWER($1)', [f.nom]);
+      if (!four) {
+        const r = await conn.query(`INSERT INTO fournisseurs (nom, type, localisation, notes) VALUES ($1,'fournisseur_externe',$2,$3)`, [f.nom, f.localisation || null, 'Créé par l\'import des registres']);
+        four = { id: r.insertId }; journal.push(['Fournisseur créé', `${f.nom} — ${f.localisation || ''}`]);
+      }
+      for (const lot of f.lots || []) fournisseurDuLot.set(String(lot).toUpperCase(), { id: four.id, nom: f.nom });
+    }
+    const recues = corrections.quantites_recues_kg || {};
+    const local = (await un('SELECT MIN(id) AS id FROM locaux')).id;
     for (const m of a.lotsMP) {
-      const l = await nouveauLot({ numero: m.numero, produit: pMP.id, origine: 'RECEPTION_MP', quantite: m.kg, date: m.date, lotFournisseur: m.numero,
-        note: 'Reçu avant TinOR (import des registres) : quantité reçue = quantité pressée ; à corriger si du stock reste.' });
-      await entree(l, pMP.id, m.kg, m.date, 'RECEPTION', null, 'Import registres — réception');
-      if (!l.existant) journal.push(['Graines', `${m.numero} : ${m.kg} kg`]);
+      const four = fournisseurDuLot.get(m.numero.toUpperCase());
+      if (!four) journal.push(['Écart', `lot de graines ${m.numero} : fournisseur non indiqué (corrections.json → fournisseurs)`]);
+      const recu = Number(recues[m.numero]) > 0 ? Number(recues[m.numero]) : m.kg;
+      if (recu < m.kg) throw new Error(`Lot ${m.numero} : ${recu} kg reçus mais ${m.kg} kg pressés.`);
+      const ex = await lotExistant(m.numero);
+      if (ex) { // lot déjà saisi : on complète seulement son fournisseur s'il manque
+        if (four) await conn.query('UPDATE lots SET fournisseur_id = COALESCE(fournisseur_id, $1), lot_fournisseur = COALESCE(lot_fournisseur, $2) WHERE id = $3', [four.id, m.numero, ex.id]);
+        continue;
+      }
+      const l = await nouveauLot({ numero: m.numero, produit: pMP.id, origine: 'RECEPTION_MP', quantite: recu, date: m.date, lotFournisseur: m.numero,
+        note: recues[m.numero] ? 'Reçu avant TinOR (import des registres).' : 'Reçu avant TinOR (import des registres) : quantité reçue inconnue = quantité pressée ; à corriger si du stock reste.' });
+      if (four) {
+        await conn.query('UPDATE lots SET fournisseur_id = $1 WHERE id = $2', [four.id, l.id]);
+        const rec = await conn.query(`INSERT INTO receptions (numero, fournisseur_id, date_reception, local_id, statut, notes) VALUES ($1,$2,$3,$4,'liberee',$5)`,
+          [await nextNumero(conn, 'reception_seq', 'REC'), four.id, m.date, local, `Lot ${m.numero} — import des registres`]);
+        await conn.query('INSERT INTO reception_lignes (reception_id, produit_id, lot_id, quantite, lot_fournisseur) VALUES ($1,$2,$3,$4,$5)', [rec.insertId, pMP.id, l.id, recu, m.numero]);
+        l.reception = ['receptions', rec.insertId];
+      }
+      await entree(l, pMP.id, recu, m.date, 'RECEPTION', l.reception, `Import registres — réception ${four ? four.nom : ''}`);
+      journal.push(['Graines', `${m.numero} (${four ? four.nom : 'fournisseur ?'}) : ${recu} kg reçus, ${m.kg} kg pressés → reste ${arr(recu - m.kg)} kg`]);
     }
     // 2. Presse
     for (const p of a.presse) {
@@ -273,6 +302,9 @@ async function rapport(fichier, a, journal, deja, restant, applique) {
   ], [32, 40]);
   ajout('Anomalies', ['Registre', 'Où', 'Constat → correction appliquée'], a.anomalies.map(x => [x.registre, x.ou, x.texte]), [16, 26, 120]);
   ajout('Plan d\'import', ['Étape', 'Détail'], journal, [18, 100]);
+  ajout('Matière première', ['Lot fournisseur', 'Fournisseur', 'Pressé (kg)', 'Pressages'], a.lotsMP.map(m => [m.numero,
+    ((a.fournisseurs || []).find(f => (f.lots || []).map(String).includes(m.numero)) || {}).nom || '?', m.kg,
+    a.presse.filter(p => p.lot_mp === m.numero).map(p => `${p.numero} (${p.kg} kg)`).join(' · ')]), [16, 16, 12, 140]);
   ajout('Stock après import', ['N° de lot', 'Produit', 'Quantité', 'Unité'], restant.map(r => [r.numero_lot, r.nom, Number(r.quantite_actuelle), r.symbole]), [28, 48, 12, 8]);
   const sortie = fichier.replace(/\.xlsx$/i, '') + '_rapport_import.xlsx';
   await wb.xlsx.writeFile(sortie);
