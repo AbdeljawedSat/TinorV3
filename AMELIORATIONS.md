@@ -440,3 +440,15 @@ Voir **DEMARRAGE_REEL.md** (mode d'emploi pas à pas).
   « Lot fournisseur » ajouté aux lignes de réception.
 - **Pépins** reconnus comme graines : « Pépins de figue de barbarie » ↔ « Huile de pépins de
   figue de barbarie — Vrac / Filtrée / Flacon ».
+
+## Bouton En ligne / Hors ligne et répartition détaillée du stock (V3.3)
+
+- **Bouton « En ligne / Hors ligne »** (en haut à droite et sur l'écran de connexion) : « Hors ligne » coupe tout appel au serveur ; le travail est enregistré sur l'appareil (numéros provisoires `…-HL-…`). Le choix est gardé après rechargement. « En ligne » vérifie le serveur, reconnecte et synchronise la file.
+- **Stock › Répartition** :
+  - une ligne par huile ; colonnes Vrac (L) et Filtré (L) séparées ;
+  - chaque format conditionné affiché en unités et converti en litres (unités × contenance : 240 × 30 ml = 7,2 L), puis « Total conditionné » et « Total » ;
+  - ligne **Total** en bas et 4 totaux au-dessus (vrac, filtré, conditionné, huile) ;
+  - un clic sur une case liste les lots qui la composent ;
+  - les produits qui ne sont pas de l'huile (savons…) sont listés à part, hors des totaux ;
+  - les exports Excel / Word / PDF reprennent la même grille.
+- Les lots repris (Reprise du stock) apparaissent dans les onglets Matière première / Vrac / Filtré / Conditionné selon leur étape.

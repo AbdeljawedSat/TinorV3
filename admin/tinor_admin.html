@@ -692,10 +692,31 @@
   .navChildren a.sousEtape{padding-left:37px;}
   .navChildren a .cnt.afaire{background:#FCEBD3; color:#A0600B;}
   .navChildren a.active .cnt.afaire{background:#fff; color:#A0600B;}
+  /* Interrupteur En ligne / Hors ligne */
+  .modeConnexion{display:inline-flex; flex:0 0 auto; border:1px solid var(--line); border-radius:22px; overflow:hidden; background:var(--paper); margin-left:10px;}
+  .modeConnexion button{border:0; background:none; font:inherit; font-size:12px; font-weight:700; padding:6px 12px; color:var(--text-soft); cursor:pointer; display:flex; align-items:center; gap:6px;}
+  .modeConnexion button.actif[data-mode="en_ligne"]{background:#2F6B2F; color:#fff;}
+  .modeConnexion button.actif[data-mode="hors_ligne"]{background:#D98A1C; color:#fff;}
+  .modeConnexion button.actif::before{content:''; width:7px; height:7px; border-radius:50%; background:currentColor;}
+  .modeConnexionLogin{margin:0 0 10px; }
+  @media (max-width:700px){ .topbar .modeConnexion{margin-left:6px;} .topbar .modeConnexion button{padding:5px 8px; font-size:11px;} }
   /* Version TEST : bandeau orange permanent */
   #modeTestBanner{background:repeating-linear-gradient(135deg,#D98A1C 0 18px,#C97A10 18px 36px); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.03em; text-align:center; padding:6px 10px;}
   body.modeTest .brand .tag::after{content:' · TEST'; color:#D98A1C; font-weight:800;}
   #loginEnvBadge{display:none; margin:0 auto 10px; width:max-content; background:#D98A1C; color:#fff; font-weight:800; font-size:12px; border-radius:20px; padding:3px 12px;}
+  /* Répartition détaillée du stock */
+  .repKpis{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:0 18px 12px;}
+  .repKpi{border:1px solid #E7D7B5; background:#FFFBF3; border-radius:10px; padding:9px 12px;}
+  .repKpi small{display:block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#7A5414;}
+  .repKpi b{display:block; font-size:19px; color:#0F2F3A;} .repKpi span{font-size:11px; color:var(--text-soft);}
+  #stockRepartitionTable th.grp{text-align:center; background:color-mix(in srgb, var(--accent) 16%, var(--paper));}
+  #stockRepartitionTable td.repCase{cursor:pointer;} #stockRepartitionTable td.repCase:hover{background:var(--accent-fond);}
+  #stockRepartitionTable td small{display:block; color:var(--text-soft); font-size:10.5px;}
+  #stockRepartitionTable tr.repTotal td{font-weight:800; background:#FBF4E6; border-top:2px solid #B07A1E;}
+  #stockRepartitionTable tr.repSection td{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#6B6B6B; background:#F5F3EE; padding:8px 12px;}
+  #stockRepartitionTable td.num, #stockRepartitionTable th.num{white-space:nowrap;}
+  #stockRepartitionTable tr.repAutre td{color:#6B6B6B;}
+  @media (max-width:700px){ .repKpis{grid-template-columns:1fr 1fr; padding:0 12px 10px;} }
   /* Reprise du stock */
   .repriseZone{display:block; margin-top:14px; border:2px dashed #C8902E; border-radius:12px; padding:18px; text-align:center; font-size:13.5px; color:#7A5414; background:#FFFBF3; cursor:pointer;}
   .repriseZone span{display:block; font-size:11.5px; color:var(--text-soft); margin-top:4px;}
@@ -829,6 +850,10 @@
       </div>
     </div>
     <div style="padding:8px 20px 20px;">
+      <div class="modeConnexion modeConnexionLogin" role="group" aria-label="Mode de travail">
+        <button type="button" data-mode="en_ligne">En ligne</button>
+        <button type="button" data-mode="hors_ligne">Hors ligne</button>
+      </div>
       <div class="serveurLigne" id="serveurLigne">Serveur : <b id="serveurAffiche">—</b> <a href="#" id="serveurChanger">changer</a></div>
       <div id="serveurBloc" class="periodeCachee">
       <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Adresse du serveur (API)</label>
@@ -958,6 +983,10 @@
         <input class="search" id="globalSearch" placeholder="Rechercher un lot, client, produit… (Ctrl+K)" autocomplete="off">
         <div id="globalSearchResults" style="display:none; position:absolute; top:38px; left:0; right:80px; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12); max-height:400px; overflow-y:auto; z-index:200;"></div>
         <button class="btnPrimary" id="btnNouveau">＋ Nouveau</button>
+      </div>
+      <div class="modeConnexion" role="group" aria-label="Mode de travail">
+        <button type="button" data-mode="en_ligne" title="Travailler directement sur le serveur">En ligne</button>
+        <button type="button" data-mode="hors_ligne" title="Travailler sans serveur, sur la copie de cet appareil">Hors ligne</button>
       </div>
     </div>
 
@@ -1368,8 +1397,9 @@
         <!-- Répartition : tableau croisé famille × format -->
         <div class="panel stockTabPanel" id="stockPanel-repartition" style="display:none;">
           <div class="panelHead">
-            <div><h2>Répartition par format</h2><div class="sub">Ligne = famille de produit, colonne = format (vrac inclus) — le total convertit chaque format en équivalent volume/poids (ex: 500 u × 10 ml = 5 L)</div></div>
+            <div><h2>Répartition par huile, par type et par volume</h2><div class="sub">Vrac et filtré en litres ; chaque format conditionné en unités et converti en litres (unités × contenance, ex. 240 × 30 ml = 7,2 L). Cliquez une case pour voir ses lots.</div></div>
           </div>
+          <div id="stockRepartitionKpis" class="repKpis"></div>
           <div style="overflow-x:auto;">
             <table id="stockRepartitionTable">
               <thead><tr id="stockRepartitionHead"></tr></thead>
@@ -3308,6 +3338,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   // Pourquoi le serveur ne répond pas : message concret pour l'utilisateur.
   async function diagnostiquerServeur(base) {
+    if (HL.force) return 'Mode « Hors ligne » choisi (bouton en haut) : TinOR n\'appelle pas le serveur.';
     try {
       const r = await hlFetch(base + '/health', {}, 6000);
       if (r.ok) { const h = await r.json().catch(() => ({})); return h.version === 'v3' ? null : `L'adresse ${base} répond, mais ce n'est pas un serveur TinOR V3.`; }
@@ -6436,7 +6467,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     { type: 'paiement', methode: 'POST', motif: /^\/factures\/\d+\/paiements$/, prefixe: 'PAI', libelle: 'Encaissement' },
     { type: 'inventaire', methode: 'PUT', motif: /^\/inventaires\/\d+\/lignes$/, prefixe: 'INV', libelle: 'Comptage d\'inventaire' },
   ];
-  const HL = { horsLigne: false, synchroEnCours: false, reconnexion: false, motDePasse: null, derniereSynchro: null, dbPromesse: null };
+  const HL = { horsLigne: false, synchroEnCours: false, reconnexion: false, motDePasse: null, derniereSynchro: null, dbPromesse: null, force: false };
+  // « Hors ligne » choisi par l'utilisateur (bouton) : mémorisé sur l'appareil ; TinOR n'appelle plus
+  // le serveur (même si le réseau existe) jusqu'au retour sur « En ligne ».
+  try { HL.force = localStorage.getItem('tinor_mode_hors_ligne') === '1'; } catch {}
+  if (HL.force) HL.horsLigne = true;
 
   function hlDb() {
     if (!HL.dbPromesse) HL.dbPromesse = new Promise((resolve, reject) => {
@@ -6581,7 +6616,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     hlMajAffichage();
   }
   function hlRepasserEnLigne() {
-    if (!HL.horsLigne) return;
+    if (!HL.horsLigne || HL.force) return;
     HL.horsLigne = false;
     hlMajAffichage();
     setTimeout(() => hlSynchroniser({ recharger: true }), 0); // envoi des opérations + données du PC
@@ -6589,6 +6624,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // Appel réseau d'apiFetch : délai max, puis bascule hors ligne en cas d'échec réseau.
   async function hlFetch(url, options, delaiMs = 20000) {
+    if (HL.force) throw new TypeError('Mode hors ligne choisi'); // traité comme une absence de réseau
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const minuterie = ctrl ? setTimeout(() => ctrl.abort(), delaiMs) : null;
     try { return await fetch(url, { ...options, signal: ctrl ? ctrl.signal : undefined }); }
@@ -6632,6 +6668,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   async function hlSynchroniser({ recharger = false, manuel = false } = {}) {
     if (HL.synchroEnCours || !TOKEN) return;
+    if (HL.force) { if (manuel) notifier('Mode « Hors ligne » choisi : passez sur « En ligne » pour envoyer.', 'info'); return; }
     HL.synchroEnCours = true;
     hlMajAffichage();
     let envoyees = 0, refusees = 0;
@@ -6718,6 +6755,43 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return true;
   }
 
+  // ---------- Interrupteur En ligne / Hors ligne ----------
+  function majBoutonMode() {
+    document.querySelectorAll('.modeConnexion button').forEach(b => {
+      const horsLigne = b.dataset.mode === 'hors_ligne';
+      b.classList.toggle('actif', horsLigne ? HL.horsLigne : !HL.horsLigne);
+      if (horsLigne) b.title = HL.force ? 'Hors ligne choisi : la copie de cet appareil est utilisée' : HL.horsLigne ? 'Réseau perdu : hors ligne automatique' : 'Travailler sans serveur, sur la copie de cet appareil';
+    });
+  }
+  async function choisirMode(mode) {
+    if (mode === 'hors_ligne') {
+      if (HL.force) return;
+      HL.force = true; HL.horsLigne = true;
+      try { localStorage.setItem('tinor_mode_hors_ligne', '1'); } catch {}
+      hlMajAffichage();
+      if (TOKEN) notifier('Hors ligne : vous travaillez sur la copie de cet appareil ; les opérations seront envoyées en repassant « En ligne ».', 'info');
+      return;
+    }
+    const etaitForce = HL.force;
+    HL.force = false;
+    try { localStorage.removeItem('tinor_mode_hors_ligne'); } catch {}
+    majBoutonMode();
+    if (!TOKEN) { HL.horsLigne = false; hlMajAffichage(); return; } // écran de connexion : la connexion se fera en ligne
+    if (!(await hlServeurJoignable())) {
+      HL.horsLigne = true; hlMajAffichage();
+      notifier(await diagnostiquerServeur(API_BASE) || 'Serveur injoignable : TinOR reste hors ligne et réessaiera tout seul.', 'erreur');
+      return;
+    }
+    if (HL.reconnexion && !(await hlReconnexionSilencieuse())) { HL.horsLigne = false; hlMajAffichage(); notifier('Serveur joignable, mais reconnectez-vous pour envoyer les opérations.', 'erreur'); return; }
+    HL.horsLigne = false;
+    if (etaitForce) notifier('En ligne : envoi des opérations en attente puis mise à jour des données.', 'succes');
+    await hlSynchroniser({ recharger: true, manuel: true });
+    hlMajAffichage();
+  }
+  document.querySelectorAll('.modeConnexion').forEach(g => g.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mode]'); if (b) choisirMode(b.dataset.mode);
+  }));
+
   // ---------- Affichage : bandeau + écran Synchronisation ----------
   async function hlMajAffichage() {
     const ops = await hlOps();
@@ -6739,12 +6813,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       texte.textContent = {
         synchro: '🔄 Synchronisation en cours…',
         corriger: `⚠ ${aCorriger} opération(s) hors ligne à corriger`,
-        horsligne: `📡 Hors ligne — vous pouvez continuer à travailler${dateCopie}`,
+        horsligne: HL.force ? `📴 Non connecté (choisi) — travail sur la copie de cet appareil${dateCopie}` : `📡 Hors ligne — vous pouvez continuer à travailler${dateCopie}`,
         reconnexion: '🔑 Reconnectez-vous pour envoyer les opérations en attente',
         attente: '⏳ Opérations en attente d\'envoi',
       }[etat] || '';
       compteur.textContent = attente ? `${attente} en attente d'envoi · Voir ›` : 'Voir ›';
     }
+    majBoutonMode();
     const badge = document.getElementById('syncBadge');
     if (badge) { badge.textContent = aCorriger || attente || ''; badge.style.display = (aCorriger || attente) ? '' : 'none'; badge.style.background = aCorriger ? 'var(--danger)' : 'var(--warn)'; }
     if (document.getElementById('view-synchro')?.classList.contains('active')) renderSynchro();
@@ -6896,10 +6971,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
 
   // Retour du réseau : signal du navigateur + vérification régulière (le signal n'est pas fiable sur téléphone).
-  window.addEventListener('online', () => { if (TOKEN) hlSynchroniser({ recharger: true }); });
+  window.addEventListener('online', () => { if (TOKEN && !HL.force) hlSynchroniser({ recharger: true }); });
   window.addEventListener('offline', () => hlPasserHorsLigne());
   setInterval(async () => {
-    if (!TOKEN || HL.synchroEnCours) return;
+    if (!TOKEN || HL.synchroEnCours || HL.force) return;
     const ops = await hlOps();
     if (HL.horsLigne || ops.some(o => o.statut === 'EN_ATTENTE')) {
       if (await hlServeurJoignable()) {
@@ -6962,6 +7037,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (lot.origine === 'PRESSE') return 'vrac';
     if (lot.origine === 'FILTRATION') return 'filtre';
     if (lot.origine === 'CONDITIONNEMENT' || lot.origine === 'PRODUCTION_RECETTE') return 'conditionne';
+    if (lot.origine === 'REPRISE') { // stock repris à la mise en route : classé selon son étape d'origine
+      let etape = null;
+      try { etape = (typeof lot.champs_perso === 'string' ? JSON.parse(lot.champs_perso) : lot.champs_perso || {}).etape_reprise; } catch {}
+      const parEtape = { MP: 'matiere', PRESSE: 'vrac', FILTRATION: 'filtre', CONDITIONNEMENT: 'conditionne' }[etape];
+      if (parEtape) return parEtape;
+      if (p.type_article === 'MATIERE_PREMIERE') return 'matiere';
+      if (p.format_id) return 'conditionne';
+      return nomFiltre(p.nom) ? 'filtre' : 'vrac';
+    }
     if (lot.origine === 'ACHAT') {
       if (p.type_article === 'MATIERE_PREMIERE') return 'matiere';
       return p.format_id ? 'conditionne' : 'vrac'; // acheté déjà conditionné vs acheté en gros
@@ -7066,61 +7150,115 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return m ? parseFloat(m[0]) : 0;
   }
 
+  // Répartition : une ligne par huile ; Vrac (L) · Filtré (L) · chaque format conditionné
+  // (unités et litres = unités × contenance) · Total conditionné · Total ; ligne Total en bas
+  // et quatre totaux au-dessus. Litres pour les formats en ml, kg pour les formats en g.
+  let REPARTITION = null; // dernière répartition calculée (exports, clic sur une case)
+  const fmtQ = (n) => Number(n || 0).toLocaleString('fr-TN', { minimumFractionDigits: 1, maximumFractionDigits: 3 });
+  function contenanceLitres(p) {
+    const f = p.format_id ? REF_DATA.formats.find(x => x.id === p.format_id) : null;
+    if (!f) return null;
+    if (f.volume) return Number(f.volume) / 1000;
+    if (f.poids) return Number(f.poids) / 1000;
+    return null;
+  }
+  const uniteFormat = (p) => { const f = p.format_id ? REF_DATA.formats.find(x => x.id === p.format_id) : null; return f && !f.volume && f.poids ? 'kg' : 'L'; };
   function renderStockRepartitionPivot() {
     const lots = stockFilteredLots().filter(l => ['vrac', 'filtre', 'conditionne'].includes(categorieStock(l)));
-    // Regrouper par clé de famille FIABLE (produit_source_id si déclaré),
-    // pas par nom — familles -> format -> { quantite, unite }
-    const familles = new Map(); // key -> { displayName, formats: Map }
+    const huiles = new Map(); // clé d'huile → { nom, vrac, filtre, formats: Map(label → {u, l, lots}), lotsVrac, lotsFiltre, unite }
+    const formats = new Map(); // label → contenance (pour le tri)
     for (const l of lots) {
       const p = APP_DATA.produits.find(x => x.id === l.produit_id);
       if (!p) continue;
-      const key = familleKey(p);
-      const fmt = formatLabel(p);
-      if (!familles.has(key)) familles.set(key, { displayName: familleDisplayName(p), formats: new Map() });
-      const entry = familles.get(key);
-      const prev = entry.formats.get(fmt) || { quantite: 0, unite: p.format_id ? 'u' : (p.unite_symbole || '') };
-      prev.quantite += Number(l.quantite_actuelle);
-      entry.formats.set(fmt, prev);
+      const source = p.produit_source_id ? APP_DATA.produits.find(x => x.id === p.produit_source_id) : null;
+      const huile = /huile/i.test(p.nom) || /huile/i.test(source?.nom || '');
+      const cle = (huile ? '' : 'autre:') + (cleHuileGen(p.nom) || familleKey(p));
+      if (!huiles.has(cle)) huiles.set(cle, { nom: '', huile, vrac: 0, filtre: 0, formats: new Map(), lotsVrac: [], lotsFiltre: [], unite: '' });
+      const h = huiles.get(cle);
+      const q = Number(l.quantite_actuelle);
+      const cat = categorieStock(l);
+      if (cat === 'conditionne') {
+        const label = p.format_id ? formatLabel(p) : 'Sans format';
+        const c = contenanceLitres(p);
+        formats.set(label, c ?? 0);
+        const cell = h.formats.get(label) || { u: 0, l: 0, convertible: true, lots: [], unite: uniteFormat(p) };
+        cell.u += q; if (c == null) cell.convertible = false; else cell.l += q * c;
+        cell.lots.push(l); h.formats.set(label, cell);
+        if (!h.nom) h.nom = familleDisplayName(p);
+      } else {
+        if (cat === 'vrac') { h.vrac += q; h.lotsVrac.push(l); } else { h.filtre += q; h.lotsFiltre.push(l); }
+        h.unite = h.unite || p.unite_symbole || 'L';
+        if (!h.nom || cat === 'vrac') h.nom = baseNomHuile(p.nom) || familleDisplayName(p);
+      }
     }
-
+    const kpis = document.getElementById('stockRepartitionKpis');
     const head = document.getElementById('stockRepartitionHead');
     const body = document.getElementById('stockRepartitionBody');
-    if (!familles.size) {
-      head.innerHTML = '<th>Produit</th>';
+    if (!huiles.size) {
+      REPARTITION = null;
+      kpis.innerHTML = '';
+      head.innerHTML = '<th>Huile</th>';
       body.innerHTML = `<tr><td class="rowMeta" style="text-align:center; padding:22px;">Aucune donnée pour ce filtre.</td></tr>`;
       return;
     }
-
-    // Colonnes = tous les formats rencontrés, triés (petit -> grand, Vrac en dernier)
-    const allFormats = [...new Set([...familles.values()].flatMap(e => [...e.formats.keys()]))]
-      .sort((a, b) => formatSortKey(a) - formatSortKey(b));
-
-    head.innerHTML = '<th>Produit</th>' + allFormats.map(f => `<th class="num">${f}</th>`).join('') + '<th class="num">Total (équiv.)</th>';
-    body.innerHTML = [...familles.values()].sort((a, b) => a.displayName.localeCompare(b.displayName)).map(({ displayName, formats: fmts }) => {
-      // Total en équivalent volume/poids (pas une simple addition de colonnes
-      // hétérogènes) : le Vrac donne l'unité de référence (L ou kg), chaque
-      // colonne de pièces conditionnées est convertie via son format
-      // (nb unités × contenance) avant d'être ajoutée — ex: 500 u × 10 ml = 5 L.
-      const vracCell = fmts.get('Vrac');
-      const uniteBase = vracCell ? vracCell.unite : null;
-      let total = vracCell ? Number(vracCell.quantite) : 0;
-      let totalCalculable = true;
-      const cells = allFormats.map(f => {
-        const cell = fmts.get(f);
-        if (!cell) return '<td class="num rowMeta">—</td>';
-        if (f !== 'Vrac') {
-          const format = REF_DATA.formats.find(fmt => (fmt.code || fmt.nom) === f);
-          if (format && format.volume) total += cell.quantite * format.volume / 1000;
-          else if (format && format.poids) total += cell.quantite * format.poids / 1000;
-          else totalCalculable = false; // format inconnu : on ne peut pas convertir cette colonne
-        }
-        return `<td class="num">${cell.quantite}${cell.unite ? ' ' + cell.unite : ''}</td>`;
-      }).join('');
-      const totalTxt = totalCalculable
-        ? `${total.toLocaleString('fr-TN', {maximumFractionDigits:3})}${uniteBase ? ' ' + uniteBase : ''}`
-        : '—';
-      return `<tr><td>${displayName}</td>${cells}<td class="num" style="font-weight:600;">${totalTxt}</td></tr>`;
-    }).join('');
+    const cols = [...formats.entries()].sort((x, y) => x[1] - y[1]).map(([label]) => label);
+    const toutes = [...huiles.values()].sort((x, y) => x.nom.localeCompare(y.nom)).map(h => {
+      const cond = cols.reduce((t, c) => t + (h.formats.get(c)?.l || 0), 0);
+      return { ...h, cond, total: h.vrac + h.filtre + cond };
+    });
+    // Les produits qui ne sont pas de l'huile (savons, pâtes…) sont listés à part, hors totaux.
+    const lignes = [...toutes.filter(h => h.huile), ...toutes.filter(h => !h.huile)];
+    const tot = { vrac: 0, filtre: 0, cond: 0, total: 0, unites: 0, formats: Object.fromEntries(cols.map(c => [c, { u: 0, l: 0 }])) };
+    for (const h of lignes.filter(h => h.huile)) {
+      tot.vrac += h.vrac; tot.filtre += h.filtre; tot.cond += h.cond; tot.total += h.total;
+      cols.forEach(c => { const x = h.formats.get(c); if (x) { tot.formats[c].u += x.u; tot.formats[c].l += x.l; tot.unites += x.u; } });
+    }
+    const u = lignes.find(h => h.huile && h.unite)?.unite || 'L';
+    REPARTITION = { lignes, cols, tot, u };
+    kpis.innerHTML = [['Total vrac', `${fmtQ(tot.vrac)} ${u}`, 'huile pressée, non filtrée'], ['Total filtré', `${fmtQ(tot.filtre)} ${u}`, 'prête à conditionner'],
+      ['Total conditionné', `${fmtQ(tot.cond)} ${u}`, `${tot.unites.toLocaleString('fr-TN')} unité(s) en flacons`], ['Total huile', `${fmtQ(tot.total)} ${u}`, 'vrac + filtré + conditionné']]
+      .map(([t, v, d]) => `<div class="repKpi"><small>${t}</small><b>${v}</b><span>${d}</span></div>`).join('');
+    head.parentElement.innerHTML = `<tr id="stockRepartitionHead"><th rowspan="2">Huile</th><th class="num" rowspan="2">Vrac</th><th class="num" rowspan="2">Filtré</th>
+        ${cols.length ? `<th class="grp" colspan="${cols.length + 1}">Conditionné — unités · ${u}</th>` : ''}<th class="num" rowspan="2">Total</th></tr>
+      ${cols.length ? `<tr>${cols.map(c => `<th class="num">${esc(c)}</th>`).join('')}<th class="num">= Total cond.</th></tr>` : ''}`;
+    const caseLots = (i, type, c) => ` class="num repCase" data-i="${i}" data-type="${type}"${c ? ` data-col="${esc(c)}"` : ''}`;
+    const ligneHtml = (h, i) => { const uh = h.huile ? u : (h.unite || ''); const uf = (x) => h.huile ? u : x.unite; return `<tr${h.huile ? '' : ' class="repAutre"'}>
+        <td><b>${esc(h.nom)}</b></td>
+        <td${h.vrac ? caseLots(i, 'vrac') : ' class="num rowMeta"'}>${h.vrac ? `${fmtQ(h.vrac)} ${uh}` : '—'}</td>
+        <td${h.filtre ? caseLots(i, 'filtre') : ' class="num rowMeta"'}>${h.filtre ? `${fmtQ(h.filtre)} ${uh}` : '—'}</td>
+        ${cols.map(c => { const x = h.formats.get(c); return x ? `<td${caseLots(i, 'format', c)}>${x.u.toLocaleString('fr-TN')} u<small>${x.convertible ? `${fmtQ(x.l)} ${uf(x)}` : 'contenance inconnue'}</small></td>` : '<td class="num rowMeta">—</td>'; }).join('')}
+        ${cols.length ? `<td class="num">${h.huile ? (h.cond ? `${fmtQ(h.cond)} ${u}` : '—') : '<span class="rowMeta">hors total</span>'}</td>` : ''}
+        <td class="num">${h.huile ? `<b>${fmtQ(h.total)} ${u}</b>` : '<span class="rowMeta">hors total</span>'}</td></tr>`; };
+    const nbHuiles = lignes.filter(h => h.huile).length;
+    document.getElementById('stockRepartitionBody').innerHTML = lignes.slice(0, nbHuiles).map(ligneHtml).join('') + `
+      <tr class="repTotal"><td>Total</td><td class="num">${fmtQ(tot.vrac)} ${u}</td><td class="num">${fmtQ(tot.filtre)} ${u}</td>
+        ${cols.map(c => tot.formats[c].u ? `<td class="num">${tot.formats[c].u.toLocaleString('fr-TN')} u<small>${fmtQ(tot.formats[c].l)} ${u}</small></td>` : '<td class="num">—</td>').join('')}
+        ${cols.length ? `<td class="num">${fmtQ(tot.cond)} ${u}</td>` : ''}<td class="num">${fmtQ(tot.total)} ${u}</td></tr>` +
+      (lignes.length > nbHuiles ? `<tr class="repSection"><td colspan="${cols.length + (cols.length ? 5 : 4)}">Autres produits (pas de l'huile) — non comptés dans les totaux</td></tr>` +
+        lignes.slice(nbHuiles).map((h, k) => ligneHtml(h, nbHuiles + k)).join('') : '');
+  }
+  // Clic sur une case : les lots qui la composent (→ répartition du lot par emplacement).
+  document.getElementById('stockRepartitionTable').addEventListener('click', (e) => {
+    const td = e.target.closest('td.repCase'); if (!td || !REPARTITION) return;
+    e.stopPropagation();
+    const h = REPARTITION.lignes[Number(td.dataset.i)];
+    const lots = td.dataset.type === 'vrac' ? h.lotsVrac : td.dataset.type === 'filtre' ? h.lotsFiltre : (h.formats.get(td.dataset.col)?.lots || []);
+    const r = td.getBoundingClientRect();
+    afficherMenuContextuel({ preventDefault() {}, clientX: r.left, clientY: r.bottom + 4 },
+      lots.map(l => ({ label: `${l.numero_lot} — ${fmtQ(l.quantite_actuelle)} ${l.unite_symbole || ''} · ${esc(l.produit_nom || '')}`, action: () => openRepartitionModal(l.numero_lot) })));
+  });
+  // Export de la répartition : colonnes à plat (unités et litres séparés), ligne Total comprise.
+  function exportRepartition() {
+    if (!REPARTITION) return { headers: [], rows: [] };
+    const { lignes, cols, tot, u } = REPARTITION;
+    const headers = [['huile', 'Huile'], ['vrac', `Vrac (${u})`], ['filtre', `Filtré (${u})`],
+      ...cols.flatMap((c, k) => [[`fu${k}`, `${c} (u)`], [`fl${k}`, `${c} (${u})`]]), ['cond', `Total conditionné (${u})`], ['total', `Total (${u})`]].map(([key, label]) => ({ key, label }));
+    const ligne = (nom, vrac, filtre, f, cond, total) => Object.assign({ huile: nom, vrac: fmtQ(vrac), filtre: fmtQ(filtre), cond: fmtQ(cond), total: fmtQ(total) },
+      ...cols.map((c, k) => ({ [`fu${k}`]: f(c) ? f(c).u.toLocaleString('fr-TN') : '—', [`fl${k}`]: f(c) ? fmtQ(f(c).l) : '—' })));
+    const rows = lignes.filter(h => h.huile).map(h => ligne(h.nom, h.vrac, h.filtre, (c) => h.formats.get(c), h.cond, h.total));
+    rows.push(ligne('TOTAL HUILE', tot.vrac, tot.filtre, (c) => tot.formats[c], tot.cond, tot.total));
+    for (const h of lignes.filter(h => !h.huile)) rows.push({ ...ligne(`${h.nom} (hors huile)`, h.vrac, h.filtre, (c) => h.formats.get(c), 0, 0), cond: 'hors total', total: 'hors total' });
+    return { headers, rows };
   }
 
   function renderStockAll() {
@@ -8868,7 +9006,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function stockExporter(format) {
     const ongletActif = document.querySelector('.stockTab.active')?.dataset.tab || 'matiere';
     const nomOnglet = { matiere: 'Matière première', vrac: 'Vrac', filtre: 'Filtré', conditionne: 'Conditionné', emballage: 'Emballage', consommables: 'Consommable', repartition: 'Répartition' }[ongletActif] || ongletActif;
-    const { headers, rows } = extraireTableauVisible(`#stockPanel-${ongletActif}`);
+    const { headers, rows } = ongletActif === 'repartition' ? exportRepartition() : extraireTableauVisible(`#stockPanel-${ongletActif}`);
     telechargerExportGenerique(`Stock — ${nomOnglet}`, `Onglet : ${nomOnglet}`, headers, rows, format, `stock_${ongletActif}`);
   }
   document.getElementById('stockExportDocxBtn').addEventListener('click', () => stockExporter('docx'));
