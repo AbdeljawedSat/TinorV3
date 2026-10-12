@@ -27,7 +27,7 @@ const PREFIXE_ORIGINE = {
 };
 
 // ---------- Numérotation « Jardins de Jerba » (protocole maison) ----------
-//   Matière première : n° du lot fournisseur, tel quel           GJ01/2023 · 212
+//   Matière première : n° du lot fournisseur, tel quel           GJ01/2023 · 2312
 //   Presse           : XX-lotMP-AAAAMMJJH (XX = n° de pressage)  02-GJ01/2023-20230225H
 //   Filtration       : même XX et lot MP, date de filtration      02-GJ01/2023-20241230
 //   Produit fini     : yy x1x1 x2x2 (yy = n° du lot fini, repart  090123

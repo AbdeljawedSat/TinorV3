@@ -17,11 +17,11 @@ const { api, login, check } = require('./api');
 
     console.log('AK. Graines : le n° de lot est celui du fournisseur');
     const rec = await post('/receptions', { fournisseur_id: fourn.id, date_reception: '2023-01-05', local_id: local.id,
-      lignes: [{ produit_id: graine.id, quantite: 100, lot_fournisseur: 'GJ01/2023' }, { produit_id: graine.id, quantite: 80, lot_fournisseur: '212' }] });
+      lignes: [{ produit_id: graine.id, quantite: 100, lot_fournisseur: 'GJ01/2023' }, { produit_id: graine.id, quantite: 80, lot_fournisseur: '2312' }] });
     const [mpA, mpB] = rec.data.lignes;
-    check(mpA.numero_lot === 'GJ01/2023' && mpB.numero_lot === '212', `lots de graines : ${mpA.numero_lot}, ${mpB.numero_lot}`);
-    const rec2 = await post('/receptions', { fournisseur_id: fourn.id, date_reception: '2023-01-06', local_id: local.id, lignes: [{ produit_id: graine.id, quantite: 5, lot_fournisseur: '212' }] });
-    check(rec2.data.lignes[0].numero_lot === '212-2', `même lot fournisseur reçu deux fois → ${rec2.data.lignes[0].numero_lot}`);
+    check(mpA.numero_lot === 'GJ01/2023' && mpB.numero_lot === '2312', `lots de graines : ${mpA.numero_lot}, ${mpB.numero_lot}`);
+    const rec2 = await post('/receptions', { fournisseur_id: fourn.id, date_reception: '2023-01-06', local_id: local.id, lignes: [{ produit_id: graine.id, quantite: 5, lot_fournisseur: '2312' }] });
+    check(rec2.data.lignes[0].numero_lot === '2312-2', `même lot fournisseur reçu deux fois → ${rec2.data.lignes[0].numero_lot}`);
 
     console.log('AL. Presse : XX-lotMP-AAAAMMJJH, XX continue toujours');
     const presser = (date, sources) => post('/presse', { date, sources, sorties: [{ produit_id: vrac.id, quantite_produite: 20, quantite_tourteau: 30 }] });
@@ -31,7 +31,7 @@ const { api, login, check } = require('./api');
     check(/^\d{2,}-GJ01\/2023-20230225H$/.test(n1), `pressage → ${n1}`);
     const p2 = await presser('2023-03-10', [{ lot_id: mpB.lot_id, quantite: 50 }, { lot_id: mpA.lot_id, quantite: 10 }]);
     const n2 = p2.data.lots_presse[0].numero_lot;
-    check(n2 === `${String(xx + 1).padStart(2, '0')}-212-20230310H`, `2 lots de graines → lot principal seulement (212 : 50 kg) : ${n2}`);
+    check(n2 === `${String(xx + 1).padStart(2, '0')}-2312-20230310H`, `2 lots de graines → lot principal seulement (2312 : 50 kg) : ${n2}`);
 
     console.log('AM. Filtration : même XX et lot MP, date de filtration, sans H');
     const filtrer = (lp, date) => post('/filtration', { date, produit_id: filtree.id, quantite_produite: 5, quantite_dechet: 1, sources: [{ lot_presse_id: lp.id, quantite_utilisee: 6 }] });
@@ -55,7 +55,7 @@ const { api, login, check } = require('./api');
     console.log('AO. Traçabilité du flacon jusqu\'aux deux lots de graines');
     const t = (await api(`/lots/${encodeURIComponent(c1.data.numero_lot)}/tracabilite`)).data;
     const amont = t.ascendants.map(a => a.numero_lot);
-    check(['GJ01/2023', '212'].every(n => amont.includes(n)) && amont.includes(f1.data.numero_lot) && amont.includes(n2), `amont : ${amont.join(', ')}`);
+    check(['GJ01/2023', '2312'].every(n => amont.includes(n)) && amont.includes(f1.data.numero_lot) && amont.includes(n2), `amont : ${amont.join(', ')}`);
   } finally {
     await regler(reglages.lot_format_style || 'code_origine_seq');
   }

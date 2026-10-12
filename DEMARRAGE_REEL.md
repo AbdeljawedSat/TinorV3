@@ -49,7 +49,7 @@ New-NetFirewallRule -DisplayName "TinOR 3001-3002" -Direction Inbound -Protocol 
 
 | Étape | Règle | Exemple |
 |---|---|---|
-| Pépins (matière première) | n° de lot du fournisseur, saisi à la réception | `GJ01/2023`, `212` |
+| Pépins (matière première) | n° de lot du fournisseur, saisi à la réception | `GJ01/2023`, `2312`, `2313`, `2314` |
 | Presse | `XX-lotMP-AAAAMMJJH` (XX = n° de pressage, ne repart jamais à zéro) | `02-GJ01/2023-20230225H` |
 | Filtration | même XX et lot MP, date de filtration, sans « H » | `02-GJ01/2023-20241230` |
 | Flacons | `yy` + `x1x1` + `x2x2` (yy repart à 01 chaque année ; x2x2 = x1x1 sans mélange) | `090123`, `100101` |
