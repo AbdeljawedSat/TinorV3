@@ -254,6 +254,12 @@ async function miseAJourLots(conn, journal) {
     await conn.query(SQL_REPRISES);
     journal('✓ Mise à jour : table des reprises de stock créée.');
   }
+  // V3.3 — yy des lots finis : un seul compteur qui continue d'une année à l'autre (lot_jj_fini).
+  const [yy] = await conn.query("SELECT MAX(`last_value`) AS v, SUM(name = 'lot_jj_fini') AS deja FROM sequences WHERE name = 'lot_jj_fini' OR name LIKE 'lot_jj_fini\\_%'");
+  if (yy[0].v != null && !Number(yy[0].deja)) {
+    await conn.query("INSERT INTO sequences (name, `last_value`) VALUES ('lot_jj_fini', ?)", [yy[0].v]);
+    journal(`✓ Mise à jour : compteur yy des lots finis continu (repart après ${yy[0].v}).`);
+  }
   if (!(await colonneExiste(conn, 'lots', 'reprise_id'))) {
     await conn.query('ALTER TABLE lots ADD COLUMN reprise_id INT NULL, ADD INDEX idx_lots_reprise (reprise_id)');
     journal('✓ Mise à jour : lots.reprise_id ajoutée.');

@@ -2,7 +2,7 @@
 // application (Android : « Ajouter à l'écran d'accueil ») et de l'ouvrir sans
 // réseau. Les appels à l'API (/api/...) ne sont JAMAIS mis en cache : les
 // données affichées viennent toujours du serveur.
-const CACHE = 'tinor-console-v1';
+const CACHE = 'tinor-console-v2';
 const FICHIERS = ['tinor_admin.html', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -20,7 +20,7 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/api/')) return;
   // Réseau d'abord (toujours la dernière version de la console), cache en secours hors ligne.
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then(rep => { const copie = rep.clone(); caches.open(CACHE).then(c => c.put(e.request, copie)); return rep; })
       .catch(() => caches.match(e.request).then(r => r || caches.match('tinor_admin.html')))
   );

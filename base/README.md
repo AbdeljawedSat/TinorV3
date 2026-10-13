@@ -4,7 +4,8 @@
 |---|---|
 | `tinor_v3_vierge.sql` | Base prête à l'emploi : 45 tables, données de référence (unités, catégories, formats, local, structure des lots, paramètres) et compte **admin / changeme** |
 | `tinor_v3_reinitialiser_demo.sql` | Pour une base **déjà installée** : **efface le contenu** des 45 tables puis charge les données de démonstration (structure inchangée) |
-| `tinor_reel_donnees.sql` | **Remplissage de `tinor_reel`** avec l'historique des registres papier (pépins → presse → filtration → flacons → ventes) ; voir `RAPPORT_IMPORT_REGISTRES.md` |
+| `import_registres_jj.sql` | Historique des registres papier dans `tinor_reel` (graines → presse → filtration → mélange → flacons → sorties) |
+| `import_ventes_jj.sql` | **À lancer après** `import_registres_jj.sql` : bons de commande, bons de livraison, factures et paiements des 22 ventes, prix de vente et remise 19 % |
 | `tinor_v3_demo.sql` | La même + un jeu de données d'exemple complet (réceptions, presse, filtration, conditionnement, commandes, factures, paiements, certificat bio) |
 
 **Structure identique à la version initiale** (`tinor_erp_v3_schema.sql` de l'archive d'origine) :

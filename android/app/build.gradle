@@ -4,10 +4,18 @@ plugins {
 
 // La console embarquée est copiée depuis ../admin à chaque build : une seule
 // source à maintenir pour le web et pour Android.
+// Version de la console = 10 premiers caractères du SHA-1 du fichier (comme le serveur,
+// src/app.js) : la console signale « application pas à jour » si le serveur en a une autre.
 def consoleDir = layout.buildDirectory.dir('generated/console')
+def consoleVersion = java.security.MessageDigest.getInstance('SHA-1')
+    .digest(rootProject.file('../admin/tinor_admin.html').bytes).encodeHex().toString().substring(0, 10)
 def copierConsole = tasks.register('copierConsole', Sync) {
+    inputs.property('consoleVersion', consoleVersion)
     from(rootProject.file('../admin')) {
         include 'tinor_admin.html', 'manifest.json', 'icon-192.png', 'icon-512.png'
+        filesMatching('tinor_admin.html') {
+            filter { String ligne -> ligne.replace("'__TINOR_CONSOLE__'", "'" + consoleVersion + "'") }
+        }
     }
     into consoleDir
 }

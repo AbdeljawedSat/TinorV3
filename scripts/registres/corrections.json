@@ -1,0 +1,60 @@
+{
+  "_lisez_moi": "Corrections des registres Jardins de Jerba que le programme ne peut pas deviner. Chaque correction apparaît dans le rapport (feuille Anomalies).",
+  "presse": {
+    "08-2312-20240210H": "08-2313-20240210H"
+  },
+  "melange": {},
+  "ventes": [
+    {
+      "motif": "Vente n°6 notée « 6×30 + 2×10 » mais le lot 082415 n'a été conditionné en 30 ml que 4 flacons (sortis le 04/05/2025) et 20 × 10 ml le 05/08/2025 pour 200 ml : vente n°6 = 20 × 10 ml (200 ml, même total)",
+      "remplacer": {
+        "ligne": 8,
+        "lot": "082415",
+        "par": [
+          {
+            "lot": "082415",
+            "ml": 10,
+            "unites": 20
+          }
+        ]
+      }
+    },
+    {
+      "motif": "Sortie de 120 ml (4 × 30 ml) du lot 082415 le 04/05/2025 au registre de mélange, absente de la feuille mouvement : vente ajoutée (client non noté)",
+      "ajouter": [
+        {
+          "date": "2025-05-04",
+          "client": "Client non noté (registre mélange)",
+          "lot": "082415",
+          "ml": 30,
+          "unites": 4
+        }
+      ]
+    }
+  ],
+  "fournisseurs": [
+    {
+      "nom": "Eco-Land",
+      "localisation": "Kesra, Tunisie",
+      "lots": [
+        "GJ01/2023"
+      ]
+    },
+    {
+      "nom": "Napoliss",
+      "localisation": "Sousse, Tunisie",
+      "lots": [
+        "2312",
+        "2313",
+        "2314"
+      ]
+    }
+  ],
+  "quantites_recues_kg": {
+    "_lisez_moi": "Quantité de pépins reçue par lot fournisseur (kg). Sans valeur : quantité reçue = quantité pressée (stock 0).",
+    "GJ01/2023": 400,
+    "2312": 200,
+    "2313": 150,
+    "2314": 50
+  }
+}

@@ -440,3 +440,74 @@ Voir **DEMARRAGE_REEL.md** (mode d'emploi pas à pas).
   « Lot fournisseur » ajouté aux lignes de réception.
 - **Pépins** reconnus comme graines : « Pépins de figue de barbarie » ↔ « Huile de pépins de
   figue de barbarie — Vrac / Filtrée / Flacon ».
+
+## Bouton En ligne / Hors ligne et répartition détaillée du stock (V3.3)
+
+- **Bouton « En ligne / Hors ligne »** (en haut à droite et sur l'écran de connexion) : « Hors ligne » coupe tout appel au serveur ; le travail est enregistré sur l'appareil (numéros provisoires `…-HL-…`). Le choix est gardé après rechargement. « En ligne » vérifie le serveur, reconnecte et synchronise la file.
+- **Stock › Répartition** :
+  - une ligne par huile ; colonnes Vrac (L) et Filtré (L) séparées ;
+  - chaque format conditionné affiché en unités et converti en litres (unités × contenance : 240 × 30 ml = 7,2 L), puis « Total conditionné » et « Total » ;
+  - ligne **Total** en bas et 4 totaux au-dessus (vrac, filtré, conditionné, huile) ;
+  - un clic sur une case liste les lots qui la composent ;
+  - les produits qui ne sont pas de l'huile (savons…) sont listés à part, hors des totaux ;
+  - les exports Excel / Word / PDF reprennent la même grille.
+- Les lots repris (Reprise du stock) apparaissent dans les onglets Matière première / Vrac / Filtré / Conditionné selon leur étape.
+
+## Import des registres Excel Jardins de Jerba, avec l'historique (V3.3)
+
+Remplit la base avec les registres tenus sur Excel (presse, filtration, mélange, stock produit fini, mouvement), en gardant les n° de lot et les dates d'origine :
+
+```
+npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx"              (vérification : rien n'est écrit)
+npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import)
+```
+
+- La chaîne complète est créée : graines (lot fournisseur) → presse → filtration → mélange (lot fini `yy x1x1 x2x2`, en vrac) → flacons 10 / 30 ml (un lot par lot fini et par format, ex. `082415-10ML`) → ventes datées. Les pertes notées au registre (« 2 pert ») sont aussi enregistrées.
+- Les fautes de frappe sont corrigées automatiquement : JG01, minuscules, 0 de tête perdu par Excel, n° filtré différent du lot presse, source de mélange mal écrite. Les bouteilles de reste (55 ml, 1000 ml) ne sont pas comptées comme des flacons. Les cas que le programme ne peut pas deviner sont dans `scripts/registres/corrections.json`.
+- Chaque lancement produit le rapport `…_rapport_import.xlsx` : anomalies et correction appliquée, plan d'import, stock obtenu.
+- L'import se fait en une transaction (tout ou rien). Un lot déjà présent dans TinOR n'est ni recréé ni modifié, donc on peut relancer sans risque de doublon.
+- Les ventes sont des sorties de stock datées, avec le client en note. Aucune facture n'est créée, car le prix n'est pas au registre.
+- **Fournisseurs des graines** : ils sont réglés dans `scripts/registres/corrections.json`, partie `fournisseurs` (GJ01/2023 → Eco-Land, Kesra ; 2312, 2313, 2314 → Napoliss, Sousse). L'import crée chaque fournisseur avec son adresse, plus une réception par lot de graines (écran Achats › Réceptions MP). Chaque pressage déduit les kg de pépins du lot fournisseur utilisé.
+- **Quantités reçues** : elles se règlent dans `quantites_recues_kg` (ex. `"GJ01/2023": 500`), et le reste en stock = reçu − pressé. Sans valeur, la quantité reçue est égale à la quantité pressée, donc le stock vaut 0.
+
+## Étape « Mélange » : lots finis à la façon des registres (V3.3)
+
+- Nouvel écran **Production › Mélange (lot fini)**. On y choisit une ou deux huiles filtrées, avec leur quantité en ml.
+- TinOR donne le n° du lot fini `yy x1x1 x2x2` : yy est le compteur des lots finis, x1x1 et x2x2 sont les compteurs XX des deux huiles (x1x1 répété s'il n'y a qu'une huile). Exemple : `110409`.
+- **yy continue d'une année à l'autre** : il n'y a plus de retour à 01 en janvier. Après l'import des registres, le prochain lot fini commence par 11.
+- **Flacons** : on clique sur « Mettre en flacons » ou on choisit le lot fini comme source dans Conditionnement. Les flacons portent le n° du mélange + le format (`110409-10ML`, `110409-30ML`). Un nouveau conditionnement du même lot dans le même format s'ajoute au même lot de flacons.
+- La liste montre, pour chaque mélange, les huiles utilisées, la quantité mélangée, le reste à conditionner et les lots de flacons.
+- Le mélange fonctionne aussi hors ligne (file de synchronisation).
+- **Presse et filtration** : numérotation V3.3 inchangée (`XX-lotfournisseur-AAAAMMJJH` / `…-AAAAMMJJ`). Elle sera revue plus tard, quand le stock des registres sera écoulé.
+
+## Fenêtre toujours à jour (V3.3)
+
+- Le serveur sert la console avec sa version (empreinte du fichier) et sans cache non vérifié. `/api/health` donne aussi cette version (`console`).
+- **PC (navigateur)** : si la fenêtre ouverte est plus ancienne que celle du serveur, un bandeau bleu « Fenêtre pas à jour » apparaît. Le bouton « Mettre à jour » vide le cache et recharge la page.
+- **Téléphone (application Android)** : la console est embarquée dans l'APK. Si le serveur a une version plus récente, le bandeau « Application pas à jour » donne le lien de la dernière version (TinOR.apk sur GitHub). La compilation Android vérifie que l'APK porte la bonne version.
+- **Serveur pas redémarré** après `git pull` : un écran nouveau (ex. Mélange) l'indique, avec la marche à suivre (fermer la fenêtre noire, relancer TinOR.bat).
+
+## Import des registres en SQL (V3.3)
+
+- `base/import_registres_jj.sql` contient tout l'import des registres en SQL. Tout est dans un seul bloc, annulé en entier à la moindre erreur, donc sûr aussi avec `SOURCE` dans l'utilitaire de commande MariaDB (`USE tinor_reel;` puis `SOURCE C:/TinorV3/base/import_registres_jj.sql`). Il contient : fournisseurs, produits, lots, réceptions, pressages, filtrations, mélanges, conditionnements, mouvements et ventes datés. On l'exécute une fois dans la base RÉEL (HeidiSQL, phpMyAdmin ou `mysql`), quand `npm run importer:registres` n'est pas utilisable.
+- Il s'adapte à la base cible :
+  - les identifiants sont décalés après ceux existants ;
+  - produits et fournisseurs sont retrouvés par leur nom, ou créés s'ils manquent ;
+  - unités, catégorie, formats et local sont retrouvés par leur code ;
+  - les n° de réception et de mouvement suivent les compteurs de la base.
+- Tout se fait en une seule transaction. Si un lot des registres existe déjà, le script s'arrête sans rien modifier.
+- Pour le refaire après une correction du fichier Excel : faire l'import dans une base neuve, puis lancer `node scripts/registres-en-sql.js` (voir l'en-tête du script).
+
+## Documents de vente des registres (V3.3)
+
+- `base/import_ventes_jj.sql` s'exécute **après** `base/import_registres_jj.sql` (`USE tinor_reel;` puis `SOURCE C:/TinorV3/base/import_ventes_jj.sql`). Il crée, pour chacune des 22 sorties des registres, un **bon de commande** (BC-0001…), un **bon de livraison** (BL-…), une **facture** (FAC-…) et un **paiement en espèces**, à la date du registre, ainsi que les 16 clients.
+- Les sorties « VENTE » déjà importées sont rattachées à la commande : le stock n'est pas sorti une seconde fois.
+- Prix de détail : flacon 10 ml 24,7 DT, flacon 30 ml 76,5 DT, avec la remise « Remise 19 % » (soit 20,007 DT et 61,965 DT). TVA, FODEC et timbre suivent les paramètres. Total : 13 454,850 DT HT, 16 177,380 DT TTC. Ces prix sont ceux d'aujourd'hui : chaque vente est à corriger ensuite dans TinOR (prix, remise, client, type de client). La sortie du 04/05/2025 va au client « Client à identifier ».
+- Un seul bloc, annulé en entier à la moindre erreur ; il refuse de tourner si des commandes existent déjà.
+- Pour le régénérer : faire les registres dans une base neuve, puis `node scripts/ventes-en-sql.js base/import_ventes_jj.sql`.
+
+## Mise à jour en un double-clic (V3.3)
+
+- **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
+- **TinOR.bat** et **TinOR Test.bat** ouvrent la fenêtre dans le navigateur (http://localhost:3001 / 3002) dès que le serveur est prêt.
+- L'écran de connexion affiche « mise à jour du jj/mm/aaaa hh:mm (code) », d'après le dernier commit installé (`/api/health` → `mise_a_jour`).

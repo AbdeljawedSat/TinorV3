@@ -70,6 +70,10 @@ jobs:
           "$BT/apksigner" verify --print-certs "$GITHUB_WORKSPACE/TinOR.apk" | head -3
           "$BT/aapt2" dump badging "$GITHUB_WORKSPACE/TinOR.apk" | head -3
           unzip -l "$GITHUB_WORKSPACE/TinOR.apk" | grep -E "assets/(tinor_admin.html|tinor-android.js)"
+          # La console embarquée porte la version (empreinte) du fichier, comme celle servie par le serveur.
+          ATTENDU=$(sha1sum ../admin/tinor_admin.html | cut -c1-10)
+          unzip -p "$GITHUB_WORKSPACE/TinOR.apk" assets/tinor_admin.html | grep -q "CONSOLE_VERSION = '$ATTENDU'" || { echo "Console embarquée sans la version $ATTENDU"; exit 1; }
+          echo "Console version $ATTENDU"
 
       - uses: actions/upload-artifact@v4
         with:

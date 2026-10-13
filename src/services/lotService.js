@@ -23,17 +23,19 @@ const PREFIXE_ORIGINE = {
   CONDITIONNEMENT: 'PF',
   PRODUCTION_RECETTE: 'PR',
   INVENTAIRE: 'INV',
+  MELANGE: 'M',
   AUTRE: 'X',
 };
 
 // ---------- Numérotation « Jardins de Jerba » (protocole maison) ----------
-//   Matière première : n° du lot fournisseur, tel quel           GJ01/2023 · 212
+//   Matière première : n° du lot fournisseur, tel quel           GJ01/2023 · 2312
 //   Presse           : XX-lotMP-AAAAMMJJH (XX = n° de pressage)  02-GJ01/2023-20230225H
 //   Filtration       : même XX et lot MP, date de filtration      02-GJ01/2023-20241230
-//   Produit fini     : yy x1x1 x2x2 (yy = n° du lot fini, repart  090123
-//                      à 01 chaque année ; x1x1 / x2x2 = XX des deux huiles
-//                      mélangées, x1x1 répété s'il n'y a qu'une huile)
-// Compteurs dans `sequences` (lot_jj_presse ; lot_jj_fini_<année>) : la reprise du
+//   Lot fini (mélange): yy x1x1 x2x2 (yy = n° du lot fini, continue   090123
+//                      d'une année à l'autre ; x1x1 / x2x2 = XX des deux
+//                      huiles mélangées, x1x1 répété s'il n'y a qu'une huile)
+//   Flacons          : n° du mélange + format                      090123-10ML
+// Compteurs dans `sequences` (lot_jj_presse ; lot_jj_fini) : la reprise du
 // stock les remet après les plus grands numéros repris. Un numéro déjà pris reçoit
 // le suffixe -2, -3… Sans les informations nécessaires (pas de lot fournisseur,
 // source dans un autre format…), la numérotation standard s'applique.
@@ -59,14 +61,14 @@ async function numeroLibre(pool, base) {
   return numero;
 }
 // Met les compteurs Jardins de Jerba au-delà d'un numéro repris, selon son étape
-// (presse / filtration : XX ; produit fini : yy de l'année du lot).
-async function recalerCompteursJJ(pool, { numero, etape, date }) {
+// (presse / filtration : XX ; lot fini / mélange : yy, qui continue d'une année à l'autre).
+async function recalerCompteursJJ(pool, { numero, etape }) {
   if (etape === 'PRESSE' || etape === 'FILTRATION') {
     const p = RE_PRESSE_JJ.exec(numero) || RE_FILTRE_JJ.exec(numero);
     if (p) await compteurAuMoins(pool, 'lot_jj_presse', Number(p[1]));
-  } else if (etape === 'CONDITIONNEMENT' && date) {
+  } else if (etape === 'CONDITIONNEMENT' || etape === 'MELANGE') {
     const f = RE_FINI_JJ.exec(numero);
-    if (f) await compteurAuMoins(pool, `lot_jj_fini_${String(date).slice(0, 4)}`, Number(f[1]));
+    if (f) await compteurAuMoins(pool, 'lot_jj_fini', Number(f[1]));
   }
 }
 async function numeroJardinsJerba(pool, origine, ctx = {}) {
@@ -91,11 +93,10 @@ async function numeroJardinsJerba(pool, origine, ctx = {}) {
     const m = RE_PRESSE_JJ.exec(principal.numero);
     return m ? numeroLibre(pool, `${m[1]}-${m[2]}-${jourCompact(ctx.date)}`) : null;
   }
-  if (origine === 'CONDITIONNEMENT') {
+  if (origine === 'CONDITIONNEMENT' || origine === 'MELANGE') {
     const xs = sources.map(s => (/^(\d+)-/.exec(s.numero) || [])[1]).filter(Boolean);
     if (!xs.length) return null;
-    const yy = await compteurSuivant(pool, `lot_jj_fini_${jourCompact(ctx.date).slice(0, 4)}`);
-    return numeroLibre(pool, `${pad2(yy)}${pad2(xs[0])}${pad2(xs[1] || xs[0])}`);
+    return numeroLibre(pool, `${pad2(await compteurSuivant(pool, 'lot_jj_fini'))}${pad2(xs[0])}${pad2(xs[1] || xs[0])}`);
   }
   return null;
 }
@@ -164,8 +165,9 @@ async function decrementerLot(pool, lotId, quantite) {
 
 // Crée un lot générique + sa première entrée d'historique de statut. Renvoie l'id du lot.
 // numerotation : { date, sources: [{ lot_id, quantite }] } — utilisé par la numérotation Jardins de Jerba.
-async function createLot(pool, { produit_id, origine, quantite, employe_id, motif, extra = {}, numerotation = {} }) {
-  const numeroLot = await nextLotNumber(pool, produit_id, origine, { lot_fournisseur: extra.lot_fournisseur, ...numerotation });
+// numero (facultatif) : n° imposé (ex. flacons d'un mélange « 090123-10ML »).
+async function createLot(pool, { produit_id, origine, quantite, employe_id, motif, extra = {}, numerotation = {}, numero = null }) {
+  const numeroLot = numero || await nextLotNumber(pool, produit_id, origine, { lot_fournisseur: extra.lot_fournisseur, ...numerotation });
   const insertRes = await pool.query(
     `INSERT INTO lots
       (produit_id, numero_lot, origine, fournisseur_id, lot_fournisseur, certificat_bio_id, bio_status,
@@ -225,4 +227,4 @@ async function recordEntree(pool, { produitId, lotId, quantite, typeMouvement, e
 const LOT_DISPONIBLE = `statut = 'LIBERE' AND (date_expiration IS NULL OR date_expiration >= CURDATE())`;
 const ORDRE_FEFO = `(date_expiration IS NULL), date_expiration ASC, created_at ASC`;
 
-module.exports = { nextNumero, nextLotNumber, recalerCompteursJJ, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };
+module.exports = { nextNumero, nextLotNumber, numeroJardinsJerba, recalerCompteursJJ, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };

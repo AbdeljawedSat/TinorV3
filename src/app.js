@@ -3,6 +3,35 @@ const cors = require('cors');
 const { requireAuth } = require('./middleware/auth');
 const { idempotence } = require('./middleware/idempotence');
 
+// Console (admin/tinor_admin.html) : relue quand le fichier change (mise à jour par git pull).
+// version = 10 premiers caractères du SHA-1 du fichier, calculée de la même façon au build Android.
+const CONSOLE_FICHIER = require('path').join(__dirname, '..', 'admin', 'tinor_admin.html');
+let consoleEnCache = { mtime: 0 };
+function consoleActuelle() {
+  const fs = require('fs');
+  const mtime = fs.statSync(CONSOLE_FICHIER).mtimeMs;
+  if (mtime !== consoleEnCache.mtime) {
+    const brut = fs.readFileSync(CONSOLE_FICHIER);
+    const version = require('crypto').createHash('sha1').update(brut).digest('hex').slice(0, 10);
+    consoleEnCache = { mtime, version, html: brut.toString('utf8').replace("'__TINOR_CONSOLE__'", `'${version}'`) };
+  }
+  return consoleEnCache;
+}
+
+// Version installée (dernier commit git) : affichée sur l'écran de connexion pour vérifier
+// qu'une mise à jour est bien arrivée. null si git n'est pas disponible.
+let versionInstallee;
+function miseAJourInstallee() {
+  if (versionInstallee === undefined) {
+    try {
+      const [hash, date] = require('child_process').execFileSync('git', ['log', '-1', '--format=%h|%cI'],
+        { cwd: require('path').join(__dirname, '..'), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 3000 }).trim().split('|');
+      versionInstallee = hash ? { commit: hash, date } : null;
+    } catch { versionInstallee = null; }
+  }
+  return versionInstallee;
+}
+
 function createApp(pool) {
   const app = express();
   // Chrome / WebView récents : une page https (application Android) qui appelle
@@ -16,11 +45,22 @@ function createApp(pool) {
 
   // Console d'administration servie par l'API : https://<domaine>/ ouvre la
   // console, déjà reliée à cette API, et installable comme application.
-  app.use(express.static(require('path').join(__dirname, '..', 'admin'), { index: 'tinor_admin.html' }));
+  // La page est servie avec sa version (empreinte du fichier) : la console compare avec
+  // /api/health → « console » et signale une fenêtre pas à jour (cache du navigateur,
+  // application Android plus ancienne que le serveur). Jamais gardée en cache sans vérification.
+  app.get(['/', '/tinor_admin.html'], (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(consoleActuelle().html);
+  });
+  app.use(express.static(require('path').join(__dirname, '..', 'admin'), {
+    index: 'tinor_admin.html',
+    setHeaders: (res, fichier) => { if (/\.(html|js|json)$/.test(fichier)) res.set('Cache-Control', 'no-cache'); },
+  }));
 
   // version : génération d'API (détection par la console) ; release : numéro de la version livrée.
   app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version,
-    environnement: require('./env').environnement() })); // « TEST » → bandeau orange dans la console
+    environnement: require('./env').environnement(), // « TEST » → bandeau orange dans la console
+    console: (() => { try { return consoleActuelle().version; } catch { return null; } })(), mise_a_jour: miseAJourInstallee() }));
 
   app.use('/api/auth', require('./routes/auth')(pool));
   // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.
@@ -47,6 +87,7 @@ function createApp(pool) {
   app.use('/api/proformas', requireAuth, require('./routes/proformas')(pool));
   app.use('/api/presse', requireAuth, require('./routes/presse')(pool));
   app.use('/api/filtration', requireAuth, require('./routes/filtration')(pool));
+  app.use('/api/melanges', requireAuth, require('./routes/melanges')(pool));
   app.use('/api/conditionnement', requireAuth, require('./routes/conditionnement')(pool));
   app.use('/api/recettes', requireAuth, require('./routes/recettes')(pool));
   app.use('/api/ordres-production', requireAuth, require('./routes/ordresProduction')(pool));
