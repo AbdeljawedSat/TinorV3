@@ -50,17 +50,23 @@ async function main() {
 -- À exécuter UNE fois dans la base RÉEL (ex. tinor_reel), après avoir démarré
 -- TinOR au moins une fois avec la dernière version (tables à jour).
 -- Si un lot des registres existe déjà, le script s'arrête sans rien modifier.
+-- Tout est dans UN SEUL bloc : à la moindre erreur, tout est annulé (même avec
+-- « source » dans l'utilitaire de commande MariaDB, qui sinon continue après une erreur).
+--
+-- Utilitaire de commande MariaDB :
+--   mysql -u root -p --default-character-set=utf8mb4
+--   USE tinor_reel;
+--   SOURCE C:/TinorV3/base/import_registres_jj.sql
 -- Produit par scripts/registres-en-sql.js — ne pas modifier à la main.
 -- ============================================================================
 SET NAMES utf8mb4;
 
 DELIMITER //
 BEGIN NOT ATOMIC
-  IF EXISTS (SELECT 1 FROM lots WHERE numero_lot IN (${lots.map(l => esc(l.numero_lot)).join(', ')})) THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Import deja fait : des lots des registres existent deja dans la base. Rien n''est modifie.';
-  END IF;
-END //
-DELIMITER ;
+DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+IF EXISTS (SELECT 1 FROM lots WHERE numero_lot IN (${lots.map(l => esc(l.numero_lot)).join(', ')})) THEN
+  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Import deja fait : des lots des registres existent deja dans la base. Rien n''est modifie.';
+END IF;
 
 START TRANSACTION;
 `);
@@ -124,7 +130,14 @@ INSERT INTO sequences (name, \`last_value\`) VALUES ('mouvement_seq', @NM + ${mv
 ${seq.map(s => `INSERT INTO sequences (name, \`last_value\`) VALUES (${esc(s.name)}, ${s.last_value}) ON DUPLICATE KEY UPDATE \`last_value\` = GREATEST(\`last_value\`, ${s.last_value});`).join('\n')}
 
 COMMIT;
--- Fin : ${lots.length} lots importés.`);
+SELECT 'Import termine : ${lots.length} lots, ${(await q('SELECT COUNT(*) n FROM conditionnements'))[0].n} conditionnements, ${mvts.length} mouvements' AS resultat;
+END //
+DELIMITER ;
+
+-- Contrôle : stock par produit après l'import
+SELECT p.nom AS produit, ROUND(SUM(l.quantite_actuelle), 3) AS stock, u.symbole AS unite
+FROM lots l JOIN produits p ON p.id = l.produit_id JOIN unites u ON u.id = p.unite_id
+WHERE JSON_VALUE(l.champs_perso, '$.import_registres') IS NOT NULL GROUP BY p.id ORDER BY p.id;`);
   fs.writeFileSync(sortie, L.join('\n') + '\n');
   console.log(`✓ ${sortie} : ${lots.length} lots, ${mvts.length} mouvements, ${recs.length} réceptions.`);
   await c.end();

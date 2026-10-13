@@ -489,7 +489,7 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 
 ## Import des registres en SQL (V3.3)
 
-- `base/import_registres_jj.sql` contient tout l'import des registres en SQL : fournisseurs, produits, lots, réceptions, pressages, filtrations, mélanges, conditionnements, mouvements et ventes datés. On l'exécute une fois dans la base RÉEL (HeidiSQL, phpMyAdmin ou `mysql`), quand `npm run importer:registres` n'est pas utilisable.
+- `base/import_registres_jj.sql` contient tout l'import des registres en SQL. Tout est dans un seul bloc, annulé en entier à la moindre erreur, donc sûr aussi avec `SOURCE` dans l'utilitaire de commande MariaDB (`USE tinor_reel;` puis `SOURCE C:/TinorV3/base/import_registres_jj.sql`). Il contient : fournisseurs, produits, lots, réceptions, pressages, filtrations, mélanges, conditionnements, mouvements et ventes datés. On l'exécute une fois dans la base RÉEL (HeidiSQL, phpMyAdmin ou `mysql`), quand `npm run importer:registres` n'est pas utilisable.
 - Il s'adapte à la base cible :
   - les identifiants sont décalés après ceux existants ;
   - produits et fournisseurs sont retrouvés par leur nom, ou créés s'ils manquent ;
