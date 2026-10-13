@@ -498,6 +498,14 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Tout se fait en une seule transaction. Si un lot des registres existe déjà, le script s'arrête sans rien modifier.
 - Pour le refaire après une correction du fichier Excel : faire l'import dans une base neuve, puis lancer `node scripts/registres-en-sql.js` (voir l'en-tête du script).
 
+## Documents de vente des registres (V3.3)
+
+- `base/import_ventes_jj.sql` s'exécute **après** `base/import_registres_jj.sql` (`USE tinor_reel;` puis `SOURCE C:/TinorV3/base/import_ventes_jj.sql`). Il crée, pour chacune des 22 sorties des registres, un **bon de commande** (BC-0001…), un **bon de livraison** (BL-…), une **facture** (FAC-…) et un **paiement en espèces**, à la date du registre, ainsi que les 16 clients.
+- Les sorties « VENTE » déjà importées sont rattachées à la commande : le stock n'est pas sorti une seconde fois.
+- Prix de détail : flacon 10 ml 24,7 DT, flacon 30 ml 76,5 DT, avec la remise « Remise 19 % » (soit 20,007 DT et 61,965 DT). TVA, FODEC et timbre suivent les paramètres. Total : 13 454,850 DT HT, 16 177,380 DT TTC. Ces prix sont ceux d'aujourd'hui : chaque vente est à corriger ensuite dans TinOR (prix, remise, client, type de client). La sortie du 04/05/2025 va au client « Client à identifier ».
+- Un seul bloc, annulé en entier à la moindre erreur ; il refuse de tourner si des commandes existent déjà.
+- Pour le régénérer : faire les registres dans une base neuve, puis `node scripts/ventes-en-sql.js base/import_ventes_jj.sql`.
+
 ## Mise à jour en un double-clic (V3.3)
 
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
