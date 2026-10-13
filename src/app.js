@@ -18,6 +18,20 @@ function consoleActuelle() {
   return consoleEnCache;
 }
 
+// Version installée (dernier commit git) : affichée sur l'écran de connexion pour vérifier
+// qu'une mise à jour est bien arrivée. null si git n'est pas disponible.
+let versionInstallee;
+function miseAJourInstallee() {
+  if (versionInstallee === undefined) {
+    try {
+      const [hash, date] = require('child_process').execFileSync('git', ['log', '-1', '--format=%h|%cI'],
+        { cwd: require('path').join(__dirname, '..'), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 3000 }).trim().split('|');
+      versionInstallee = hash ? { commit: hash, date } : null;
+    } catch { versionInstallee = null; }
+  }
+  return versionInstallee;
+}
+
 function createApp(pool) {
   const app = express();
   // Chrome / WebView récents : une page https (application Android) qui appelle
@@ -46,7 +60,7 @@ function createApp(pool) {
   // version : génération d'API (détection par la console) ; release : numéro de la version livrée.
   app.get('/api/health', (req, res) => res.json({ ok: true, version: 'v3', release: require('../package.json').version,
     environnement: require('./env').environnement(), // « TEST » → bandeau orange dans la console
-    console: (() => { try { return consoleActuelle().version; } catch { return null; } })() }));
+    console: (() => { try { return consoleActuelle().version; } catch { return null; } })(), mise_a_jour: miseAJourInstallee() }));
 
   app.use('/api/auth', require('./routes/auth')(pool));
   // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.

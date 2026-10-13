@@ -66,3 +66,12 @@ stock, les compteurs repartent après les plus grands numéros repris.
   (ils appliquent eux-mêmes les mises à jour de la base).
 - Téléphone : changer d'adresse (…:3001 / …:3002) pour changer de version ; TinOR refuse de
   changer tant que des opérations faites hors ligne n'ont pas été envoyées à l'autre serveur.
+
+## Mettre TinOR à jour
+
+1. Double-cliquez sur **Mettre a jour TinOR.bat** dans `C:\TinorV3`. Il récupère la dernière version sur GitHub et installe les composants. Il affiche ensuite la version installée (date et code).
+2. Fermez la fenêtre noire de TinOR, puis relancez **TinOR.bat**. Le navigateur s'ouvre tout seul sur http://localhost:3001.
+3. Vérifiez la ligne « mise à jour du … » sur l'écran de connexion. Elle doit correspondre à la date affichée à l'étape 1.
+
+Vos données (base MariaDB), `.env`, `.env.test` et les sauvegardes ne sont jamais touchés par la mise à jour. Ouvrez toujours TinOR par l'adresse http://localhost:3001, jamais en double-cliquant sur un fichier `tinor_admin.html` : un fichier copié ailleurs ne se met jamais à jour.
+

@@ -848,7 +848,7 @@
       <div>
         <div id="loginEnvBadge"></div>
         <h2>TinOR — Connexion</h2>
-        <div class="sub">Console de gestion V3.3</div>
+        <div class="sub">Console de gestion V3.3 <span id="loginVersionMaj"></span></div>
       </div>
     </div>
     <div style="padding:8px 20px 20px;">
@@ -3366,6 +3366,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const badge = document.getElementById('loginEnvBadge');
       if (badge) { badge.textContent = test ? 'VERSION TEST' : 'VERSION RÉELLE'; badge.style.display = h.environnement ? 'block' : 'none'; badge.style.background = test ? '#D98A1C' : '#2F6B2F'; }
       majVersionConsole(h.console);
+      const maj = document.getElementById('loginVersionMaj');
+      if (maj) maj.textContent = h.mise_a_jour ? `· mise à jour du ${new Date(h.mise_a_jour.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} (${h.mise_a_jour.commit})` : '';
     } catch { /* hors ligne : on garde l'affichage précédent */ }
   }
 

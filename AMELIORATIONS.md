@@ -497,3 +497,9 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
   - les n° de réception et de mouvement suivent les compteurs de la base.
 - Tout se fait en une seule transaction. Si un lot des registres existe déjà, le script s'arrête sans rien modifier.
 - Pour le refaire après une correction du fichier Excel : faire l'import dans une base neuve, puis lancer `node scripts/registres-en-sql.js` (voir l'en-tête du script).
+
+## Mise à jour en un double-clic (V3.3)
+
+- **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
+- **TinOR.bat** et **TinOR Test.bat** ouvrent la fenêtre dans le navigateur (http://localhost:3001 / 3002) dès que le serveur est prêt.
+- L'écran de connexion affiche « mise à jour du jj/mm/aaaa hh:mm (code) », d'après le dernier commit installé (`/api/health` → `mise_a_jour`).
