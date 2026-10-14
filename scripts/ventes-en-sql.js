@@ -17,8 +17,8 @@ require('../src/env');
 const mysql = require('mysql2/promise');
 const { computeFactureTotalsDepuisLignes } = require('../src/services/pricing');
 
-const PRIX = { 10: 24.7, 30: 76.5 };          // prix de détail (DT, TTC) par format en ml
-const REMISE = { nom: 'Remise 19 %', pct: 19 };
+const PRIX = { 10: 25, 30: 77.5 };            // prix de détail (DT, TTC) par format en ml : 20 et 62 DT après remise
+const REMISE = { nom: 'Remise 20 %', pct: 20 };
 const NOM_CLIENT = { artizanet: 'artisanet' }; // variante de frappe évidente
 const SANS_CLIENT = 'Client à identifier';
 

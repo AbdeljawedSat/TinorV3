@@ -502,7 +502,7 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 
 - `base/import_ventes_jj.sql` s'exécute **après** `base/import_registres_jj.sql` (`USE tinor_reel;` puis `SOURCE C:/TinorV3/base/import_ventes_jj.sql`). Il crée, pour chacune des 22 sorties des registres, un **bon de commande** (BC-0001…), un **bon de livraison** (BL-…), une **facture** (FAC-…) et un **paiement en espèces**, à la date du registre, ainsi que les 16 clients.
 - Les sorties « VENTE » déjà importées sont rattachées à la commande : le stock n'est pas sorti une seconde fois.
-- Prix de détail : flacon 10 ml 24,7 DT, flacon 30 ml 76,5 DT, avec la remise « Remise 19 % » (soit 20,007 DT et 61,965 DT). TVA, FODEC et timbre suivent les paramètres. Total : 13 454,850 DT HT, 16 177,380 DT TTC. Ces prix sont ceux d'aujourd'hui : chaque vente est à corriger ensuite dans TinOR (prix, remise, client, type de client). La sortie du 04/05/2025 va au client « Client à identifier ».
+- Prix de détail : flacon 10 ml 25 DT, flacon 30 ml 77,5 DT TTC, avec la remise « Remise 20 % » (soit 20 DT et 62 DT). TVA, FODEC et timbre suivent les paramètres. Total : 13 457,140 DT HT, 16 180,140 DT TTC. Ces prix sont ceux d'aujourd'hui : chaque vente est à corriger ensuite dans TinOR (prix, remise, client, type de client). La sortie du 04/05/2025 va au client « Client à identifier ».
 - Un seul bloc, annulé en entier à la moindre erreur ; il refuse de tourner si des commandes existent déjà.
 - Pour le régénérer : faire les registres dans une base neuve, puis `node scripts/ventes-en-sql.js base/import_ventes_jj.sql`.
 
