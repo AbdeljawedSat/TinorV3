@@ -953,6 +953,7 @@
           <a data-view="utilisateurs"><span>Utilisateurs</span></a>
           <a data-view="employes"><span>Employés</span></a>
           <a data-view="locaux"><span>Locaux &amp; Zones</span></a>
+          <a data-view="apropos"><span>À propos</span></a>
         </div>
       </div>
 
@@ -2015,6 +2016,23 @@
             <thead><tr><th>Code</th><th>Nom</th><th>Type</th><th>Zones</th><th></th></tr></thead>
             <tbody id="locauxBody"><tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ===== À PROPOS ===== -->
+      <div class="view" id="view-apropos">
+        <div class="pageHead"><h1>À propos</h1><p>La console de gestion des Jardins de Jerba</p></div>
+        <div class="panel" style="max-width:520px; padding:28px 30px;">
+          <div style="font-family:'Fraunces',serif; font-size:32px; font-weight:600; color:var(--ink); letter-spacing:.3px;">TinOR</div>
+          <div class="rowMeta" style="margin:2px 0 20px;">Console de gestion — Jardins de Jerba</div>
+          <table style="width:100%;"><tbody>
+            <tr><td class="rowMeta" style="width:42%;">Version</td><td><b>TinOR V3.3</b></td></tr>
+            <tr><td class="rowMeta">Année</td><td><b>2026</b></td></tr>
+            <tr><td class="rowMeta">Développé par</td><td><b>SATOURI Abdeljawed</b></td></tr>
+            <tr><td class="rowMeta">Dernière mise à jour</td><td id="aproposMaj">—</td></tr>
+            <tr><td class="rowMeta">Environnement</td><td id="aproposEnv">—</td></tr>
+          </tbody></table>
+          <p class="rowMeta" style="margin:22px 0 0;">© 2026 SATOURI Abdeljawed — tous droits réservés.</p>
         </div>
       </div>
 
@@ -3368,6 +3386,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       majVersionConsole(h.console);
       const maj = document.getElementById('loginVersionMaj');
       if (maj) maj.textContent = h.mise_a_jour ? `· mise à jour du ${new Date(h.mise_a_jour.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} (${h.mise_a_jour.commit})` : '';
+    } catch { /* hors ligne : on garde l'affichage précédent */ }
+  }
+
+  // ---------- À propos : date de mise à jour et version RÉEL / TEST d'après /api/health ----------
+  async function chargerApropos() {
+    try {
+      const r = await hlFetch(API_BASE + '/health', {}, 6000);
+      const h = r.ok ? await r.json() : {};
+      document.getElementById('aproposMaj').textContent = h.mise_a_jour
+        ? `${new Date(h.mise_a_jour.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} (${h.mise_a_jour.commit})` : '—';
+      document.getElementById('aproposEnv').textContent = h.environnement === 'TEST' ? 'Version TEST' : h.environnement ? 'Version RÉELLE' : '—';
     } catch { /* hors ligne : on garde l'affichage précédent */ }
   }
 
@@ -9390,7 +9419,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires', reprise:'view-reprise',
     notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
-    certificats:'view-certificats', parametres:'view-parametres'
+    certificats:'view-certificats', parametres:'view-parametres', apropos:'view-apropos'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
@@ -9405,7 +9434,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
     fournisseurs:['Achats & Système','Fournisseurs'], certificats:['Achats & Système','Certificats Bio'],
     locaux:['Achats & Système','Locaux & Zones'], employes:['Achats & Système','Employés'],
-    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres']
+    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], apropos:['Achats & Système','À propos']
   };
 
   document.querySelectorAll('#navScroll .navGroup').forEach(g => {
@@ -9465,6 +9494,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (key === 'parametres' && TOKEN) {
       chargerListeBackups();
     }
+    if (key === 'apropos') chargerApropos();
 
     if(window.innerWidth <= 880) document.getElementById('sidebar').classList.remove('open');
     majOngletsMobile(key);
@@ -10400,7 +10430,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     presse: 'presse', filtration: 'filtre', melanges: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', reprise: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
-    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local',
+    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', apropos: 'parametre',
   };
   const iconeEcran = (vue, classe = 'ecranIc') => ICONE_ECRAN[vue] ? `<svg class="${classe}" aria-hidden="true"><use href="#e-${ICONE_ECRAN[vue]}"/></svg>` : '';
   document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.dataset.rubrique = RUBRIQUE_CLE[g.querySelector('.lbl').textContent] || ''; });
