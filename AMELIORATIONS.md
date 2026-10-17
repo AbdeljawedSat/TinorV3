@@ -506,6 +506,18 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Un seul bloc, annulé en entier à la moindre erreur ; il refuse de tourner si des commandes existent déjà.
 - Pour le régénérer : faire les registres dans une base neuve, puis `node scripts/ventes-en-sql.js base/import_ventes_jj.sql`.
 
+## Nouvelle graine : création de ses dérivés (V3.3)
+
+- Dans **Nouveau produit**, dès que le type est « Matière première » et que le nom commence par « Graines de … » ou « Pépins de … », un bloc propose de créer en même temps :
+  - l'**huile vrac** (« Huile de Sésame — Vrac », en litres) ;
+  - l'**huile filtrée** (« — Filtrée », en litres, liée au vrac) ;
+  - les **flacons**, un produit par volume coché (10, 30, 100, 250 ml, 1 L ou « ＋ Autre volume » qui crée le format), vendables, en unités, avec un prix de vente facultatif.
+- Un **aperçu** liste ce qui sera créé (code prévu, type, unité, lien) et ce qui existe déjà (« existe déjà — ignoré »).
+- Tout est créé en **une seule opération** : si un produit échoue, rien n'est créé. Catégorie « Huiles », TVA et éligibilité bio sont repris de la graine ; les produits sont directement reliés pour Presse, Filtration, Conditionnement et Répartition.
+- Nom non reconnu (ex. « Sésame ») : un message demande de commencer par « Graines de » ou « Pépins de ».
+- Sur une graine déjà créée : bouton **🌱 Dérivés** (ou menu ⋯) pour ajouter les dérivés manquants, par exemple un volume de plus, sans toucher à l'existant.
+- API : `POST /api/produits/avec-derives` et `POST /api/produits/:id/derives`. Test : `test/stock/derives.js`.
+
 ## Mise à jour en un double-clic (V3.3)
 
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
