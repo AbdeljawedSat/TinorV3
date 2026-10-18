@@ -4029,7 +4029,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!box._d) monterDerives(box, { nomGraine: nom, nouvelle: true });
   }
   document.getElementById('produitNom').addEventListener('input', majDerivesProduit);
-  document.getElementById('produitType').addEventListener('change', majDerivesProduit);
+  // Type « Matière première » choisi à la création : « Graines de » s'ajoute au nom (modifiable ensuite).
+  // Ex. « Nigelle » → « Graines de Nigelle », « Amande » → « Graines d'Amande », nom vide → « Graines de ».
+  const PREFIXE_GRAINE_RE = /^(graines?|p[ée]pins?)\s+(de\s+|d['’])/i;
+  function nomAvecPrefixeGraine(nom) {
+    const n = String(nom || '').trim();
+    if (PREFIXE_GRAINE_RE.test(n)) return n;
+    if (!n) return 'Graines de ';
+    return /^[aeiouyàâäéèêëîïôöûüœ]/i.test(n) ? `Graines d'${n}` : `Graines de ${n}`;
+  }
+  function surChangementTypeProduit() {
+    const champ = document.getElementById('produitNom');
+    if (!document.getElementById('produitId').value) { // création seulement : on ne touche jamais un produit existant
+      if (document.getElementById('produitType').value === 'MATIERE_PREMIERE') {
+        const vide = !champ.value.trim();
+        champ.value = nomAvecPrefixeGraine(champ.value);
+        if (vide) { champ.focus(); champ.setSelectionRange(champ.value.length, champ.value.length); }
+      } else if (/^graines?\s+de\s*$/i.test(champ.value.trim())) champ.value = ''; // préfixe seul : on le retire
+    }
+    majDerivesProduit();
+  }
+  document.getElementById('produitType').addEventListener('change', surChangementTypeProduit);
 
   // Graine déjà créée : fenêtre « Ajouter des dérivés ».
   let derivesGraineId = null;
@@ -4079,6 +4099,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     };
     if (!payload.nom || !payload.categorie_id || !payload.unite_id) {
       errEl.textContent = 'Nom, catégorie et unité sont requis.'; errEl.style.display = 'block'; return;
+    }
+    if (/^(graines?|p[ée]pins?)\s+(de|d['’])\s*$/i.test(payload.nom)) {
+      errEl.textContent = 'Complétez le nom de la graine (ex. « Graines de Nigelle »).'; errEl.style.display = 'block'; return;
     }
     try {
       const boxD = document.getElementById('derivesBox');

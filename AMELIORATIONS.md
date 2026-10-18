@@ -515,6 +515,7 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Un **aperçu** liste ce qui sera créé (code prévu, type, unité, lien) et ce qui existe déjà (« existe déjà — ignoré »).
 - Tout est créé en **une seule opération** : si un produit échoue, rien n'est créé. Catégorie « Huiles », TVA et éligibilité bio sont repris de la graine ; les produits sont directement reliés pour Presse, Filtration, Conditionnement et Répartition.
 - Nom non reconnu (ex. « Sésame ») : un message demande de commencer par « Graines de » ou « Pépins de ».
+- Dès qu'on choisit le type « Matière première » à la création, **« Graines de » s'ajoute au nom** : « Nigelle » → « Graines de Nigelle », « Amande » → « Graines d'Amande », nom vide → « Graines de » (curseur à la fin). Un nom déjà en « Graines de … » ou « Pépins de … » n'est pas modifié ; on peut retirer le préfixe pour une matière première qui n'est pas une graine. Un nom réduit au préfixe est refusé.
 - Sur une graine déjà créée : bouton **🌱 Dérivés** (ou menu ⋯) pour ajouter les dérivés manquants, par exemple un volume de plus, sans toucher à l'existant.
 - API : `POST /api/produits/avec-derives` et `POST /api/produits/:id/derives`. Test : `test/stock/derives.js`.
 
