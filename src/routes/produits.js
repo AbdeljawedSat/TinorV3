@@ -2,6 +2,7 @@ const express = require('express');
 const { positifOuZero, entreBornes, Invalide } = require('../services/regles');
 const { enTransaction } = require('../db/transaction');
 const { normaliser, cleGraine } = require('../services/graines');
+const { codeProduitSuivant } = require('../services/produitCode');
 
 // Prix, coût et seuil de stock ne peuvent pas être négatifs ; TVA entre 0 et 100 %.
 function verifierProduit({ prix_vente, cout_standard, stock_min, tva }) {
@@ -48,17 +49,9 @@ module.exports = function (pool) {
     res.json(result.rows[0]);
   });
 
-  // Génère le prochain code produit à 2 chiffres (protocole TT conservé de la V2).
-  async function nextProductCode(pool) {
-    const seq = await pool.query(
-      `UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = 'produit_code_seq'`
-    );
-    if (!seq.affectedRows) {
-      await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ('produit_code_seq', 1)`);
-    }
-    const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = 'produit_code_seq'`);
-    return String(cur.rows[0].last_value).padStart(2, '0');
-  }
+  // Prochain code produit à 2 chiffres (protocole TT conservé de la V2). Les codes déjà pris sont sautés :
+  // un compteur en retard (produits créés par un import ou reprise) ne provoque plus « Duplicate entry ».
+  const nextProductCode = (pool) => codeProduitSuivant(pool);
 
   // Insère un produit (+ sa séquence de lot) et renvoie sa ligne. Utilisé par la création simple et par les dérivés.
   async function insererProduit(pool, p) {
