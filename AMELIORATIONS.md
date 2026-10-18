@@ -330,7 +330,8 @@ L'application (Android ou navigateur) continue de fonctionner sans connexion au 
 - **Opérations possibles hors ligne** : commandes, réceptions, presse, filtration, conditionnement,
   encaissements, comptages d'inventaire. Chacune reçoit un numéro provisoire (`CMD-HL-K4P2-3`) et le
   stock local en tient compte (lots, produits, solde des factures).
-  **En ligne seulement** : factures, avoirs, annulations, clients, produits, réglages (message clair).
+  **En ligne seulement** : factures, avoirs, annulations, modification ou suppression d'un client ou fournisseur, produits, réglages (message clair).
+- **Client ou fournisseur créé hors ligne** : le formulaire est le même ; la fiche apparaît dans la liste avec « ⏳ en attente » et peut servir tout de suite (bouton **＋ Commande** du client, réception pour un fournisseur). Elle reçoit un identifiant provisoire négatif, remplacé par le vrai à l'envoi : la commande ou la réception créée entre-temps est rattachée à la bonne fiche. **Anti-doublon** : si un client ou fournisseur du même nom (casse, accents et espaces ignorés) existe déjà sur le PC, aucune seconde fiche n'est créée, l'opération est rattachée à la fiche existante et un message le signale. Une commande attend l'envoi de son client ; si l'envoi du client est refusé, elle reste en attente.
 - **Retour du réseau** (détecté automatiquement, vérification toutes les 20 s, ou bouton
   « Synchroniser maintenant ») : envoi dans l'ordre, puis rechargement de toutes les données (ce qui
   a été fait sur le PC arrive sur le téléphone).
