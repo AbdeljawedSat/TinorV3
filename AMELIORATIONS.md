@@ -530,6 +530,14 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 
 - L'étiquette imprimée d'un lot (QR code, n° de lot, produit, dates, bio) porte maintenant une ligne **« Reste : 0,56 L »** (ou « 12 u », « 3,2 kg »…) suivie de la date d'impression en petit : c'est la quantité du lot à ce moment-là, pas une valeur figée. Le format 70 × 40 mm est inchangé (vérifié avec un produit long, une date d'expiration et le bio).
 
+## Sécurité de la connexion (V3.3)
+
+- **Mot de passe livré (`changeme`)** : à la connexion avec ce mot de passe, la console ouvre « Changer mon mot de passe » (ancien déjà rempli, nouveau de 8 caractères minimum, confirmation). « Plus tard » est possible, mais le rappel revient à chaque connexion. Le même formulaire est dans **Réglages › À propos › 🔒 Changer mon mot de passe**. Le nouveau mot de passe ne peut pas être `changeme`.
+- **Blocage après 5 échecs** : 5 mots de passe faux pour le même identifiant depuis la même adresse en 15 minutes → refus (code 429, « réessayez dans N minute(s) »), même avec le bon mot de passe, jusqu'à la fin de la fenêtre. Un succès remet le compteur à zéro. Les blocages sont en mémoire : redémarrer le serveur les lève.
+- **Clé de signature des connexions** : `JWT_SECRET` absent, de moins de 16 caractères ou connu (valeurs d'exemple) → le serveur utilise une clé **aléatoire** (avertissement au démarrage) au lieu de la clé publique d'avant : personne ne peut forger de connexion. Contrepartie : les connexions sont à refaire après un redémarrage. `npm run setup` écrit une vraie clé dans `.env`.
+- **Hébergeur (Railway, Render…)** : ajouter `TRUST_PROXY=1` pour que le blocage compte l'adresse réelle de chaque client (sinon tous les clients partagent celle de l'hébergeur).
+- API : `POST /api/auth/mot-de-passe` ({ ancien, nouveau }, connexion requise). Test : `test/stock/securite.js`.
+
 ## Mise à jour en un double-clic (V3.3)
 
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
