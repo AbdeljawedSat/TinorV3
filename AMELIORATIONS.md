@@ -520,6 +520,12 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Sur une graine déjà créée : bouton **🌱 Dérivés** (ou menu ⋯) pour ajouter les dérivés manquants, par exemple un volume de plus, sans toucher à l'existant.
 - API : `POST /api/produits/avec-derives` et `POST /api/produits/:id/derives`. Test : `test/stock/derives.js`.
 
+## Registre des lots : tri par origine (V3.3)
+
+- Nouvelle liste **« Tri : … »** à côté du filtre Origine : origine (presse → filtration → mélange → conditionnement, ou l'inverse), date (récents ou anciens d'abord), n° de lot, produit, statut, quantité restante. Les **en-têtes de colonne** sont aussi cliquables (▲▼, un second clic inverse le sens).
+- À égalité, les lots sont classés par date (récents d'abord) puis par n° de lot. L'ordre habituel reste le choix par défaut ; « Réinitialiser » le rétablit.
+- Le filtre **Origine** existant ne montre que les quatre types du registre (presse, filtration, mélange, conditionnement) ; il se combine avec le tri.
+
 ## Mise à jour en un double-clic (V3.3)
 
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.

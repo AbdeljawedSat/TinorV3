@@ -1750,6 +1750,10 @@
                 <option value="conditionnement">Conditionnement</option>
               </select>
             </div>
+            <div style="min-width:190px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Trier par</label>
+              <select id="lotsTri" class="formInput"></select>
+            </div>
             <div style="min-width:150px;">
               <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
               <input type="date" id="lotsFilterDateDebut" class="formInput">
@@ -1763,7 +1767,7 @@
         </div>
         <div class="panel">
           <table>
-            <thead><tr><th>N° Lot</th><th>Produit</th><th>Origine</th><th>Date</th><th>Bio</th><th>Statut</th><th class="num">Qté restante</th><th></th></tr></thead>
+            <thead id="lotsHead"><tr><th data-tri="num">N° Lot</th><th data-tri="produit">Produit</th><th data-tri="origine">Origine</th><th data-tri="date">Date</th><th>Bio</th><th data-tri="statut">Statut</th><th class="num" data-tri="qte">Qté restante</th><th></th></tr></thead>
             <tbody id="lotsBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
           </table>
         </div>
@@ -8728,11 +8732,62 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (l.origine === 'CONDITIONNEMENT' || l.origine === 'PRODUCTION_RECETTE') return 'conditionnement';
     return null;
   }
+  // Tri du registre : par défaut l'ordre du serveur ; sinon une colonne, dans un sens. L'origine suit le déroulé de
+  // la fabrication (presse → filtration → mélange → conditionnement) ; à égalité : date récente d'abord, puis n° de lot.
+  const LOTS_TRI = { cle: '', sens: 1 };
+  const ORDRE_ORIGINE = { presse: 1, filtration: 2, melange: 3, conditionnement: 4 };
+  const LOTS_TRI_OPTIONS = [
+    ['', 1, 'Ordre habituel'],
+    ['origine', 1, 'Origine : presse → conditionnement'], ['origine', -1, 'Origine : conditionnement → presse'],
+    ['date', -1, 'Date : récents d\'abord'], ['date', 1, 'Date : anciens d\'abord'],
+    ['num', 1, 'N° de lot : A → Z'], ['num', -1, 'N° de lot : Z → A'],
+    ['produit', 1, 'Produit : A → Z'], ['produit', -1, 'Produit : Z → A'],
+    ['statut', 1, 'Statut : A → Z'],
+    ['qte', -1, 'Quantité restante : décroissante'], ['qte', 1, 'Quantité restante : croissante'],
+  ];
+  const LOTS_TRI_LIBELLES = { num: 'N° Lot', produit: 'Produit', origine: 'Origine', date: 'Date', statut: 'Statut', qte: 'Qté restante' };
+  function trierLotsRegistre(rows) {
+    const { cle, sens } = LOTS_TRI;
+    if (!cle) return rows;
+    const texte = (a, b) => String(a || '').localeCompare(String(b || ''), 'fr', { numeric: true, sensitivity: 'base' });
+    const date = l => String(l.date_production || l.created_at || '');
+    const valeur = {
+      num: (a, b) => texte(a.numero_lot, b.numero_lot),
+      produit: (a, b) => texte(a.produit_nom, b.produit_nom),
+      origine: (a, b) => (ORDRE_ORIGINE[typeLotRegistre(a)] || 9) - (ORDRE_ORIGINE[typeLotRegistre(b)] || 9),
+      date: (a, b) => date(a).localeCompare(date(b)),
+      statut: (a, b) => texte(a.statut, b.statut),
+      qte: (a, b) => Number(a.quantite_actuelle) - Number(b.quantite_actuelle),
+    }[cle];
+    return [...rows].sort((a, b) => (sens * valeur(a, b)) || date(b).localeCompare(date(a)) || texte(a.numero_lot, b.numero_lot));
+  }
+  function majEnTetesTriLots() {
+    document.querySelectorAll('#lotsHead th[data-tri]').forEach(th => {
+      const actif = th.dataset.tri === LOTS_TRI.cle;
+      th.textContent = LOTS_TRI_LIBELLES[th.dataset.tri] + (actif ? (LOTS_TRI.sens === 1 ? ' ▲' : ' ▼') : '');
+      th.style.cursor = 'pointer'; th.title = 'Cliquer pour trier';
+    });
+    const sel = document.getElementById('lotsTri');
+    if (sel) sel.value = `${LOTS_TRI.cle}|${LOTS_TRI.sens}`;
+  }
+  (function initTriLots() {
+    const sel = document.getElementById('lotsTri');
+    sel.innerHTML = LOTS_TRI_OPTIONS.map(([c, s, l]) => `<option value="${c}|${s}">${c ? 'Tri : ' + l : 'Trier par… (ordre habituel)'}</option>`).join('');
+    sel.addEventListener('change', () => { const [c, s] = sel.value.split('|'); LOTS_TRI.cle = c; LOTS_TRI.sens = Number(s); renderLotsRegistre(); });
+    document.getElementById('lotsHead').addEventListener('click', (e) => {
+      const th = e.target.closest('th[data-tri]'); if (!th) return;
+      const cle = th.dataset.tri;
+      // Même colonne : on inverse. Nouvelle colonne : sens naturel (date et quantité : du plus grand au plus petit).
+      if (LOTS_TRI.cle === cle) LOTS_TRI.sens = -LOTS_TRI.sens; else { LOTS_TRI.cle = cle; LOTS_TRI.sens = (cle === 'date' || cle === 'qte') ? -1 : 1; }
+      renderLotsRegistre();
+    });
+  })();
   function renderLotsRegistre() {
     const body = document.getElementById('lotsBody');
     const origineChoisie = document.getElementById('lotsFilterOrigine')?.value || '';
     const lotsTypes = APP_DATA.lots.filter(l => { const t = typeLotRegistre(l); return t && (!origineChoisie || t === origineChoisie); });
-    const rows = filtreVue('lots', filtrerParTexteEtDate(lotsTypes, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at));
+    const rows = trierLotsRegistre(filtreVue('lots', filtrerParTexteEtDate(lotsTypes, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at)));
+    majEnTetesTriLots();
     if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucun lot pour ce filtre.</td></tr>`; return; }
     const bioLabel = { BIO: '<span class="pill good">Bio</span>', NON_BIO: '<span class="pill grey">Non bio</span>', EN_CONVERSION: '<span class="pill warn">Conversion</span>', A_VERIFIER: '<span class="pill grey">À vérifier</span>', BLOQUE: '<span class="pill danger">Bloqué</span>' };
     body.innerHTML = rows.map(l => `
@@ -9454,7 +9509,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('lotsExportPdfBtn').addEventListener('click', () => lotsExporter('pdf'));
   cablerFiltresTexteEtDate('lots', renderLotsRegistre);
   document.getElementById('lotsFilterOrigine').addEventListener('change', renderLotsRegistre);
-  document.getElementById('lotsFilterResetBtn').addEventListener('click', () => { document.getElementById('lotsFilterOrigine').value = ''; renderLotsRegistre(); });
+  document.getElementById('lotsFilterResetBtn').addEventListener('click', () => { document.getElementById('lotsFilterOrigine').value = ''; LOTS_TRI.cle = ''; LOTS_TRI.sens = 1; renderLotsRegistre(); });
 
   // ---------- Factures — exporte les factures actuellement filtrées à l'écran ----------
   function facturesExporter(format) {
