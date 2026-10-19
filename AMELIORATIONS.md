@@ -526,6 +526,10 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - À égalité, les lots sont classés par date (récents d'abord) puis par n° de lot. L'ordre habituel reste le choix par défaut ; « Réinitialiser » le rétablit.
 - Le filtre **Origine** existant ne montre que les quatre types du registre (presse, filtration, mélange, conditionnement) ; il se combine avec le tri.
 
+## Étiquette de lot : quantité restante (V3.3)
+
+- L'étiquette imprimée d'un lot (QR code, n° de lot, produit, dates, bio) porte maintenant une ligne **« Reste : 0,56 L »** (ou « 12 u », « 3,2 kg »…) suivie de la date d'impression en petit : c'est la quantité du lot à ce moment-là, pas une valeur figée. Le format 70 × 40 mm est inchangé (vérifié avec un produit long, une date d'expiration et le bio).
+
 ## Mise à jour en un double-clic (V3.3)
 
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
