@@ -1740,6 +1740,16 @@
               <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Produit ou N° de lot</label>
               <input type="text" id="lotsFilterTexte" class="formInput" placeholder="ex: Sésame ou 01-MP-001">
             </div>
+            <div style="min-width:170px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Origine</label>
+              <select id="lotsFilterOrigine" class="formInput">
+                <option value="">Toutes (presse, filtration, mélange, conditionnement)</option>
+                <option value="presse">Presse</option>
+                <option value="filtration">Filtration</option>
+                <option value="melange">Mélange</option>
+                <option value="conditionnement">Conditionnement</option>
+              </select>
+            </div>
             <div style="min-width:150px;">
               <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
               <input type="date" id="lotsFilterDateDebut" class="formInput">
@@ -8709,16 +8719,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return `<div style="font-size:10.5px; color:${couleur}; ${actif && j <= 30 ? 'font-weight:600;' : ''}">Exp. ${fmtDate(l.date_expiration)}</div>`;
   }
 
+  // Type de lot affiché dans le registre : seuls presse, filtration, mélange et
+  // conditionnement y figurent (les entrées matière sont dans Réceptions/Stock).
+  function typeLotRegistre(l) {
+    if (estLotMelange(l)) return 'melange';
+    if (l.origine === 'PRESSE') return 'presse';
+    if (l.origine === 'FILTRATION') return 'filtration';
+    if (l.origine === 'CONDITIONNEMENT' || l.origine === 'PRODUCTION_RECETTE') return 'conditionnement';
+    return null;
+  }
   function renderLotsRegistre() {
     const body = document.getElementById('lotsBody');
-    const rows = filtreVue('lots', filtrerParTexteEtDate(APP_DATA.lots, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at));
+    const origineChoisie = document.getElementById('lotsFilterOrigine')?.value || '';
+    const lotsTypes = APP_DATA.lots.filter(l => { const t = typeLotRegistre(l); return t && (!origineChoisie || t === origineChoisie); });
+    const rows = filtreVue('lots', filtrerParTexteEtDate(lotsTypes, 'lots', l => `${l.produit_nom || ''} ${l.numero_lot}`, l => l.date_production || l.created_at));
     if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucun lot pour ce filtre.</td></tr>`; return; }
     const bioLabel = { BIO: '<span class="pill good">Bio</span>', NON_BIO: '<span class="pill grey">Non bio</span>', EN_CONVERSION: '<span class="pill warn">Conversion</span>', A_VERIFIER: '<span class="pill grey">À vérifier</span>', BLOQUE: '<span class="pill danger">Bloqué</span>' };
     body.innerHTML = rows.map(l => `
       <tr data-id="${l.id}">
         <td class="lotCode">${l.numero_lot}</td>
         <td>${l.produit_nom || '—'}</td>
-        <td class="rowMeta">${l.origine}</td>
+        <td class="rowMeta">${{ presse: 'Presse', filtration: 'Filtration', melange: 'Mélange', conditionnement: 'Conditionnement' }[typeLotRegistre(l)] || l.origine}</td>
         <td class="rowMeta num">${fmtDate(l.date_production || l.created_at)}${celluleExpiration(l)}</td>
         <td>${bioLabel[l.bio_status] || l.bio_status}</td>
         <td>${pillStatut(l.statut)}</td>
@@ -9432,6 +9453,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('lotsExportXlsxBtn').addEventListener('click', () => lotsExporter('xlsx'));
   document.getElementById('lotsExportPdfBtn').addEventListener('click', () => lotsExporter('pdf'));
   cablerFiltresTexteEtDate('lots', renderLotsRegistre);
+  document.getElementById('lotsFilterOrigine').addEventListener('change', renderLotsRegistre);
+  document.getElementById('lotsFilterResetBtn').addEventListener('click', () => { document.getElementById('lotsFilterOrigine').value = ''; renderLotsRegistre(); });
 
   // ---------- Factures — exporte les factures actuellement filtrées à l'écran ----------
   function facturesExporter(format) {
