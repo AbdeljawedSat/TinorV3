@@ -3399,7 +3399,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         throw new Error('Hors ligne : ces données ne sont pas encore sur cet appareil (elles le seront après une connexion).');
       }
       if (def) return hlMettreEnFile(def, methode, path, options.body, idOperation);
-      throw new Error('Hors ligne : cette action demande une connexion (factures, avoirs, annulations, clients, réglages…). Réessayez une fois connecté.');
+      throw new Error('Hors ligne : cette action demande une connexion (factures, avoirs, annulations, modification ou suppression d\'un client ou fournisseur, produits, réglages…). Réessayez une fois connecté.');
     }
     // Jeton expiré (ou session ouverte hors ligne) : reconnexion automatique puis nouvel essai.
     if (res.status === 401 && !path.startsWith('/auth/') && HL.motDePasse && await hlReconnexionSilencieuse()) {
@@ -3746,6 +3746,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     });
   });
 
+  // « ＋ Commande » : ouvre une commande pour ce client (aussi pour un client créé hors ligne, pas encore envoyé).
+  function nouvelleCommandePour(clientId) {
+    openCommandeModal(null);
+    setTimeout(() => { const sel = document.getElementById('commandeClient'); if (sel) sel.value = clientId; }, 100);
+  }
   function renderClients() {
     const body = document.getElementById('clientsBody');
     document.getElementById('clientsCount').textContent = `${APP_DATA.clients.length} fiche${APP_DATA.clients.length > 1 ? 's' : ''} client`;
@@ -3754,7 +3759,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!clientsVus.length) { body.innerHTML = `<tr><td colspan="8" class="videAction">Aucun client dans cette vue.</td></tr>`; return; }
     body.innerHTML = clientsVus.map(c => `
       <tr data-id="${c.id}">
-        <td>${c.nom}</td>
+        <td>${c.nom}${c.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
         <td class="rowMeta">${c.type}</td>
         <td>${c.ville || '—'}</td>
         <td class="rowMeta">${c.matricule_fiscal || '—'}</td>
@@ -3762,20 +3767,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="num">${fmtDT(c.total_achete)}</td>
         <td class="num">${Number(c.solde) > 0.0005 ? `<b style="color:var(--warn);">${fmtDT(c.solde)}</b>` : Number(c.solde) < -0.0005 ? fmtSolde(c.solde) : '<span class="rowMeta">—</span>'}</td>
         <td class="rowActions">
-          <button class="rowActionBtn" onclick="ouvrirReleve(${c.id})">Relevé</button>
-          <button class="rowActionBtn" onclick="openClientModal(${c.id})">Modifier</button>
-          ${isGerant() ? `<button class="rowActionBtn danger" onclick="askDelete('clients', ${c.id}, '${c.nom.replace(/'/g, "\\'")}', renderClients)">Supprimer</button>` : ''}
+          <button class="rowActionBtn" onclick="nouvelleCommandePour(${c.id})">＋ Commande</button>
+          ${c.en_attente_envoi ? '' : `<button class="rowActionBtn" onclick="ouvrirReleve(${c.id})">Relevé</button>
+          <button class="rowActionBtn" onclick="openClientModal(${c.id})">Modifier</button>`}
+          ${isGerant() && !c.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('clients', ${c.id}, '${c.nom.replace(/'/g, "\\'")}', renderClients)">Supprimer</button>` : ''}
         </td>
       </tr>`).join('');
     cablerMenuContextuel('clientsBody', (id) => {
       const c = APP_DATA.clients.find(x => x.id === id);
       if (!c) return [];
       const items = [
-        { label: '📄 Relevé de compte', action: () => ouvrirReleve(id) },
-        { label: '✎ Modifier', action: () => openClientModal(id) },
-        { label: '＋ Nouvelle commande', action: () => { openCommandeModal(null); setTimeout(() => { const sel = document.getElementById('commandeClient'); if (sel) sel.value = id; }, 100); } },
+        ...(c.en_attente_envoi ? [] : [{ label: '📄 Relevé de compte', action: () => ouvrirReleve(id) }, { label: '✎ Modifier', action: () => openClientModal(id) }]),
+        { label: '＋ Nouvelle commande', action: () => nouvelleCommandePour(id) },
       ];
-      if (isGerant()) items.push(null, { label: '✕ Supprimer', danger: true, action: () => askDelete('clients', id, c.nom, renderClients) });
+      if (isGerant() && !c.en_attente_envoi) items.push(null, { label: '✕ Supprimer', danger: true, action: () => askDelete('clients', id, c.nom, renderClients) });
       return items;
     });
   }
@@ -3826,20 +3831,21 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const bioLabel = { certifie: '<span class="pill good">Certifié</span>', conversion: '<span class="pill warn">Conversion</span>', non_bio: '<span class="pill grey">Non bio</span>' };
     body.innerHTML = APP_DATA.fournisseurs.map(f => `
       <tr data-id="${f.id}">
-        <td>${f.nom}</td>
+        <td>${f.nom}${f.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
         <td class="rowMeta">${f.type}</td>
         <td class="rowMeta">${f.matricule_fiscal || '—'}</td>
         <td>${f.localisation || '—'}</td>
         <td>${bioLabel[f.statut_bio] || f.statut_bio}</td>
         <td class="${f.certificat_numero ? 'lotCode' : 'rowMeta'}">${f.certificat_numero || '—'}</td>
         <td class="rowActions">
-          <button class="rowActionBtn" onclick="openFournisseurModal(${f.id})">Modifier</button>
-          ${isGerant() ? `<button class="rowActionBtn danger" onclick="askDelete('fournisseurs', ${f.id}, '${f.nom.replace(/'/g, "\\'")}', renderFournisseurs)">Supprimer</button>` : ''}
+          ${f.en_attente_envoi ? '' : `<button class="rowActionBtn" onclick="openFournisseurModal(${f.id})">Modifier</button>`}
+          ${isGerant() && !f.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('fournisseurs', ${f.id}, '${f.nom.replace(/'/g, "\\'")}', renderFournisseurs)">Supprimer</button>` : ''}
         </td>
       </tr>`).join('');
     cablerMenuContextuel('fournisseursBody', (id) => {
       const f = APP_DATA.fournisseurs.find(x => x.id === id);
       if (!f) return [];
+      if (f.en_attente_envoi) return [];
       const items = [{ label: '✎ Modifier', action: () => openFournisseurModal(id) }];
       if (isGerant()) items.push(null, { label: '✕ Supprimer', danger: true, action: () => askDelete('fournisseurs', id, f.nom, renderFournisseurs) });
       return items;
@@ -4029,7 +4035,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!box._d) monterDerives(box, { nomGraine: nom, nouvelle: true });
   }
   document.getElementById('produitNom').addEventListener('input', majDerivesProduit);
-  document.getElementById('produitType').addEventListener('change', majDerivesProduit);
+  // Type « Matière première » choisi à la création : « Graines de » s'ajoute au nom (modifiable ensuite).
+  // Ex. « Nigelle » → « Graines de Nigelle », « Amande » → « Graines d'Amande », nom vide → « Graines de ».
+  const PREFIXE_GRAINE_RE = /^(graines?|p[ée]pins?)\s+(de\s+|d['’])/i;
+  function nomAvecPrefixeGraine(nom) {
+    const n = String(nom || '').trim();
+    if (PREFIXE_GRAINE_RE.test(n)) return n;
+    if (!n) return 'Graines de ';
+    return /^[aeiouyàâäéèêëîïôöûüœ]/i.test(n) ? `Graines d'${n}` : `Graines de ${n}`;
+  }
+  function surChangementTypeProduit() {
+    const champ = document.getElementById('produitNom');
+    if (!document.getElementById('produitId').value) { // création seulement : on ne touche jamais un produit existant
+      if (document.getElementById('produitType').value === 'MATIERE_PREMIERE') {
+        const vide = !champ.value.trim();
+        champ.value = nomAvecPrefixeGraine(champ.value);
+        if (vide) { champ.focus(); champ.setSelectionRange(champ.value.length, champ.value.length); }
+      } else if (/^graines?\s+de\s*$/i.test(champ.value.trim())) champ.value = ''; // préfixe seul : on le retire
+    }
+    majDerivesProduit();
+  }
+  document.getElementById('produitType').addEventListener('change', surChangementTypeProduit);
 
   // Graine déjà créée : fenêtre « Ajouter des dérivés ».
   let derivesGraineId = null;
@@ -4079,6 +4105,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     };
     if (!payload.nom || !payload.categorie_id || !payload.unite_id) {
       errEl.textContent = 'Nom, catégorie et unité sont requis.'; errEl.style.display = 'block'; return;
+    }
+    if (/^(graines?|p[ée]pins?)\s+(de|d['’])\s*$/i.test(payload.nom)) {
+      errEl.textContent = 'Complétez le nom de la graine (ex. « Graines de Nigelle »).'; errEl.style.display = 'block'; return;
     }
     try {
       const boxD = document.getElementById('derivesBox');
@@ -6823,6 +6852,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   const HL_SESSION_CLE = 'tinor_session_hors_ligne';
   const HL_SESSION_JOURS = 7;
   const HL_OPERATIONS = [
+    { type: 'client', methode: 'POST', motif: /^\/clients$/, prefixe: 'CLI', libelle: 'Client' },
+    { type: 'fournisseur', methode: 'POST', motif: /^\/fournisseurs$/, prefixe: 'FRN', libelle: 'Fournisseur' },
     { type: 'commande', methode: 'POST', motif: /^\/commandes$/, prefixe: 'BC', libelle: 'Commande' },
     { type: 'livraison', methode: 'POST', motif: /^\/livraisons$/, prefixe: 'BL', libelle: 'Bon de livraison' },
     { type: 'proforma', methode: 'POST', motif: /^\/proformas$/, prefixe: 'PRO', libelle: 'Facture en attente' },
@@ -6902,6 +6933,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try { n = Number(localStorage.getItem('tinor_compteur_hl') || 0) + 1; localStorage.setItem('tinor_compteur_hl', String(n)); } catch { n = Date.now() % 10000; }
     return `${prefixe}-HL-${hlAppareil()}-${n}`;
   }
+  function hlIdProvisoire() {
+    let n = 0;
+    try { n = Number(localStorage.getItem('tinor_compteur_id_hl') || 0) + 1; localStorage.setItem('tinor_compteur_id_hl', String(n)); } catch { n = Date.now() % 100000000; }
+    return -n;
+  }
   const hlOperation = (methode, path) => HL_OPERATIONS.find(o => o.methode === methode && o.motif.test(path)) || null;
 
   // Résumé lisible d'une opération (écran Synchronisation, notifications).
@@ -6912,8 +6948,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     switch (op.type) {
       case 'commande': {
         const client = APP_DATA.clients.find(c => c.id === Number(p.client_id));
-        return `${client ? client.nom : 'client ' + p.client_id} · ${(p.lignes || []).map(l => `${l.qty} × ${hlNomProduit(l.produit_id)}`).join(', ')}`;
+        return `${client ? client.nom : (HL.noms && HL.noms['client:' + p.client_id]) || 'client ' + p.client_id} · ${(p.lignes || []).map(l => `${l.qty} × ${hlNomProduit(l.produit_id)}`).join(', ')}`;
       }
+      case 'client': case 'fournisseur': return `${p.nom || ''}${p.ville ? ' · ' + p.ville : p.localisation ? ' · ' + p.localisation : ''}`;
       case 'reception': return (p.lignes || []).map(l => `${l.quantite} × ${hlNomProduit(l.produit_id)}`).join(', ');
       case 'presse': return `${(p.sources || []).map(s => `${s.quantite} de ${lot(s.lot_id)}`).join(' + ')} → ${(p.sorties || []).map(s => `${s.quantite_produite} ${hlNomProduit(s.produit_id)}`).join(', ')}`;
       case 'filtration': return `${hlNomProduit(p.produit_id)} : ${p.quantite_produite}`;
@@ -6931,6 +6968,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function hlAppliquerEffets(path, data) {
     const ops = (await hlOps()).filter(o => o.statut === 'EN_ATTENTE');
     if (!ops.length || !Array.isArray(data)) return data;
+    if (path === '/clients' || path === '/fournisseurs') { // créés hors ligne, pas encore envoyés : visibles et utilisables (commande, réception)
+      const type = path === '/clients' ? 'client' : 'fournisseur';
+      const ajoutes = ops.filter(o => o.type === type).map(o => ({
+        ...(type === 'client' ? { type: 'particulier', commandes_count: 0, total_achete: 0, total_facture: 0, total_paye: 0, solde: 0 } : { type: 'fournisseur_externe', statut_bio: 'conversion' }),
+        ...o.payload, id: o.id_provisoire, en_attente_envoi: true, numero_provisoire: o.numero_provisoire, created_at: o.cree_le }));
+      return [...data, ...ajoutes].sort((a, b) => String(a.nom).localeCompare(String(b.nom), 'fr'));
+    }
     const copie = JSON.parse(JSON.stringify(data));
     const presse = path === '/presse' ? copie : ((await hlLireCache('/presse'))?.data || []);
     const filtration = path === '/filtration' ? copie : ((await hlLireCache('/filtration'))?.data || []);
@@ -7007,10 +7051,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       payload: corps ? JSON.parse(corps) : {}, numero_provisoire: hlNumeroProvisoire(def.prefixe),
       cree_le: new Date().toISOString(), statut: 'EN_ATTENTE', erreur: null, tentatives: 0,
     };
+    // Client / fournisseur créé hors ligne : identifiant provisoire NÉGATIF (jamais confondu avec un vrai) que les
+    // commandes et réceptions suivantes utilisent ; il est remplacé par le vrai identifiant à la synchronisation.
+    if (def.type === 'client' || def.type === 'fournisseur') op.id_provisoire = hlIdProvisoire();
     await hlEcrireOp(op);
     notifier(`Hors ligne — ${def.libelle.toLowerCase()} ${op.numero_provisoire} enregistrée sur cet appareil ; envoi automatique au retour de la connexion.`, 'info');
     hlMajAffichage();
-    return { hors_ligne: true, id: null, numero: op.numero_provisoire, numero_lot: op.numero_provisoire, operation_id: op.id };
+    return { hors_ligne: true, id: op.id_provisoire || null, numero: op.numero_provisoire, numero_lot: op.numero_provisoire, operation_id: op.id };
   }
 
   // ---------- Synchronisation ----------
@@ -7035,6 +7082,24 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       body: JSON.stringify(op.payload),
     });
   }
+  // Client / fournisseur déjà présent sur le serveur (même nom, casse, accents et espaces ignorés).
+  async function hlTrouverExistant(op) {
+    try {
+      const rep = await hlFetch(API_BASE + (op.type === 'client' ? '/clients' : '/fournisseurs'), { headers: { ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) } });
+      if (!rep.ok) return null;
+      const cle = normaliserNomGraine(op.payload.nom);
+      return (await rep.json()).find(x => normaliserNomGraine(x.nom) === cle) || null;
+    } catch { return null; }
+  }
+  // Le client / fournisseur a maintenant un vrai identifiant : les opérations en attente qui l'utilisaient le reprennent.
+  async function hlRemplacerIdProvisoire(op, idReel) {
+    if (!op.id_provisoire || !idReel) return;
+    const champ = op.type === 'client' ? 'client_id' : 'fournisseur_id';
+    HL.noms = HL.noms || {}; HL.noms[`${op.type}:${idReel}`] = op.payload.nom;
+    for (const o of await hlOps()) {
+      if (o.id !== op.id && o.payload && Number(o.payload[champ]) === op.id_provisoire) { o.payload[champ] = idReel; await hlEcrireOp(o); }
+    }
+  }
   async function hlSynchroniser({ recharger = false, manuel = false } = {}) {
     if (HL.synchroEnCours || !TOKEN) return;
     if (HL.force) { if (manuel) notifier('Mode « Hors ligne » choisi : passez sur « En ligne » pour envoyer.', 'info'); return; }
@@ -7044,7 +7109,25 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     try {
       if (!(await hlServeurJoignable())) { HL.horsLigne = true; if (manuel) notifier('Serveur toujours injoignable : nouvel essai automatique dans quelques secondes.', 'erreur'); return; }
       HL.horsLigne = false;
-      for (const op of (await hlOps()).filter(o => o.statut === 'EN_ATTENTE')) {
+      const idsEnAttente = (await hlOps()).filter(o => o.statut === 'EN_ATTENTE').map(o => o.id);
+      for (const idOp of idsEnAttente) {
+        const op = (await hlOps()).find(o => o.id === idOp); // relue à chaque tour : un client envoyé juste avant a pu changer son contenu
+        if (!op || op.statut !== 'EN_ATTENTE') continue;
+        // Rattachée à un client / fournisseur créé hors ligne et pas encore envoyé (ou à corriger) : elle attend son tour.
+        if (Number(op.payload?.client_id) < 0 || Number(op.payload?.fournisseur_id) < 0) continue;
+        // Client / fournisseur de même nom déjà sur le serveur : pas de doublon, on rattache à la fiche existante.
+        if (op.type === 'client' || op.type === 'fournisseur') {
+          const existant = await hlTrouverExistant(op);
+          if (existant) {
+            await hlRemplacerIdProvisoire(op, existant.id);
+            await hlSupprimerOp(op.id);
+            await hlAjouterHistorique({ id: op.id, type: op.type, libelle: op.libelle, numero_provisoire: op.numero_provisoire,
+              numero: `rattaché à « ${existant.nom} » (existait déjà)`, description: hlDescription(op), envoye_le: new Date().toISOString(), statut: '' });
+            notifier(`${op.libelle} « ${op.payload.nom} » existait déjà : rattaché à la fiche existante, aucun doublon créé.`, 'info');
+            envoyees++;
+            continue;
+          }
+        }
         let rep;
         try { rep = await hlEnvoyer(op); } catch { HL.horsLigne = true; break; } // connexion reperdue : on reprendra plus tard
         if (rep.status === 401) {
@@ -7053,6 +7136,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         }
         const data = await rep.json().catch(() => ({}));
         if (rep.ok) {
+          if (op.id_provisoire && data.id) await hlRemplacerIdProvisoire(op, data.id); // avant de supprimer : repris au prochain essai si coupure
           await hlSupprimerOp(op.id);
           await hlAjouterHistorique({ id: op.id, type: op.type, libelle: op.libelle, numero_provisoire: op.numero_provisoire,
             numero: data.numero || data.numero_lot || (data.lots_presse && data.lots_presse[0] && data.lots_presse[0].numero_lot) || '✓ enregistrée', description: hlDescription(op), envoye_le: new Date().toISOString(),

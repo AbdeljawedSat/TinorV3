@@ -330,7 +330,8 @@ L'application (Android ou navigateur) continue de fonctionner sans connexion au 
 - **Opérations possibles hors ligne** : commandes, réceptions, presse, filtration, conditionnement,
   encaissements, comptages d'inventaire. Chacune reçoit un numéro provisoire (`CMD-HL-K4P2-3`) et le
   stock local en tient compte (lots, produits, solde des factures).
-  **En ligne seulement** : factures, avoirs, annulations, clients, produits, réglages (message clair).
+  **En ligne seulement** : factures, avoirs, annulations, modification ou suppression d'un client ou fournisseur, produits, réglages (message clair).
+- **Client ou fournisseur créé hors ligne** : le formulaire est le même ; la fiche apparaît dans la liste avec « ⏳ en attente » et peut servir tout de suite (bouton **＋ Commande** du client, réception pour un fournisseur). Elle reçoit un identifiant provisoire négatif, remplacé par le vrai à l'envoi : la commande ou la réception créée entre-temps est rattachée à la bonne fiche. **Anti-doublon** : si un client ou fournisseur du même nom (casse, accents et espaces ignorés) existe déjà sur le PC, aucune seconde fiche n'est créée, l'opération est rattachée à la fiche existante et un message le signale. Une commande attend l'envoi de son client ; si l'envoi du client est refusé, elle reste en attente.
 - **Retour du réseau** (détecté automatiquement, vérification toutes les 20 s, ou bouton
   « Synchroniser maintenant ») : envoi dans l'ordre, puis rechargement de toutes les données (ce qui
   a été fait sur le PC arrive sur le téléphone).
@@ -515,6 +516,7 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - Un **aperçu** liste ce qui sera créé (code prévu, type, unité, lien) et ce qui existe déjà (« existe déjà — ignoré »).
 - Tout est créé en **une seule opération** : si un produit échoue, rien n'est créé. Catégorie « Huiles », TVA et éligibilité bio sont repris de la graine ; les produits sont directement reliés pour Presse, Filtration, Conditionnement et Répartition.
 - Nom non reconnu (ex. « Sésame ») : un message demande de commencer par « Graines de » ou « Pépins de ».
+- Dès qu'on choisit le type « Matière première » à la création, **« Graines de » s'ajoute au nom** : « Nigelle » → « Graines de Nigelle », « Amande » → « Graines d'Amande », nom vide → « Graines de » (curseur à la fin). Un nom déjà en « Graines de … » ou « Pépins de … » n'est pas modifié ; on peut retirer le préfixe pour une matière première qui n'est pas une graine. Un nom réduit au préfixe est refusé.
 - Sur une graine déjà créée : bouton **🌱 Dérivés** (ou menu ⋯) pour ajouter les dérivés manquants, par exemple un volume de plus, sans toucher à l'existant.
 - API : `POST /api/produits/avec-derives` et `POST /api/produits/:id/derives`. Test : `test/stock/derives.js`.
 
