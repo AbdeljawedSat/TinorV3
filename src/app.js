@@ -40,6 +40,8 @@ function createApp(pool) {
     if (req.method === 'OPTIONS' && req.get('Access-Control-Request-Private-Network')) res.set('Access-Control-Allow-Private-Network', 'true');
     next();
   });
+  // Derrière un hébergeur (Railway, Render…), l'adresse réelle du client est dans X-Forwarded-For : TRUST_PROXY=1 l'active.
+  if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
   app.use(cors());
   app.use(express.json({ limit: '8mb' })); // logo de la société envoyé avec les exports (data URI)
 

@@ -28,6 +28,7 @@ La commande de démarrage est lue dans `railway.json` :
 |---|---|
 | `DATABASE_URL` | `${{MySQL.MYSQL_URL}}` |
 | `JWT_SECRET` | une longue chaîne aléatoire (ex. résultat de `openssl rand -hex 32`) |
+| `TRUST_PROXY` | `1` derrière un hébergeur : le blocage après 5 échecs de connexion compte l'adresse réelle du client |
 | `NODE_ENV` | `production` |
 
 `PORT` est fourni automatiquement par Railway.

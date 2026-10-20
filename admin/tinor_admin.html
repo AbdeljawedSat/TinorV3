@@ -2069,6 +2069,7 @@
             <tr><td class="rowMeta">Dernière mise à jour</td><td id="aproposMaj">—</td></tr>
             <tr><td class="rowMeta">Environnement</td><td id="aproposEnv">—</td></tr>
           </tbody></table>
+          <button class="btnGhost" style="margin-top:18px;" onclick="ouvrirMotDePasse()">🔒 Changer mon mot de passe</button>
           <p class="rowMeta" style="margin:22px 0 0;">© 2026 SATOURI Abdeljawed — tous droits réservés.</p>
         </div>
       </div>
@@ -2132,6 +2133,30 @@
 </div>
 
 <!-- ============ MODALE : FORMULAIRE PRODUIT ============ -->
+<!-- ============ MODALE : CHANGER MON MOT DE PASSE ============ -->
+<div class="modalOverlay" id="mdpModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2>Changer mon mot de passe</h2><div class="sub" id="mdpSousTitre">Compte TinOR</div></div>
+      <button class="modalClose" id="mdpModalCloseBtn">×</button>
+    </div>
+    <div style="padding:6px 20px 16px;">
+      <div id="mdpAlerte" class="derivesAide" style="display:none; margin:10px 0 0;"></div>
+      <div id="mdpFormError" style="color:var(--danger); font-size:11.5px; margin:10px 0 0; display:none;"></div>
+      <label class="formLbl">Mot de passe actuel</label>
+      <input type="password" id="mdpAncien" class="formInput" autocomplete="current-password">
+      <label class="formLbl">Nouveau mot de passe (8 caractères minimum)</label>
+      <input type="password" id="mdpNouveau" class="formInput" autocomplete="new-password">
+      <label class="formLbl">Confirmer le nouveau mot de passe</label>
+      <input type="password" id="mdpConfirmation" class="formInput" autocomplete="new-password">
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="mdpCancelBtn">Plus tard</button>
+      <button class="btnPrimary" id="mdpSaveBtn">Changer le mot de passe</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ MODALE : DÉRIVÉS D'UNE GRAINE EXISTANTE ============ -->
 <div class="modalOverlay" id="derivesModalOverlay">
   <div class="modal" style="max-width:560px;">
@@ -3566,9 +3591,41 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     HL.reconnexion = false;
     await hlMemoriserSession(username, password, data.user);
     await entrer(data.user);
+    if (data.mot_de_passe_par_defaut) ouvrirMotDePasse(password, true);
   }
   document.getElementById('loginSubmitBtn').addEventListener('click', handleLogin);
   document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+  // ---------- Changer mon mot de passe (proposé à la connexion tant que c'est « changeme ») ----------
+  function ouvrirMotDePasse(ancien = '', parDefaut = false) {
+    document.getElementById('mdpSousTitre').textContent = CURRENT_USER ? `Compte ${CURRENT_USER.username}` : 'Compte TinOR';
+    const alerte = document.getElementById('mdpAlerte');
+    alerte.style.display = parDefaut ? 'block' : 'none';
+    alerte.textContent = 'Vous utilisez le mot de passe livré avec TinOR (« changeme ») : tout le monde le connaît. Choisissez le vôtre.';
+    document.getElementById('mdpFormError').style.display = 'none';
+    document.getElementById('mdpAncien').value = ancien;
+    document.getElementById('mdpNouveau').value = ''; document.getElementById('mdpConfirmation').value = '';
+    document.getElementById('mdpModalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById(ancien ? 'mdpNouveau' : 'mdpAncien').focus(), 50);
+  }
+  const fermerMotDePasse = () => document.getElementById('mdpModalOverlay').classList.remove('open');
+  document.getElementById('mdpCancelBtn').addEventListener('click', fermerMotDePasse);
+  document.getElementById('mdpModalCloseBtn').addEventListener('click', fermerMotDePasse);
+  document.getElementById('mdpSaveBtn').addEventListener('click', async () => {
+    const err = document.getElementById('mdpFormError'); err.style.display = 'none';
+    const ancien = document.getElementById('mdpAncien').value, nouveau = document.getElementById('mdpNouveau').value;
+    const montrer = (m) => { err.textContent = m; err.style.display = 'block'; };
+    if (!ancien) return montrer('Saisissez votre mot de passe actuel.');
+    if (nouveau.length < 8) return montrer('Le nouveau mot de passe doit faire au moins 8 caractères.');
+    if (nouveau !== document.getElementById('mdpConfirmation').value) return montrer('La confirmation ne correspond pas.');
+    try {
+      await apiFetch('/auth/mot-de-passe', { method: 'POST', body: JSON.stringify({ ancien, nouveau }) });
+      HL.motDePasse = nouveau; // reconnexion silencieuse et connexion hors ligne avec le nouveau mot de passe
+      try { if (CURRENT_USER) await hlMemoriserSession(CURRENT_USER.username, nouveau, CURRENT_USER); } catch {}
+      fermerMotDePasse();
+      notifier('Mot de passe changé.', 'succes');
+    } catch (e) { montrer(e.message); }
+  });
 
   // ---------- Données en mémoire (rafraîchies après chaque connexion / action) ----------
   const APP_DATA = { produits: [], clients: [], fournisseurs: [], commandes: [], lots: [], locaux: [], employes: [], lotsPresse: [], lotsFiltration: [], conditionnements: [], factures: [], users: [], recettes: [], ordresProduction: [], grilles: [], settings: null, achats: [], receptions: [], stockMouvements: [], stockResume: [], notifications: [], paiements: [], certificats: [] };
