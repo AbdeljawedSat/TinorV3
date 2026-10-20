@@ -543,3 +543,15 @@ npm run importer:registres -- "C:\chemin\BD_tinorexel.xlsx" --appliquer  (import
 - **Mettre a jour TinOR.bat** récupère la dernière version depuis GitHub, installe les composants et affiche la version avant et après. Il ne touche ni à la base, ni à `.env` / `.env.test`, ni aux sauvegardes. S'il y a des modifications locales, elles sont mises de côté avec `git stash`.
 - **TinOR.bat** et **TinOR Test.bat** ouvrent la fenêtre dans le navigateur (http://localhost:3001 / 3002) dès que le serveur est prêt.
 - L'écran de connexion affiche « mise à jour du jj/mm/aaaa hh:mm (code) », d'après le dernier commit installé (`/api/health` → `mise_a_jour`).
+
+## Numérotation des opérations (Réglages › Numérotation)
+
+Pour chacune des 15 opérations (commande, BL, pro forma, facture, avoir, achat, réception, lot de graines, lot de presse, lot filtré, lot fini, lot de flacons, mouvement, inventaire, reprise), le gérant choisit **séparément** le format du numéro :
+
+- **Proposé par le système** : documents `FAC-2026-0001` (préfixe + année + n° qui avance, remis à 1 chaque année) ; lots `GR-26-001`, `P-26-001`, `F-26-001`, `M-26-001` ; flacons = lot fini + contenance (`…-30ML`).
+- **Format actuel** : le comportement historique de TinOR, inchangé (choix par défaut : rien ne change tant qu'on n'a pas choisi).
+- **Personnalisé** : zones composées à la main — séquence, date, partie du n° d'origine (commande, lot de presse…), lettre, code produit, contenance, texte fixe — avec aperçu en direct et les 3 prochains numéros.
+
+Règles : facture et avoir exigent une séquence continue (remise à 1 au plus chaque année, pas de lettre) ; longueur limitée à la colonne de la base ; un lot déjà existant reçoit « -2 » ; le numéro de lot donné par le fournisseur est gardé. Une « date d'application » permet de garder l'ancien format jusqu'à une date. Les numéros déjà créés ne changent jamais.
+
+Technique : table `numerotation_formats` (créée par `npm run migrate`), moteur `src/services/numerotation.js`, API `/api/numerotation`, test `test/stock/numerotation-formats.js`.

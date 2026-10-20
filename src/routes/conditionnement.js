@@ -1,6 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { positif, entierSiUnite, arrondi, facteurConversion } = require('../services/regles');
+const numerotation = require('../services/numerotation');
 const { nextNumero, createLot, consumeLot, recordEntree, LOT_DISPONIBLE, ORDRE_FEFO } = require('../services/lotService');
 const { cleHuile, estNomMelange } = require('../services/graines');
 const { creerProduitFini } = require('../services/produitCode');
@@ -207,12 +208,16 @@ module.exports = function (pool) {
       // Flacons d'un mélange (lot fini) : n° du mélange + format (« 110409-10ML »). Un nouveau
       // conditionnement du même lot fini dans le même format s'ajoute à ce lot.
       let lotId, numeroLot;
+      const fmtProd = (await pool.query('SELECT volume, poids FROM formats WHERE id = (SELECT COALESCE($1, format_id) FROM produits WHERE id = $2)', [format_id || null, produit_id])).rows[0] || {};
+      const contenance = fmtProd.volume ? `${Number(fmtProd.volume)}ML` : fmtProd.poids ? `${Number(fmtProd.poids)}G` : 'U';
       const melangeSource = lotsSources.length === 1 ? (await pool.query(
         `SELECT numero_lot FROM lots WHERE id = $1 AND JSON_VALUE(champs_perso, '$.etape') = 'MELANGE'`, [lotsSources[0].lot_id])).rows[0] : null;
       if (melangeSource) {
-        const fmt = (await pool.query('SELECT volume, poids FROM formats WHERE id = (SELECT COALESCE($1, format_id) FROM produits WHERE id = $2)', [format_id || null, produit_id])).rows[0] || {};
-        const suffixe = fmt.volume ? `${Number(fmt.volume)}ML` : fmt.poids ? `${Number(fmt.poids)}G` : 'U';
-        numeroLot = `${melangeSource.numero_lot}-${suffixe}`;
+        numeroLot = `${melangeSource.numero_lot}-${contenance}`;
+        // Format « personnalisé » choisi pour les flacons : il remplace « lot fini + contenance » (proposé = identique).
+        if (await numerotation.modeDe(pool, 'cond') === 'perso') {
+          numeroLot = await numerotation.numeroPour(pool, 'cond', { date, p1: melangeSource.numero_lot, contenance, prod: (await pool.query('SELECT code FROM produits WHERE id = $1', [produit_id])).rows[0]?.code }) || numeroLot;
+        }
         const existant = (await pool.query('SELECT id, produit_id FROM lots WHERE numero_lot = $1 FOR UPDATE', [numeroLot])).rows[0];
         if (existant && existant.produit_id !== Number(produit_id)) {
           return res.status(400).json({ error: `Le lot ${numeroLot} existe déjà pour un autre produit.` });
@@ -232,7 +237,7 @@ module.exports = function (pool) {
         ({ lotId, numeroLot } = await createLot(pool, {
           produit_id, origine: 'CONDITIONNEMENT', quantite: qty, employe_id, motif: 'Création via conditionnement',
           extra: { champs_perso },
-          numerotation: { date, sources: lotsSources },
+          numerotation: { date, sources: lotsSources, contenance },
         }));
       }
 

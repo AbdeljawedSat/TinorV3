@@ -94,6 +94,7 @@ function createApp(pool) {
   app.use('/api/recettes', requireAuth, require('./routes/recettes')(pool));
   app.use('/api/ordres-production', requireAuth, require('./routes/ordresProduction')(pool));
   app.use('/api/settings', requireAuth, require('./routes/settings')(pool));
+  app.use('/api/numerotation', requireAuth, require('./routes/numerotation')(pool));
   app.use('/api/certificats', requireAuth, require('./routes/certificats')(pool));
   app.use('/api/paiements', requireAuth, require('./routes/paiements')(pool));
   app.use('/api/avoirs', requireAuth, require('./routes/avoirs')(pool));

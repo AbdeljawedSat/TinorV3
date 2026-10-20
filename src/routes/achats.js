@@ -1,14 +1,7 @@
 const express = require('express');
 const { positif, positifOuZero, datesOrdonnees } = require('../services/regles');
 
-async function nextNumero(pool, seqName, prefix) {
-  const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
-  if (!upd.affectedRows) {
-    await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ($1, 1)`, [seqName]);
-  }
-  const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = $1`, [seqName]);
-  return `${prefix}-${String(cur.rows[0].last_value).padStart(4, '0')}`;
-}
+const { nextNumero } = require('../services/lotService');
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -53,7 +46,7 @@ module.exports = function (pool) {
       if (!Array.isArray(lignes) || !lignes.length) {
         return res.status(400).json({ error: 'Au moins une ligne est requise.' });
       }
-      const numero = await nextNumero(pool, 'achat_seq', 'ACH');
+      const numero = await nextNumero(pool, 'achat_seq', 'ACH', { date: date_achat });
       let totalHt = 0;
       for (const l of lignes) {
         if (!l.produit_id || !l.quantite) {

@@ -3,7 +3,16 @@
 // chaque route réimplémente sa propre variante du protocole TT-SSS et finisse
 // par diverger.
 
-async function nextNumero(pool, seqName, prefix) {
+const numerotation = require('./numerotation');
+
+// ctx : { date, p1, p2 } — date de l'opération et numéro(s) d'origine (ex. la commande d'un BL),
+// utilisés si l'opération a un format de numérotation choisi (écran « Numérotation »).
+async function nextNumero(pool, seqName, prefix, ctx = {}) {
+  const op = numerotation.PAR_SEQ[seqName];
+  if (op) {
+    const choisi = await numerotation.numeroPour(pool, op.cle, ctx);
+    if (choisi) return choisi;
+  }
   const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
   if (!upd.affectedRows) {
     await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ($1, 1)`, [seqName]);
@@ -101,9 +110,34 @@ async function numeroJardinsJerba(pool, origine, ctx = {}) {
   return null;
 }
 
+const CLE_LOT = { RECEPTION_MP: 'lotmp', ACHAT: 'lotmp', PRESSE: 'presse', FILTRATION: 'filtration', MELANGE: 'melange', CONDITIONNEMENT: 'cond' };
+
+// Numéro de lot selon le format choisi pour l'étape (écran « Numérotation »), ou null → format actuel.
+async function numeroLotChoisi(pool, cle, produit, origine, ctx) {
+  if (await numerotation.modeDe(pool, cle) === 'actuel') return null;
+  if (cle === 'lotmp' && String(ctx.lot_fournisseur || '').trim()) return numeroLibre(pool, String(ctx.lot_fournisseur).trim()); // le n° du fournisseur est gardé
+  const noms = [];
+  const tri = [...(ctx.sources || [])].filter(s => s && s.lot_id);
+  for (const s of tri) {
+    const l = (await pool.query('SELECT numero_lot FROM lots WHERE id = $1', [s.lot_id])).rows[0];
+    if (l) noms.push({ numero: l.numero_lot, quantite: Number(s.quantite) || 0 });
+  }
+  // Presse, filtration, conditionnement : l'origine principale est le lot le plus utilisé ; mélange : dans l'ordre saisi.
+  const ordre = cle === 'melange' ? noms : [...noms].sort((a, b) => b.quantite - a.quantite);
+  const brut = await numerotation.numeroPour(pool, cle, {
+    date: ctx.date, p1: ctx.p1 ?? (ordre[0] && ordre[0].numero) ?? String(ctx.lot_fournisseur || ''), p2: ctx.p2 ?? (ordre[1] && ordre[1].numero) ?? '',
+    prod: produit.code, contenance: ctx.contenance,
+  });
+  return brut ? numeroLibre(pool, brut) : null;
+}
+
 async function nextLotNumber(pool, produitId, origine, ctx = {}) {
   const prod = await pool.query('SELECT code FROM produits WHERE id = $1', [produitId]);
   if (!prod.rows[0]) throw Object.assign(new Error('Produit introuvable.'), { status: 400 });
+  if (CLE_LOT[origine]) {
+    const choisi = await numeroLotChoisi(pool, CLE_LOT[origine], prod.rows[0], origine, ctx);
+    if (choisi) return choisi;
+  }
 
   const settingsRes = await pool.query('SELECT lot_format_style, lot_seq_par_origine FROM settings WHERE id = 1');
   const settings = settingsRes.rows[0] || {};
@@ -227,4 +261,4 @@ async function recordEntree(pool, { produitId, lotId, quantite, typeMouvement, e
 const LOT_DISPONIBLE = `statut = 'LIBERE' AND (date_expiration IS NULL OR date_expiration >= CURDATE())`;
 const ORDRE_FEFO = `(date_expiration IS NULL), date_expiration ASC, created_at ASC`;
 
-module.exports = { nextNumero, nextLotNumber, numeroJardinsJerba, recalerCompteursJJ, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };
+module.exports = { numeroLibre, nextNumero, nextLotNumber, numeroJardinsJerba, recalerCompteursJJ, createLot, consumeLot, recordEntree, decrementerLot, LOT_DISPONIBLE, ORDRE_FEFO };

@@ -853,6 +853,25 @@
     #view-dashboard .pageHead{padding:10px 14px 44px;} #view-dashboard > .pageHead + .kpiRow{margin-top:-34px;}
   }
 
+  /* ----- Numérotation des opérations ----- */
+  .numCartes{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:12px 0;}
+  .numCarte{border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; background:var(--paper);}
+  .numCarte.on{border-color:var(--accent); background:var(--accent-fond);}
+  .numCarte .ex{font-family:ui-monospace,Consolas,monospace; font-size:17px; font-weight:700; color:var(--ink); margin:6px 0; word-break:break-all;}
+  .numCarte small{display:block; color:var(--ink-soft,#5b6f75); margin-bottom:8px;}
+  .numApercu{background:var(--ink); color:#fff; border-radius:10px; padding:14px 16px; font-family:ui-monospace,Consolas,monospace; font-size:22px; font-weight:700; word-break:break-all;}
+  .numSeg{padding:1px 4px; border-radius:5px; margin-right:2px; background:rgba(255,255,255,.14);}
+  .numZone{display:grid; grid-template-columns:28px 1fr auto; gap:10px; border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; align-items:start;}
+  .numZone .n{width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:12px; font-weight:700;}
+  .numZone .opts{display:flex; flex-wrap:wrap; gap:10px; margin-top:6px;}
+  .numZone .opts label{display:block; font-size:11px; color:var(--ink-soft,#5b6f75); margin-bottom:2px;}
+  .numZone .res{font-family:ui-monospace,Consolas,monospace; background:var(--accent-fond); border-radius:5px; padding:1px 6px; margin-left:6px;}
+  .numZone .ctl button{border:1px solid var(--line); background:var(--paper); border-radius:6px; cursor:pointer; margin-left:2px;}
+  .numLegal{border-radius:8px; padding:9px 12px; margin:10px 0; background:#EAF6EE; border:1px solid #BFE0CB; font-size:13px;}
+  .numLegal.ko{background:#FDECEC; border-color:#F2B8B8;}
+  .numAjout{display:flex; flex-wrap:wrap; gap:6px;}
+  .numCtx{display:flex; flex-wrap:wrap; gap:12px;}
+  .numCtx label{display:block; font-size:12px; color:var(--ink-soft,#5b6f75); margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -976,6 +995,7 @@
           <a data-view="utilisateurs"><span>Utilisateurs</span></a>
           <a data-view="employes"><span>Employés</span></a>
           <a data-view="locaux"><span>Locaux &amp; Zones</span></a>
+          <a data-view="numerotation"><span>Numérotation</span></a>
           <a data-view="apropos"><span>À propos</span></a>
         </div>
       </div>
@@ -2053,6 +2073,51 @@
             <thead><tr><th>Code</th><th>Nom</th><th>Type</th><th>Zones</th><th></th></tr></thead>
             <tbody id="locauxBody"><tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ===== NUMÉROTATION DES OPÉRATIONS ===== -->
+      <div class="view" id="view-numerotation">
+        <div class="pageHead"><h1>Numérotation des opérations</h1><p>Pour chaque opération, choisissez le format du numéro : proposé par TinOR, format actuel ou personnalisé</p></div>
+        <div class="panel" style="padding:18px 20px;">
+          <label class="rowMeta" for="numOp">1 · Choisir l'opération</label>
+          <select id="numOp" style="display:block; width:100%; max-width:420px; margin:4px 0 6px;"></select>
+          <div class="rowMeta" id="numNote"></div>
+          <div class="numCartes" id="numCartes"></div>
+        </div>
+        <div id="numEditeur">
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">2 · Aperçu</div>
+            <div class="numApercu" id="numApercu" style="margin:6px 0 12px;"></div>
+            <div class="numCtx">
+              <div><label id="numLDate">Date</label><input type="date" id="numCDate"></div>
+              <div id="numBP1"><label id="numLP1"></label><input type="text" id="numCP1"></div>
+              <div id="numBP2"><label id="numLP2"></label><input type="text" id="numCP2"></div>
+              <div id="numBProd"><label>Code produit</label><input type="text" id="numCProd" value="04" style="width:70px"></div>
+            </div>
+            <div id="numLegal"></div>
+          </div>
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">3 · Zones du numéro, de gauche à droite</div>
+            <div id="numZones" style="margin-top:8px;"></div>
+            <div class="rowMeta" style="margin:4px 0 6px;">Ajouter une zone :</div>
+            <div class="numAjout" id="numAjout"></div>
+          </div>
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">Les 3 prochains numéros <span style="font-weight:400">(le compteur avance ; un lot déjà existant reçoit « -2 »)</span></div>
+            <table style="margin-top:6px;"><tbody id="numSuite"></tbody></table>
+          </div>
+        </div>
+        <div class="panel" style="padding:18px 20px; margin-top:14px;">
+          <div class="rowMeta">4 · À partir de quand ?</div>
+          <div class="numCtx" style="align-items:end; margin-top:6px;">
+            <div><label>Le choix s'applique à partir du (vide = tout de suite)</label><input type="date" id="numDApp"></div>
+            <div class="rowMeta">Les numéros déjà créés ne changent jamais. Avant cette date, le format actuel continue.</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap;">
+            <button class="btnPrimary" id="numSave">Enregistrer ce choix</button>
+            <span class="rowMeta" id="numRegle"></span>
+          </div>
         </div>
       </div>
 
@@ -3469,6 +3534,158 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if (maj) maj.textContent = h.mise_a_jour ? `· mise à jour du ${new Date(h.mise_a_jour.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })} (${h.mise_a_jour.commit})` : '';
     } catch { /* hors ligne : on garde l'affichage précédent */ }
   }
+
+  // ---------- Numérotation des opérations ----------
+  const NUM = { liste: [], cle: 'facture', brouillon: {}, minuterie: null };
+  const NUM_TYPES = { seq: 'Séquence', date: 'Date', par: "Partie du numéro d'origine", let: 'Lettre', prod: 'Code produit', fmt: 'Contenance (10ML, 30ML…)', txt: 'Texte fixe' };
+  const NUM_PARTIES = [['entier', 'Le numéro en entier'], ['xx', 'Le n° de pressage (avant le 1er « - »)'], ['lotmp', 'Le lot fournisseur (au milieu)'], ['date', 'La date (8 chiffres à la fin)'], ['sep', 'Le morceau n° … séparé par un caractère'], ['chars', 'Les caractères de … à …']];
+  const NUM_FMT_DATE = [['AAAAMMJJ', 'AAAAMMJJ → 20261020'], ['AAMMJJ', 'AAMMJJ → 261020'], ['JJMMAAAA', 'JJMMAAAA → 20102026'], ['AAAAMM', 'AAAAMM → 202610'], ['AAAA', 'AAAA → 2026'], ['AA', 'AA → 26'], ['MMJJ', 'MMJJ → 1020']];
+  const NUM_NOUVELLE = { seq: { t: 'seq', digits: 4, reset: 'jamais', last: 0 }, date: { t: 'date', fmt: 'AAAAMMJJ', src: 'op' }, par: { t: 'par', src: 1, part: 'entier' },
+    let: { t: 'let', mode: 'fixe', v: 'H' }, prod: { t: 'prod' }, fmt: { t: 'fmt' }, txt: { t: 'txt', v: '-' } };
+  const numOp = () => NUM.liste.find(o => o.cle === NUM.cle);
+  const numBrouillon = () => NUM.brouillon[NUM.cle];
+  const numEsc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const numOptions = (valeur, liste) => liste.map(([a, b]) => `<option value="${a}" ${String(a) === String(valeur) ? 'selected' : ''}>${b}</option>`).join('');
+
+  async function chargerNumerotation() {
+    NUM.liste = await apiFetch('/numerotation');
+    for (const o of NUM.liste) {
+      NUM.brouillon[o.cle] = { mode: o.mode, zones: JSON.parse(JSON.stringify(o.zones)), date_application: o.date_application || '' };
+    }
+    const sel = document.getElementById('numOp');
+    const groupes = {};
+    NUM.liste.forEach(o => (groupes[o.groupe] = groupes[o.groupe] || []).push(o));
+    sel.innerHTML = Object.entries(groupes).map(([g, l]) => `<optgroup label="${g}">${l.map(o => `<option value="${o.cle}">${o.nom}</option>`).join('')}</optgroup>`).join('');
+    sel.value = NUM.cle;
+    numChoisir(NUM.cle);
+  }
+  function numChoisir(cle) {
+    NUM.cle = cle;
+    const o = numOp();
+    document.getElementById('numOp').value = cle;
+    document.getElementById('numNote').textContent = o.note || '';
+    document.getElementById('numCDate').value = new Date().toISOString().slice(0, 10);
+    const exemples = { bl: 'BC-2026-0008', proforma: 'BC-2026-0008', facture: 'BC-2026-0008', avoir: 'FAC-2026-0011', lotmp: 'GJ01/2023', presse: 'GJ01/2023',
+      filtration: '07-GJ01/2023-20231226H', melange: '23-2312-20240331', cond: '011823' };
+    document.getElementById('numCP1').value = exemples[cle] || '';
+    document.getElementById('numCP2').value = o.p2 ? '18-GJ01/2023-20240325' : '';
+    document.getElementById('numBP1').style.display = o.p1 ? '' : 'none';
+    document.getElementById('numBP2').style.display = o.p2 ? '' : 'none';
+    document.getElementById('numBProd').style.display = o.kind === 'lot' ? '' : 'none';
+    if (o.p1) document.getElementById('numLP1').textContent = `${o.p1} (origine n°1)`;
+    if (o.p2) document.getElementById('numLP2').textContent = `${o.p2} (origine n°2)`;
+    document.getElementById('numLDate').textContent = o.date_label;
+    document.getElementById('numDApp').value = numBrouillon().date_application || '';
+    numRendre();
+  }
+  function numAppliquer(mode) {
+    const o = numOp(), b = numBrouillon();
+    b.mode = mode;
+    if (mode === 'prop' || (mode === 'perso' && !b.zones.length)) b.zones = JSON.parse(JSON.stringify(o.proposition));
+    numRendre();
+  }
+  function numContexte() {
+    return { date: document.getElementById('numCDate').value, p1: document.getElementById('numCP1').value, p2: document.getElementById('numCP2').value, prod: document.getElementById('numCProd').value };
+  }
+  function numRendre() {
+    const o = numOp(), b = numBrouillon();
+    const cartes = [
+      ['prop', 'Proposé par le système', o.exemple_proposition, o.kind === 'lot' ? "lettre de l'étape + année + numéro qui avance" : 'préfixe + année + numéro qui avance', 'Appliquer la proposition'],
+      ['actuel', 'Format actuel', o.exemple_actuel, "celui que TinOR utilise aujourd'hui", 'Garder le format actuel'],
+      ['perso', 'Personnalisé', o.exemple_perso || '—', 'vous composez les zones ci-dessous', 'Composer mon format'],
+    ];
+    document.getElementById('numCartes').innerHTML = cartes.map(([k, t, ex, d, bouton]) => `<div class="numCarte ${b.mode === k ? 'on' : ''}">
+      <b>${b.mode === k ? '● ' : '○ '}${t}</b><div class="ex">${numEsc(ex)}</div><small>${d}</small>
+      ${b.mode !== k ? `<button class="btnGhost" data-num-mode="${k}">${bouton}</button>` : ''}</div>`).join('');
+    document.querySelectorAll('[data-num-mode]').forEach(x => x.onclick = () => numAppliquer(x.dataset.numMode));
+    document.getElementById('numEditeur').style.display = b.mode === 'actuel' ? 'none' : '';
+    document.getElementById('numSave').disabled = !isGerant();
+    if (b.mode === 'actuel') { document.getElementById('numRegle').textContent = isGerant() ? '' : 'Seul le gérant peut enregistrer.'; return; }
+
+    const aSeq = b.zones.some(z => z.t === 'seq'), seqOk = b.zones.some(z => z.t === 'seq' && ['jamais', 'annee'].includes(z.reset));
+    document.getElementById('numLegal').innerHTML = o.legal ? `<div class="numLegal ${aSeq && seqOk ? '' : 'ko'}">⚖ <b>Numéro légal</b> — la suite doit être <b>continue et sans trou</b> : une zone Séquence qui ne repart à 1 qu'en début d'année (ou jamais) est obligatoire. ${aSeq && seqOk ? '✔ Format conforme.' : '✖ Ajoutez-la pour pouvoir enregistrer.'}</div>` : '';
+    document.getElementById('numZones').innerHTML = b.zones.map((z, i) => `<div class="numZone"><div class="n">${i + 1}</div>
+      <div><b>${NUM_TYPES[z.t]}</b>${numOptionsZone(z, i, o)}</div>
+      <div class="ctl"><button data-num-m="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>▲</button><button data-num-m="down" data-i="${i}" ${i === b.zones.length - 1 ? 'disabled' : ''}>▼</button><button data-num-m="del" data-i="${i}">✕</button></div></div>`).join('')
+      || '<div class="rowMeta">Ajoutez une première zone ↓</div>';
+    const dispo = Object.keys(NUM_TYPES).filter(k => (k !== 'prod' || o.kind === 'lot') && (k !== 'par' || o.p1) && (k !== 'fmt' || o.cle === 'cond') && !(k === 'let' && o.legal));
+    document.getElementById('numAjout').innerHTML = dispo.map(k => `<button class="btnGhost" data-num-a="${k}">＋ ${NUM_TYPES[k]}</button>`).join('');
+    document.querySelectorAll('[data-num-a]').forEach(x => x.onclick = () => { b.mode = 'perso'; b.zones.push(JSON.parse(JSON.stringify(NUM_NOUVELLE[x.dataset.numA]))); numRendre(); });
+    document.querySelectorAll('[data-num-m]').forEach(x => x.onclick = () => {
+      const i = Number(x.dataset.i);
+      b.mode = 'perso';
+      if (x.dataset.numM === 'del') b.zones.splice(i, 1);
+      else { const j = x.dataset.numM === 'up' ? i - 1 : i + 1; [b.zones[i], b.zones[j]] = [b.zones[j], b.zones[i]]; }
+      numRendre();
+    });
+    document.querySelectorAll('#numZones [data-k]').forEach(el => el.oninput = el.onchange = () => {
+      const z = b.zones[el.dataset.i];
+      let v = el.value;
+      if (['digits', 'last', 'n', 'de', 'a'].includes(el.dataset.k) || (el.dataset.k === 'src' && z.t === 'par')) v = Number(v);
+      z[el.dataset.k] = v;
+      b.mode = 'perso';
+      if (el.tagName === 'SELECT') numRendre(); else numApercuDiffere();
+    });
+    numApercuDiffere();
+  }
+  function numOptionsZone(z, i, o) {
+    const d = `data-i="${i}"`;
+    if (z.t === 'seq') {
+      const remises = o.legal ? [['jamais', 'Jamais (continue)'], ['annee', "Chaque année (début d'exercice)"]] : [['jamais', 'Jamais (continue)'], ['annee', 'Chaque année'], ['mois', 'Chaque mois'], ['jour', 'Chaque jour']];
+      return `<div class="opts"><div><label>Nombre de chiffres</label><select ${d} data-k="digits">${[1, 2, 3, 4, 5, 6].map(n => `<option ${n === z.digits ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div><label>Repart à 1…</label><select ${d} data-k="reset">${numOptions(z.reset, remises)}</select></div>
+        <div><label>Dernier n° utilisé</label><input type="number" min="0" ${d} data-k="last" value="${z.last || 0}" style="width:90px"></div></div>`;
+    }
+    if (z.t === 'date') return `<div class="opts"><div><label>Format</label><select ${d} data-k="fmt">${numOptions(z.fmt, NUM_FMT_DATE)}</select></div>
+      <div><label>Quelle date ?</label><select ${d} data-k="src">${numOptions(z.src || 'op', [['op', o.date_label], ['jour', 'Date du jour de saisie'], ['orig', "Date du lot / document d'origine"]])}</select></div></div>`;
+    if (z.t === 'par') return `<div class="opts"><div><label>Origine</label><select ${d} data-k="src">${numOptions(z.src, [['1', o.p1], ...(o.p2 ? [['2', o.p2]] : [])])}</select></div>
+      <div><label>Quelle partie récupérer</label><select ${d} data-k="part">${numOptions(z.part, NUM_PARTIES)}</select></div>
+      ${z.part === 'sep' ? `<div><label>Séparateur</label><input type="text" ${d} data-k="sep" value="${numEsc(z.sep || '-')}" maxlength="3" style="width:50px"></div><div><label>Morceau n°</label><input type="number" min="1" ${d} data-k="n" value="${z.n || 1}" style="width:70px"></div>` : ''}
+      ${z.part === 'chars' ? `<div><label>De</label><input type="number" min="1" ${d} data-k="de" value="${z.de || 1}" style="width:70px"></div><div><label>À</label><input type="number" min="1" ${d} data-k="a" value="${z.a || 2}" style="width:70px"></div>` : ''}</div>`;
+    if (z.t === 'let') return `<div class="opts"><div><label>Type</label><select ${d} data-k="mode">${numOptions(z.mode, [['fixe', 'Lettre fixe (ex. H)'], ['seq', 'A, B, C… selon le rang du jour']])}</select></div>
+      ${z.mode === 'fixe' ? `<div><label>Lettre</label><input type="text" maxlength="2" ${d} data-k="v" value="${numEsc(z.v || '')}" style="width:50px"></div>` : ''}</div>`;
+    if (z.t === 'prod') return '<div class="rowMeta">Code à 2 chiffres du produit (fiche produit).</div>';
+    if (z.t === 'fmt') return '<div class="rowMeta">Contenance du flacon : 10ML, 30ML…</div>';
+    return `<div class="opts"><div><label>Texte</label><input type="text" ${d} data-k="v" value="${numEsc(z.v || '')}" maxlength="20"></div></div>`;
+  }
+  function numApercuDiffere() {
+    clearTimeout(NUM.minuterie);
+    NUM.minuterie = setTimeout(numApercu, 200);
+  }
+  async function numApercu() {
+    const o = numOp(), b = numBrouillon();
+    if (!o || b.mode === 'actuel') return;
+    const apercu = document.getElementById('numApercu'), suite = document.getElementById('numSuite');
+    try {
+      const r = await apiFetch('/numerotation/apercu', { method: 'POST', body: JSON.stringify({ cle: o.cle, zones: b.zones, n: 3, ...numContexte() }) });
+      apercu.innerHTML = r.segments.map(s => `<span class="numSeg">${numEsc(s.texte) || '∅'}</span>`).join('');
+      const jour = numContexte().date.split('-').reverse().join('/');
+      suite.innerHTML = r.numeros.map((n, i) => `<tr><td>${i + 1}</td><td>${jour}</td><td style="font-family:ui-monospace,Consolas,monospace"><b>${numEsc(n)}</b></td></tr>`).join('');
+      const depasse = r.longueur > r.max;
+      document.getElementById('numRegle').textContent = `Longueur : ${r.longueur} caractères (maximum ${r.max}).` + (depasse ? ' ✖ Trop long.' : '');
+      document.getElementById('numSave').disabled = !isGerant() || depasse;
+    } catch (e) {
+      apercu.textContent = '—';
+      suite.innerHTML = '';
+      document.getElementById('numRegle').textContent = e.message || 'Format invalide.';
+      document.getElementById('numSave').disabled = true;
+    }
+  }
+  async function numEnregistrer() {
+    const o = numOp(), b = numBrouillon();
+    b.date_application = document.getElementById('numDApp').value;
+    try {
+      const r = await apiFetch(`/numerotation/${o.cle}`, { method: 'PUT', body: JSON.stringify({ mode: b.mode, zones: b.mode === 'actuel' ? [] : b.zones, date_application: b.date_application || null }) });
+      const i = NUM.liste.findIndex(x => x.cle === o.cle);
+      NUM.liste[i] = r;
+      NUM.brouillon[o.cle] = { mode: r.mode, zones: JSON.parse(JSON.stringify(r.zones)), date_application: r.date_application || '' };
+      notifier(`Numérotation enregistrée : ${o.nom}.`, 'succes');
+      numChoisir(o.cle);
+    } catch (e) { notifier(e.message || 'Enregistrement impossible.', 'erreur'); }
+  }
+  document.getElementById('numOp').onchange = (e) => numChoisir(e.target.value);
+  document.getElementById('numSave').onclick = numEnregistrer;
+  ['numCDate', 'numCP1', 'numCP2', 'numCProd'].forEach(id => document.getElementById(id).addEventListener('input', numApercuDiffere));
 
   // ---------- À propos : date de mise à jour et version RÉEL / TEST d'après /api/health ----------
   async function chargerApropos() {
@@ -9808,7 +10025,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires', reprise:'view-reprise',
     notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
-    certificats:'view-certificats', parametres:'view-parametres', apropos:'view-apropos'
+    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', apropos:'view-apropos'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
@@ -9823,7 +10040,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
     fournisseurs:['Achats & Système','Fournisseurs'], certificats:['Achats & Système','Certificats Bio'],
     locaux:['Achats & Système','Locaux & Zones'], employes:['Achats & Système','Employés'],
-    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], apropos:['Achats & Système','À propos']
+    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], apropos:['Achats & Système','À propos']
   };
 
   document.querySelectorAll('#navScroll .navGroup').forEach(g => {
@@ -9884,6 +10101,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       chargerListeBackups();
     }
     if (key === 'apropos') chargerApropos();
+    if (key === 'numerotation' && TOKEN) chargerNumerotation().catch(e => notifier(e.message, 'error'));
 
     if(window.innerWidth <= 880) document.getElementById('sidebar').classList.remove('open');
     majOngletsMobile(key);
@@ -10819,7 +11037,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     presse: 'presse', filtration: 'filtre', melanges: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', reprise: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
-    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', apropos: 'parametre',
+    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', apropos: 'parametre',
   };
   const iconeEcran = (vue, classe = 'ecranIc') => ICONE_ECRAN[vue] ? `<svg class="${classe}" aria-hidden="true"><use href="#e-${ICONE_ECRAN[vue]}"/></svg>` : '';
   document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.dataset.rubrique = RUBRIQUE_CLE[g.querySelector('.lbl').textContent] || ''; });

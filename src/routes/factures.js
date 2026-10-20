@@ -1,7 +1,7 @@
 const { enTransaction } = require('../db/transaction');
 const express = require('express');
 const { computeFactureTotals, computeFactureTotalsDepuisLignes } = require('../services/pricing');
-const { decrementerLot, LOT_DISPONIBLE } = require('../services/lotService');
+const { decrementerLot, nextNumero, LOT_DISPONIBLE } = require('../services/lotService');
 const { StockInsuffisant } = require('../db/transaction');
 const { positif, arrondi } = require('../services/regles');
 const { requireRole } = require('../middleware/auth');
@@ -10,15 +10,6 @@ const { emettreFacture } = require('../services/ventes');
 // Total des avoirs émis par facture (réduit ce que le client doit).
 const AVOIRS_PAR_FACTURE = '(SELECT facture_id, SUM(total_ttc) AS total_avoirs FROM avoirs GROUP BY facture_id)';
 const ar = (x) => Math.round(Number(x) * 1000) / 1000;
-
-async function nextNumero(pool, seqName, prefix) {
-  const upd = await pool.query(`UPDATE sequences SET \`last_value\` = \`last_value\` + 1 WHERE name = $1`, [seqName]);
-  if (!upd.affectedRows) {
-    await pool.query(`INSERT INTO sequences (name, \`last_value\`) VALUES ($1, 1)`, [seqName]);
-  }
-  const cur = await pool.query(`SELECT \`last_value\` FROM sequences WHERE name = $1`, [seqName]);
-  return `${prefix}-${String(cur.rows[0].last_value).padStart(4, '0')}`;
-}
 
 module.exports = function (pool) {
   const router = express.Router();
@@ -160,7 +151,7 @@ module.exports = function (pool) {
       return res.status(400).json({ error: `L'avoir (${ar(montants.totalTTC)} DT) dépasse ce qui reste facturé (${ar(Number(facture.total_ttc) - dejaAvoir)} DT).` });
     }
 
-    const numero = await nextNumero(pool, 'avoir_seq', 'AV');
+    const numero = await nextNumero(pool, 'avoir_seq', 'AV', { p1: facture.numero });
     const ins = await pool.query(
       `INSERT INTO avoirs (numero, facture_id, client_id, client_nom, motif, remise_en_stock, total_ht, fodec_montant, montant_tva, droit_timbre, total_ttc, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
