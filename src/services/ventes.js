@@ -62,7 +62,7 @@ async function creerLivraison(pool, { commande_id, lignes, date_livraison, notes
     if (siRien === 'ignorer') return null;
     throw new ErreurVente(`Rien à livrer sur la commande ${commande.numero}.`);
   }
-  const numero = await nextNumero(pool, 'bl_seq', 'BL');
+  const numero = await nextNumero(pool, 'bl_seq', 'BL', { date: date_livraison, p1: commande.numero });
   const ins = await pool.query(
     `INSERT INTO bons_livraison (numero, commande_id, client_id, date_livraison, notes, employe_id) VALUES ($1,$2,$3,$4,$5,$6)`,
     [numero, commande_id, commande.client_id, date_livraison || new Date().toISOString().slice(0, 10), notes || null, employe_id || null]);
@@ -123,7 +123,7 @@ async function emettreFacture(pool, { commande_id, tva_rate, employe_id }) {
   }
 
   const t = await totauxDepuisLignes(pool, lignes.map(l => ({ unitPrice: l.unit_price, qty: l.qty })), tva_rate);
-  const numero = await nextNumero(pool, 'facture_seq', 'FAC');
+  const numero = await nextNumero(pool, 'facture_seq', 'FAC', { p1: commande.numero });
   const fac = await pool.query(
     `INSERT INTO factures (numero, commande_id, commande_numero, client_id, client_nom, tva_rate, fodec_montant, droit_timbre, total_ht, montant_tva, total_ttc)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,

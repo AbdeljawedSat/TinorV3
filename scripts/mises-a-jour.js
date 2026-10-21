@@ -56,6 +56,13 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V3.3 — numérotation configurable des opérations (format actuel / proposé / personnalisé).
+  const [nf] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'numerotation_formats'");
+  if (!nf[0].n) {
+    await conn.query(SQL_NUMEROTATION_FORMATS);
+    journal('✓ Mise à jour : table numerotation_formats créée (numérotation des opérations).');
+  }
+
   // V3.3 — chaîne de vente : quantités livrées, bons de livraison, factures en attente.
   if (!(await colonneExiste(conn, 'commande_lignes', 'qty_livree'))) {
     await conn.query('ALTER TABLE commande_lignes ADD COLUMN qty_livree DECIMAL(10,2) NOT NULL DEFAULT 0');
@@ -155,6 +162,16 @@ CREATE TABLE IF NOT EXISTS proforma_lignes (
   FOREIGN KEY (proforma_id) REFERENCES proformas(id) ON DELETE CASCADE,
   FOREIGN KEY (commande_ligne_id) REFERENCES commande_lignes(id) ON DELETE SET NULL,
   FOREIGN KEY (produit_id) REFERENCES produits(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_NUMEROTATION_FORMATS = `CREATE TABLE IF NOT EXISTS numerotation_formats (
+  cle              VARCHAR(30) NOT NULL PRIMARY KEY,
+  mode             VARCHAR(10) NOT NULL DEFAULT 'actuel',
+  zones            LONGTEXT NULL,
+  date_application DATE NULL,
+  updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_by       INT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

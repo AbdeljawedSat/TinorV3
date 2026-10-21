@@ -55,7 +55,7 @@ module.exports = function (pool) {
       if (!Array.isArray(lignes) || !lignes.length) {
         return res.status(400).json({ error: 'Au moins une ligne est requise.' });
       }
-      const numero = await nextNumero(pool, 'reception_seq', 'REC');
+      const numero = await nextNumero(pool, 'reception_seq', 'REC', { date: date_reception });
 
       const recRes = await pool.query(
         `INSERT INTO receptions (numero, fournisseur_id, achat_id, date_reception, local_id, statut, notes, employe_id)

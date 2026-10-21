@@ -58,7 +58,7 @@ module.exports = function (pool) {
       const lignes = await lignesCommande(pool, commande_id);
       if (!lignes.length) return res.status(400).json({ error: 'Commande sans lignes.' });
       const tva = (await pool.query('SELECT tva FROM settings WHERE id = 1')).rows[0]?.tva ?? 19;
-      const numero = await nextNumero(pool, 'proforma_seq', 'PRO');
+      const numero = await nextNumero(pool, 'proforma_seq', 'PRO', { p1: c.numero });
       const ins = await pool.query(
         `INSERT INTO proformas (numero, commande_id, client_id, date_proforma, tva_rate, notes, employe_id) VALUES ($1,$2,$3,CURDATE(),$4,$5,$6)`,
         [numero, commande_id, c.client_id, tva, notes || null, employe_id || null]);
