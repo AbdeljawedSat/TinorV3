@@ -1,0 +1,44 @@
+      <!-- ===== CONDITIONNEMENT ===== -->
+      <div class="view" id="view-conditionnement">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Conditionnement</h1><p>Transformation du vrac (presse/filtration) en produit fini formaté</p></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btnGhost" id="conditionnementExportDocxBtn">⬇ DOCX</button>
+            <button class="btnGhost" id="conditionnementExportXlsxBtn">⬇ XLSX</button>
+            <button class="btnGhost" id="conditionnementExportPdfBtn">⬇ PDF</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:16px;">
+          <div style="padding:14px 18px; display:flex; gap:8px;">
+            <button class="chip conditionnementHuileToggle active" data-val="toutes">Toutes catégories</button>
+            <button class="chip conditionnementHuileToggle" data-val="huile">Huile</button>
+            <button class="chip conditionnementHuileToggle" data-val="autre">Autre</button>
+          </div>
+          <div style="padding:0 18px 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Produit ou N° de lot</label>
+              <input type="text" id="conditionnementFilterTexte" class="formInput" placeholder="ex: Savon ou 06-PF-001">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="conditionnementFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="conditionnementFilterDateFin" class="formInput">
+            </div>
+            <button class="btnGhost" id="conditionnementFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr>
+              <th>N° Lot</th><th>Produit</th><th>Date</th>
+              <th class="num">Nb unités</th><th class="num">Volume / Poids (unité)</th><th class="num">Total</th>
+              <th class="num">Stock non conditionné (lots sources)</th><th></th>
+            </tr></thead>
+            <tbody id="conditionnementBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

@@ -1,0 +1,79 @@
+      <!-- ===== DASHBOARD ===== -->
+      <div class="view" id="view-dashboard">
+        <div class="pageHead">
+          <h1>Tableau de bord</h1>
+          <p id="dashboardDateSub">Vue d'ensemble de l'activité</p>
+          <svg class="branche" aria-hidden="true"><use href="#s-branche"/></svg>
+        </div>
+        <div class="kpiRow">
+          <div class="kpiCard"><div class="lbl">Produits au catalogue</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Commandes en attente</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Lots bloqués/quarantaine</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+          <div class="kpiCard"><div class="lbl">Commandes au total</div><div class="val num">—</div><div class="delta" style="display:none;"></div></div>
+        </div>
+
+        <div class="panel" id="dashboardAFairePanel">
+          <div class="panelHead"><div><h2>À faire aujourd'hui</h2><div class="sub">Cliquez une ligne pour ouvrir la liste concernée</div></div></div>
+          <div class="aFaireListe" id="dashboardAFaire"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead"><div><h2>Ventes des 6 derniers mois</h2><div class="sub">Factures émises (TTC), avoirs déduits</div></div></div>
+          <div class="graphVentes" id="dashboardGraphVentes"></div>
+        </div>
+
+        <div class="panel" id="dashboardAlertesPanel" style="display:none;">
+          <div class="panelHead"><div><h2>⚠ Alertes prioritaires</h2><div class="sub">Cliquez une alerte pour voir le détail</div></div></div>
+          <div id="dashboardAlertes" style="display:flex; flex-direction:column; gap:0;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead"><div><h2>Actions rapides</h2></div></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; padding:4px 0 8px;">
+            <button class="btnPrimary" id="qaCommande">＋ Nouvelle commande</button>
+            <button class="btnGhost" id="qaReception">＋ Réception matière</button>
+            <button class="btnGhost" id="qaPresse">＋ Presse</button>
+            <button class="btnGhost" id="qaConditionnement">＋ Conditionnement</button>
+            <button class="btnGhost" id="qaClient">＋ Nouveau client</button>
+          </div>
+        </div>
+
+
+        <div class="panel">
+          <div class="panelHead"><div><h2>Stock par famille</h2><div class="sub">Répartition du stock disponible, par catégorie</div></div></div>
+          <div id="dashboardStockFamille" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; padding:4px 0 8px;"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead"><div><h2>Pipeline de production</h2><div class="sub">Où se trouve le stock en ce moment, matière première → produit fini</div></div></div>
+          <div id="dashboardPipeline" style="display:flex; gap:8px; padding:8px 0 12px; overflow-x:auto;"></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="panel">
+            <div class="panelHead"><div><h2>Meilleures ventes</h2><div class="sub">Cumul des quantités vendues</div></div></div>
+            <table>
+              <thead><tr><th>Produit</th><th class="num">Qté</th></tr></thead>
+              <tbody id="dashboardTopVentesBody"><tr><td colspan="2" class="rowMeta" style="text-align:center; padding:16px;">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="panel" id="dashboardMargePanel" style="display:none;">
+            <div class="panelHead"><div><h2>⚠ Marge faible</h2><div class="sub">Prix de vente trop proche du coût de revient</div></div></div>
+            <table>
+              <thead><tr><th>Produit</th><th class="num">Marge</th></tr></thead>
+              <tbody id="dashboardMargeBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div><h2>Activité récente</h2><div class="sub">Dernières opérations tous modules confondus</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Date</th><th>Opération</th><th>Détail</th><th class="num">Montant</th></tr></thead>
+            <tbody id="dashboardActiviteBody"><tr><td colspan="4" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

@@ -1,0 +1,28 @@
+<!-- ============ MODALE : ORDRE DE PRODUCTION ============ -->
+<div class="modalOverlay" id="ordreProdModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2>Nouvel ordre de production</h2><div class="sub">Consomme les ingrédients de la recette</div></div>
+      <button class="modalClose" id="ordreProdModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="ordreProdFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Recette</label>
+      <select id="ordreProdRecette" class="formInput"></select>
+      <label class="formLbl">Date</label>
+      <input type="date" id="ordreProdDate" class="formInput">
+      <label class="formLbl">Quantité à produire</label>
+      <input type="number" step="1" id="ordreProdQty" class="formInput">
+      <label class="formLbl">Notes</label>
+      <input type="text" id="ordreProdNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="ordreProdFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="ordreProdCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="ordreProdSaveBtn">Lancer la production</button>
+      </div>
+    </div>
+  </div>
+</div>
+

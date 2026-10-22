@@ -1,0 +1,28 @@
+<!-- ============ MODALE : FACTURE EN ATTENTE (pro forma) ============ -->
+<div class="modalOverlay" id="proformaOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="proformaTitre">Facture en attente</h2><div class="sub" id="proformaSous"></div></div>
+      <button class="modalClose" id="proformaFermer">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="proformaErreur" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;"></div>
+      <table>
+        <thead><tr><th>Désignation</th><th class="num">Qté</th><th>Prix TTC</th><th class="num">Total</th></tr></thead>
+        <tbody id="proformaLignes"></tbody>
+      </table>
+      <div id="proformaTotaux" style="margin-top:10px; font-size:13px;"></div>
+      <label class="formLbl">Notes (conditions, délai, acompte…)</label>
+      <input type="text" id="proformaNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="proformaSupprimer" style="color:var(--danger);">Annuler la pro forma</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btnGhost" id="proformaImprimer">🖨 Imprimer</button>
+        <button class="btnGhost" id="proformaEnregistrer">Enregistrer</button>
+        <button class="btnPrimary" id="proformaValider">Valider la facture</button>
+      </div>
+    </div>
+  </div>
+</div>
+

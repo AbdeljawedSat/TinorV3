@@ -1,0 +1,171 @@
+      <!-- ===== PARAMÈTRES ===== -->
+      <div class="view" id="view-parametres">
+        <div class="pageHead"><h1>Paramètres</h1><p>Variables de calcul globales — grille de prix, offre spéciale, TVA</p></div>
+        <div class="filterRow" style="margin-bottom:16px;">
+          <span class="chip active paramTabBtn" data-tab="general">Grille &amp; calcul</span>
+          <span class="chip paramTabBtn" data-tab="facturation">Identité de facturation</span>
+          <span class="chip paramTabBtn" data-tab="sauvegarde">Sauvegarde</span>
+        </div>
+        <div class="paramTabPane" data-tab="general">
+        <div class="panel" style="max-width:520px;">
+          <div style="padding:18px 20px;">
+            <div id="parametresFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:12px; display:none;"></div>
+
+            <label class="formLbl">Salaire journalier de référence (DT)</label>
+            <input type="number" step="0.01" id="paramSalaire" class="formInput">
+
+            <label class="formLbl">Marge (%)</label>
+            <input type="number" step="0.01" id="paramMarge" class="formInput">
+
+            <label class="formLbl">TVA (%)</label>
+            <input type="number" step="0.01" id="paramTva" class="formInput">
+
+            <label class="formLbl">FODEC (% du HT)</label>
+            <input type="number" step="0.01" id="paramFodecRate" class="formInput">
+
+            <label class="formLbl">Droit de timbre (DT, montant fixe)</label>
+            <input type="number" step="0.001" id="paramDroitTimbre" class="formInput">
+
+            <label class="formLbl">Seuil d'application du timbre (TTC en DT)</label>
+            <input type="number" step="0.001" id="paramTimbreSeuil" class="formInput">
+            <div class="rowMeta" style="margin:-4px 0 12px;">Le timbre ne s'applique que si le total TTC de la facture atteint ce seuil.</div>
+
+            <label class="formLbl">Format des numéros de lot</label>
+            <select id="paramLotFormatStyle" class="formInput">
+              <option value="code_origine_seq">Code produit — Origine — Séquence (ex: 03-P-001)</option>
+              <option value="origine_code_seq">Origine + Code produit — Séquence (ex: P03-001)</option>
+              <option value="jardins_jerba">Jardins de Jerba — graines = lot fournisseur · presse 02-GJ01/2023-20230225H · filtré 02-GJ01/2023-20241230 · flacons 090123</option>
+            </select>
+            <label class="chkLbl" style="margin-top:8px;">
+              <input type="checkbox" id="paramLotSeqParOrigine"> Séquence séparée par origine (chaque étape — achat, presse, filtration... — repart de 001)
+            </label>
+            <div class="rowMeta" style="margin:2px 0 12px;">Ne s'applique qu'aux <b>nouveaux</b> lots créés après ce changement — les numéros déjà attribués ne sont jamais modifiés.</div>
+
+            <label class="formLbl">Ajustement coût matière (%)</label>
+            <input type="number" step="0.01" id="paramMatierePct" class="formInput">
+
+            <label class="formLbl">Ajustement rendement (%)</label>
+            <input type="number" step="0.01" id="paramRendPct" class="formInput">
+
+            <label class="formLbl">Source de référence prix</label>
+            <select id="paramRefSource" class="formInput">
+              <option value="tableau">Tableau (prix de référence stockés)</option>
+              <option value="marche">Marché (calcul en direct)</option>
+            </select>
+
+            <label class="formLbl" style="margin-top:16px; font-weight:600;">Offre spéciale par défaut</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label class="formLbl">Unités achetées</label>
+                <input type="number" step="1" id="paramOffreAchete" class="formInput">
+              </div>
+              <div>
+                <label class="formLbl">Unités offertes</label>
+                <input type="number" step="1" id="paramOffreGratuit" class="formInput">
+              </div>
+            </div>
+            <label class="chkLbl" style="margin-top:12px;"><input type="checkbox" id="paramCumulerLot"> Cumuler l'offre spéciale avec les remises pourcentage</label>
+
+            <button class="btnPrimary" id="parametresSaveBtn" style="margin-top:20px;">Enregistrer</button>
+            <span class="status" id="parametresFormStatus"></span>
+          </div>
+        </div>
+        </div>
+
+        <div class="paramTabPane" data-tab="facturation" style="display:none;">
+        <div class="panel" style="max-width:520px; margin-top:18px;">
+          <div style="padding:18px 20px;">
+            <h2 style="margin:0 0 4px;">Identité de facturation</h2>
+            <div class="rowMeta" style="margin-bottom:16px;">Logo et coordonnées utilisés pour générer une facture imprimable/PDF professionnelle</div>
+
+            <label class="formLbl">Logo de l'entreprise</label>
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+              <img id="paramLogoPreview" src="" alt="" style="max-height:56px; max-width:140px; display:none; border:1px solid var(--line); border-radius:6px; padding:4px; background:#fff;">
+              <input type="file" id="paramLogoInput" accept="image/*" class="formInput" style="max-width:220px;">
+            </div>
+
+            <label class="formLbl">Nom de l'entreprise</label>
+            <input type="text" id="paramEntrepriseNom" class="formInput" placeholder="STE JAS — Les Jardins de Jerba">
+            <label class="formLbl">Adresse</label>
+            <input type="text" id="paramEntrepriseAdresse" class="formInput">
+            <label class="formLbl">Téléphone</label>
+            <input type="text" id="paramEntrepriseTelephone" class="formInput">
+            <label class="formLbl">Email</label>
+            <input type="text" id="paramEntrepriseEmail" class="formInput">
+            <label class="formLbl">Matricule fiscal</label>
+            <input type="text" id="paramEntrepriseMatriculeFiscal" class="formInput">
+            <label class="formLbl">Couleur principale du modèle de facture</label>
+            <input type="color" id="paramFactureCouleur" class="formInput" style="height:42px; padding:4px;">
+
+            <button class="btnPrimary" id="parametresFactureSaveBtn" style="margin-top:16px;">Enregistrer l'identité de facturation</button>
+            <span class="status" id="parametresFactureFormStatus"></span>
+          </div>
+        </div>
+        </div>
+
+        <div class="paramTabPane" data-tab="sauvegarde" style="display:none;">
+        <div class="panel" style="max-width:520px; margin-top:18px;">
+          <div style="padding:18px 20px;">
+            <h2 style="margin:0 0 4px;">Sauvegarde de la base</h2>
+            <div class="rowMeta" style="margin-bottom:16px;">Copie complète de toutes les données — à faire régulièrement, en plus d'une sauvegarde automatique planifiée (voir README fourni)</div>
+            <button class="btnPrimary" id="backupNowBtn">💾 Sauvegarder maintenant</button>
+            <span class="status" id="backupStatus"></span>
+            <div id="backupError" style="color:var(--danger); font-size:11.5px; margin-top:8px; display:none;"></div>
+            <h3 style="margin:20px 0 8px; font-size:13px;">Sauvegardes existantes</h3>
+            <table style="width:100%;">
+              <thead><tr><th>Fichier</th><th class="num">Taille</th><th></th></tr></thead>
+              <tbody id="backupListBody"><tr><td colspan="3" class="rowMeta">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="view" id="view-lots">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Registre des lots</h1><p>Traçabilité complète — matière première, presse, filtration, conditionnement</p></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btnGhost" id="lotsExportDocxBtn">⬇ DOCX</button>
+            <button class="btnGhost" id="lotsExportXlsxBtn">⬇ XLSX</button>
+            <button class="btnGhost" id="lotsExportPdfBtn">⬇ PDF</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:0;">
+          <div style="padding:14px 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Produit ou N° de lot</label>
+              <input type="text" id="lotsFilterTexte" class="formInput" placeholder="ex: Sésame ou 01-MP-001">
+            </div>
+            <div style="min-width:170px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Origine</label>
+              <select id="lotsFilterOrigine" class="formInput">
+                <option value="">Toutes (presse, filtration, mélange, conditionnement)</option>
+                <option value="presse">Presse</option>
+                <option value="filtration">Filtration</option>
+                <option value="melange">Mélange</option>
+                <option value="conditionnement">Conditionnement</option>
+              </select>
+            </div>
+            <div style="min-width:190px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Trier par</label>
+              <select id="lotsTri" class="formInput"></select>
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="lotsFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="lotsFilterDateFin" class="formInput">
+            </div>
+            <button class="btnGhost" id="lotsFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead id="lotsHead"><tr><th data-tri="num">N° Lot</th><th data-tri="produit">Produit</th><th data-tri="origine">Origine</th><th data-tri="date">Date</th><th>Bio</th><th data-tri="statut">Statut</th><th class="num" data-tri="qte">Qté restante</th><th></th></tr></thead>
+            <tbody id="lotsBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

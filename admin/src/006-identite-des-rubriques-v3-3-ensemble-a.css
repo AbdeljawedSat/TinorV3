@@ -1,0 +1,38 @@
+  /* ---------- Identité des rubriques (V3.3, ensemble A) ---------- */
+  /* Couleurs claires des rubriques sur le menu sombre */
+  .navGroup[data-rubrique="ventes"]{--r:#7DB8E0;} .navGroup[data-rubrique="production"]{--r:#A9C77A;}
+  .navGroup[data-rubrique="stock"]{--r:#E2B867;} .navGroup[data-rubrique="achats"]{--r:#E89A7D;} .navGroup[data-rubrique="reglages"]{--r:#AEB8C2;}
+  .navGroupBtn .code, .navGroup.open .navGroupBtn .code{width:28px; height:28px; border-radius:8px; display:grid; place-items:center;
+    background:color-mix(in srgb, var(--r, #C9A662) 22%, transparent); color:var(--r, #C9A662);}
+  .navGroupBtn .code svg{width:16px; height:16px;}
+  .navGroup.rubriqueActive{box-shadow:inset 3px 0 0 var(--r);}
+  .navGroup.rubriqueActive .navGroupBtn{background:color-mix(in srgb, var(--r) 16%, var(--ink-soft)); color:#fff;}
+  .navGroup.rubriqueActive .navGroupBtn .lbl{color:#fff;}
+  .navChildren a{justify-content:flex-start; padding-left:18px;}
+  .navChildren a .cnt{margin-left:auto;}
+  .navChildren a .ecranIc{width:15px; height:15px; flex:none; opacity:.7;}
+  .navGroup .navChildren a.active{background:var(--r, var(--brass)); color:var(--ink);}
+  .navChildren a.active .ecranIc{opacity:1;}
+  /* Bandeau illustré en haut de chaque écran */
+  .content{background:var(--sand);}
+  .view .pageHead{position:relative; overflow:hidden; isolation:isolate; background:var(--accent-fond);
+    border:1px solid color-mix(in srgb, var(--accent) 16%, var(--line)); border-radius:14px; padding:18px 22px 16px; margin-bottom:20px;}
+  .pageHead .illuRubrique{position:absolute; right:10px; bottom:-12px; width:180px; height:140px; color:var(--accent); opacity:.2; z-index:-1; pointer-events:none;}
+  .pageHead h1{padding-bottom:0;} .pageHead h1::after{display:none;}
+  .exportBtn{white-space:nowrap;}
+  .ecranPastille{display:inline-grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--paper); color:var(--accent);
+    vertical-align:-7px; margin-right:10px; box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);}
+  .ecranPastille svg{width:19px; height:19px;}
+  @media (max-width:700px){
+    .view table tbody td.lotCode[data-doc^="doc-"]{justify-self:start; border-radius:6px; padding:3px 9px !important; font-size:12px;}
+    .view table tbody td.lotCode.doc-ventes{background:#E3F0F9 !important; color:#155884;} .view table tbody td.lotCode.doc-avoir{background:#FBE5E3 !important; color:#8E2F24;}
+    .view table tbody td.lotCode.doc-production{background:#EDF4E0 !important; color:#47651B;} .view table tbody td.lotCode.doc-stock{background:#FAF0DC !important; color:#8A5F14;}
+    .view table tbody td.lotCode.doc-achats{background:#FBE9E2 !important; color:#9A4024;}
+    .view table tbody td.lotCode[data-doc^="doc-"]::before{display:none;}
+  }
+  @media (max-width:700px){ .view .pageHead{padding:14px 14px 12px;} .pageHead .illuRubrique{width:110px; height:86px; right:4px;} .ecranPastille{width:30px; height:30px;} }
+  /* Numéros de document colorés selon leur rubrique */
+  .lotCode.doc-ventes{background:#E3F0F9; color:#155884;} .lotCode.doc-avoir{background:#FBE5E3; color:#8E2F24;}
+  .lotCode.doc-production{background:#EDF4E0; color:#47651B;} .lotCode.doc-stock{background:#FAF0DC; color:#8A5F14;}
+  .lotCode.doc-achats{background:#FBE9E2; color:#9A4024;}
+  #paletteListe .item .ecranIc{width:15px; height:15px; vertical-align:-2px; margin-right:8px; color:var(--text-soft);}

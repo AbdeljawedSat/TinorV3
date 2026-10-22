@@ -1,0 +1,16 @@
+<!-- ============ MODALE : COÛT D'UN LOT ============ -->
+<div class="modalOverlay" id="coutModalOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="coutModalTitle">Coût du lot</h2><div class="sub">Calculé d'après les achats et les lots utilisés, plus les frais d'étape</div></div>
+      <button class="modalClose" id="coutModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:70vh; overflow-y:auto;">
+      <div id="coutResume"></div>
+      <table style="width:100%; margin-top:10px;"><thead><tr><th>Lot utilisé</th><th class="num">Quantité</th><th class="num">Coût unitaire</th><th class="num">Montant</th></tr></thead><tbody id="coutDetail"></tbody></table>
+      <div class="rowMeta" style="margin-top:12px;"><b>Coût saisi à la main</b> (matière première sans achat enregistré, correction) — laissez vide pour le calcul automatique :</div>
+      <div class="numCtx" style="margin-top:6px; align-items:end;"><div><label>DT par unité du lot (HT)</label><input type="number" step="any" min="0" id="coutManuel"></div><button class="btnGhost" id="coutEnregistrer">Enregistrer</button></div>
+    </div>
+  </div>
+</div>
+

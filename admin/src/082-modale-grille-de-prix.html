@@ -1,0 +1,65 @@
+<!-- ============ MODALE : GRILLE DE PRIX ============ -->
+<div class="modalOverlay" id="grilleModalOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modalHead">
+      <div><h2 id="grilleModalTitle">Nouvelle grille de prix</h2><div class="sub">Coût de revient et prix par format</div></div>
+      <button class="modalClose" id="grilleModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:68vh; overflow-y:auto;">
+      <div id="grilleFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="grilleId">
+
+      <div id="grilleNouvelleSection">
+        <label class="formLbl">Produit (huile)</label>
+        <select id="grilleProduit" class="formInput"></select>
+        <label class="formLbl">Coût matière (DT/L)</label>
+        <input type="number" step="0.001" id="grilleMatiere" class="formInput">
+        <label class="formLbl">Rendement (L / ouvrier / jour)</label>
+        <input type="number" step="0.01" id="grilleProd" class="formInput">
+        <label class="formLbl">Amortissement (DT/L)</label>
+        <input type="number" step="0.001" id="grilleAmortissement" class="formInput" value="5">
+        <label class="formLbl">Électricité (DT/L)</label>
+        <input type="number" step="0.001" id="grilleElectricite" class="formInput" value="0">
+      </div>
+
+      <div id="grilleExistanteSection" style="display:none;">
+        <div class="structLocked" style="margin-bottom:14px; font-size:13px;">
+          <b>Coût de revient courant : <span id="grilleCoutRevientAffiche" style="font-family:'IBM Plex Mono',monospace;"></span></b>
+          <span id="grilleCoutOverrideBadge" style="display:none; color:var(--warn); font-weight:600;"> (forcé manuellement)</span>
+          <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">= matière ajustée + salaire/rendement + amortissement + électricité</div>
+        </div>
+
+        <label class="formLbl" style="font-weight:600;">Amortissement et électricité</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <input type="number" step="0.001" id="grilleAmortissementEdit" class="formInput" placeholder="Amortissement DT/L">
+          <input type="number" step="0.001" id="grilleElectriciteEdit" class="formInput" placeholder="Électricité DT/L">
+        </div>
+        <button class="btnGhost" id="grilleMajCoutsBtn" style="margin-top:8px;">Mettre à jour</button>
+
+        <label class="formLbl" style="font-weight:600; margin-top:16px;">Prix par format — laisser vide pour le calcul automatique</label>
+        <div id="grilleFormatsRows"></div>
+        <label class="formLbl">Forcer le coût de revient (DT/L) — laisser vide pour revenir au calcul</label>
+        <input type="number" step="0.001" id="grilleCoutOverrideInput" class="formInput">
+        <button class="btnGhost" id="grilleAppliquerOverridesBtn" style="margin-top:10px;">Appliquer ces valeurs</button>
+
+        <label class="formLbl" style="margin-top:20px; font-weight:600;">Nouvelle entrée de coût (historique)</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <input type="date" id="grilleHistDate" class="formInput">
+          <input type="number" step="0.001" id="grilleHistMatiere" class="formInput" placeholder="Coût matière">
+          <input type="number" step="0.01" id="grilleHistProd" class="formInput" placeholder="Rendement">
+          <input type="text" id="grilleHistNote" class="formInput" placeholder="Note (ex: hausse prix graines)">
+        </div>
+        <button class="btnGhost" id="grilleAjouterHistBtn" style="margin-top:8px;">＋ Ajouter cette entrée</button>
+        <div id="grilleHistoriqueList" style="margin-top:10px; font-size:11.5px; color:var(--text-soft);"></div>
+      </div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="grilleFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="grilleCancelBtn">Fermer</button>
+        <button class="btnPrimary" id="grilleSaveBtn">Créer la grille</button>
+      </div>
+    </div>
+  </div>
+</div>
+

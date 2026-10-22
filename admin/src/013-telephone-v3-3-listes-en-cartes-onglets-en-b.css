@@ -1,0 +1,51 @@
+  /* ---------- Téléphone (V3.3) : listes en cartes, onglets en bas, formulaires plein écran ---------- */
+  #ongletsMobile{display:none;}
+  @media (max-width: 700px){
+    .topbar{gap:8px; padding:0 12px;}
+    .crumbs{display:none;}
+    .menuToggle{display:none;}
+    .search{width:auto; flex:1; min-width:0;}
+    #btnNouveau{font-size:0; padding:8px 12px;}
+    #btnNouveau::before{content:'＋'; font-size:16px;}
+    .content{padding:14px 12px calc(84px + env(safe-area-inset-bottom));}
+    .sidebar{z-index:45;}
+    #ongletsMobile{display:grid; grid-template-columns:repeat(5,1fr); position:fixed; left:0; right:0; bottom:0; z-index:40;
+      background:var(--paper); border-top:1px solid var(--line); padding:4px 4px calc(4px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 18px rgba(23,35,29,.08);}
+    #ongletsMobile button{background:none; border:0; display:flex; flex-direction:column; align-items:center; gap:2px;
+      font:inherit; font-size:10.5px; color:var(--text-soft); padding:6px 0; cursor:pointer; border-radius:8px;}
+    #ongletsMobile button svg{width:22px; height:22px;}
+    #ongletsMobile button.actif{color:var(--ink); font-weight:600; background:rgba(184,146,74,.12);}
+    #notifications{right:12px; left:12px; bottom:calc(76px + env(safe-area-inset-bottom)); max-width:none; align-items:stretch;}
+
+    /* Listes : une carte par ligne, libellé de colonne devant chaque valeur */
+    .view table{border:0; min-width:0 !important; width:100%;}
+    .view table thead{display:none;}
+    .view table tbody{display:flex; flex-direction:column; gap:10px;}
+    .view table tbody tr{display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; background:var(--paper);
+      border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
+    .view table tbody td{display:block; background:none !important; position:static !important; border:0 !important; padding:2px 0 !important; text-align:left !important; white-space:normal; min-width:0; overflow-wrap:anywhere;}
+    .view table tbody td::before{content:attr(data-label); display:block; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft);}
+    .view table tbody td[data-label=""]::before{display:none;}
+    .view table tbody td:first-child{font-size:11.5px; color:var(--text-soft);}
+    .view table tbody td:nth-child(2){grid-column:1 / -1; order:-1; font-weight:600; font-size:14px;}
+    .view table tbody td:nth-child(2)::before{display:none;}
+    .view table tbody td:has(.rowActions), .view table tbody td.rowActions{grid-column:1 / -1;}
+    .view table tbody .rowActions{justify-content:flex-start; flex-wrap:wrap;}
+    .view table tbody td[colspan]{grid-column:1 / -1; text-align:center !important;}
+    .view table tbody tr:has(> td[colspan]:only-child){display:block;}
+    .view .tableWrap, .view .tblWrap{overflow:visible;}
+
+    /* Formulaires plein écran */
+    .modalOverlay{padding:0;}
+    .modal{max-width:none !important; width:100% !important; height:100%; max-height:none; border-radius:0;}
+    .modal > div[style*="max-height"]{max-height:none !important; flex:1;}
+
+    /* Ligne de commande en cours de saisie : sur deux colonnes */
+    .ligneCmdStageHead{display:none;}
+    .ligneCmdStageRow{grid-template-columns:1fr 1fr !important; gap:8px;}
+    .ligneCmdStageRow .comboWrap{grid-column:1 / -1;}
+    .ligneCmdStageRow .ligneNum::before{content:attr(data-label); display:block; font-size:10px; text-transform:uppercase; color:var(--text-soft); text-align:left;}
+    .cmdTable thead{display:none;}
+  }
+

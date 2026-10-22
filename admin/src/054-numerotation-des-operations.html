@@ -1,0 +1,45 @@
+      <!-- ===== NUMÉROTATION DES OPÉRATIONS ===== -->
+      <div class="view" id="view-numerotation">
+        <div class="pageHead"><h1>Numérotation des opérations</h1><p>Pour chaque opération, choisissez le format du numéro : proposé par TinOR, format actuel ou personnalisé</p></div>
+        <div class="panel" style="padding:18px 20px;">
+          <label class="rowMeta" for="numOp">1 · Choisir l'opération</label>
+          <select id="numOp" style="display:block; width:100%; max-width:420px; margin:4px 0 6px;"></select>
+          <div class="rowMeta" id="numNote"></div>
+          <div class="numCartes" id="numCartes"></div>
+        </div>
+        <div id="numEditeur">
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">2 · Aperçu</div>
+            <div class="numApercu" id="numApercu" style="margin:6px 0 12px;"></div>
+            <div class="numCtx">
+              <div><label id="numLDate">Date</label><input type="date" id="numCDate"></div>
+              <div id="numBP1"><label id="numLP1"></label><input type="text" id="numCP1"></div>
+              <div id="numBP2"><label id="numLP2"></label><input type="text" id="numCP2"></div>
+              <div id="numBProd"><label>Code produit</label><input type="text" id="numCProd" value="04" style="width:70px"></div>
+            </div>
+            <div id="numLegal"></div>
+          </div>
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">3 · Zones du numéro, de gauche à droite</div>
+            <div id="numZones" style="margin-top:8px;"></div>
+            <div class="rowMeta" style="margin:4px 0 6px;">Ajouter une zone :</div>
+            <div class="numAjout" id="numAjout"></div>
+          </div>
+          <div class="panel" style="padding:18px 20px; margin-top:14px;">
+            <div class="rowMeta">Les 3 prochains numéros <span style="font-weight:400">(le compteur avance ; un lot déjà existant reçoit « -2 »)</span></div>
+            <table style="margin-top:6px;"><tbody id="numSuite"></tbody></table>
+          </div>
+        </div>
+        <div class="panel" style="padding:18px 20px; margin-top:14px;">
+          <div class="rowMeta">4 · À partir de quand ?</div>
+          <div class="numCtx" style="align-items:end; margin-top:6px;">
+            <div><label>Le choix s'applique à partir du (vide = tout de suite)</label><input type="date" id="numDApp"></div>
+            <div class="rowMeta">Les numéros déjà créés ne changent jamais. Avant cette date, le format actuel continue.</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap;">
+            <button class="btnPrimary" id="numSave">Enregistrer ce choix</button>
+            <span class="rowMeta" id="numRegle"></span>
+          </div>
+        </div>
+      </div>
+

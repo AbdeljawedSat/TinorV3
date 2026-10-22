@@ -1,0 +1,26 @@
+  /* ---------- Fiche détaillée (V3.3) : panneau à droite ---------- */
+  #ficheFond{position:fixed; inset:0; background:rgba(23,35,29,.28); z-index:60; opacity:0; pointer-events:none; transition:opacity .2s;}
+  #ficheFond.open{opacity:1; pointer-events:auto;}
+  #fiche{position:fixed; top:0; right:0; bottom:0; width:min(520px, 100vw); background:var(--paper); z-index:61; display:flex; flex-direction:column;
+    box-shadow:-14px 0 40px rgba(23,35,29,.18); transform:translateX(102%); transition:transform .24s ease; border-left:4px solid var(--accent);}
+  #fiche.open{transform:none;}
+  .ficheTete{padding:18px 22px 14px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:flex-start;}
+  .ficheTete .titre{flex:1; min-width:0;}
+  .ficheTete .type{font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--accent);}
+  .ficheTete h2{font-family:'Fraunces',serif; font-size:21px; margin:2px 0 4px;}
+  .ficheTete .meta{font-size:12.5px; color:var(--text-soft); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  #ficheCorps{flex:1; overflow-y:auto; padding:16px 22px;}
+  .ficheBloc{margin-bottom:20px;} .ficheBloc h3{font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft); margin:0 0 8px; font-weight:700;}
+  .ficheBloc table td, .ficheBloc table th{padding:7px 6px; font-size:12.5px;}
+  .ficheTotaux{display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:13px; margin-top:8px;}
+  .ficheTotaux .fort{font-weight:700; font-size:15px; border-top:1px solid var(--line); padding-top:6px;}
+  .ficheLien{color:var(--accent); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+  .ficheNotes{white-space:pre-line; font-size:12.5px; background:var(--sand); border-radius:8px; padding:10px 12px;}
+  #ficheActions{border-top:1px solid var(--line); padding:12px 22px calc(12px + env(safe-area-inset-bottom)); display:flex; flex-wrap:wrap; gap:8px; background:#FCFBF8;}
+  #ficheActions button{font-size:12.5px; padding:8px 12px; border-radius:8px; cursor:pointer; font-family:inherit; border:1px solid var(--line); background:var(--paper); color:var(--text);}
+  #ficheActions button.principal{background:var(--ink); color:#fff; border-color:var(--ink);}
+  #ficheActions button.danger{color:var(--danger); border-color:#E7C4BE;}
+  #ficheActions button:disabled{opacity:.55; cursor:not-allowed;}
+  #ficheActions .raison{flex-basis:100%; font-size:11.5px; color:var(--text-soft); margin-top:-2px;}
+  #commandesBody tr[data-id], #facturesBody tr[data-id]{cursor:pointer;}
+

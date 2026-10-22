@@ -1,0 +1,35 @@
+<!-- ============ MODALE : PAIEMENT FACTURE ============ -->
+<div class="modalOverlay" id="paiementModalOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modalHead">
+      <div><h2 id="paiementModalTitle">Enregistrer un paiement</h2></div>
+      <button class="modalClose" id="paiementModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="paiementFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="paiementFactureId">
+      <label class="formLbl">Date</label>
+      <input type="date" id="paiementDate" class="formInput">
+      <label class="formLbl">Montant (DT)</label>
+      <input type="number" step="0.001" id="paiementMontant" class="formInput">
+      <label class="formLbl">Mode</label>
+      <select id="paiementMode" class="formInput">
+        <option value="especes">Espèces</option>
+        <option value="cheque">Chèque</option>
+        <option value="virement">Virement</option>
+        <option value="carte">Carte</option>
+        <option value="autre">Autre</option>
+      </select>
+      <label class="formLbl">Référence (optionnel)</label>
+      <input type="text" id="paiementReference" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="paiementFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="paiementCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="paiementSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

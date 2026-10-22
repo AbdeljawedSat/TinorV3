@@ -1,0 +1,34 @@
+<!-- ============ MODALE : NOUVELLE CATÉGORIE (rapide) ============ -->
+<div class="modalOverlay" id="categorieRapideModalOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modalHead">
+      <div><h2>Nouvelle catégorie</h2></div>
+      <button class="modalClose" id="categorieRapideModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="categorieRapideFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Code (court, unique — ex: SERUM)</label>
+      <input type="text" id="categorieRapideCode" class="formInput">
+      <label class="formLbl">Nom affiché</label>
+      <input type="text" id="categorieRapideNom" class="formInput">
+      <label class="formLbl">Type</label>
+      <select id="categorieRapideType" class="formInput">
+        <option value="PRODUIT">Produit</option>
+        <option value="MATIERE">Matière première</option>
+        <option value="INGREDIENT">Ingrédient</option>
+        <option value="CONSOMMABLE">Consommable</option>
+        <option value="EMBALLAGE">Emballage</option>
+        <option value="SOUS_PRODUIT">Sous-produit</option>
+        <option value="AUTRE">Autre</option>
+      </select>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="categorieRapideFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="categorieRapideCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="categorieRapideSaveBtn">Créer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

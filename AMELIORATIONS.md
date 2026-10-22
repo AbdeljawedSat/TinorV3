@@ -555,3 +555,35 @@ Pour chacune des 15 opérations (commande, BL, pro forma, facture, avoir, achat,
 Règles : facture et avoir exigent une séquence continue (remise à 1 au plus chaque année, pas de lettre) ; longueur limitée à la colonne de la base ; un lot déjà existant reçoit « -2 » ; le numéro de lot donné par le fournisseur est gardé. Une « date d'application » permet de garder l'ancien format jusqu'à une date. Les numéros déjà créés ne changent jamais.
 
 Technique : table `numerotation_formats` (créée par `npm run migrate`), moteur `src/services/numerotation.js`, API `/api/numerotation`, test `test/stock/numerotation-formats.js`.
+
+
+## V4.0 — ce qui a été fait, d'après le rapport de test et les propositions précédentes
+
+| Proposition | État V4 |
+|---|---|
+| Gardes de rôle sur `/users`, `/settings`, `/backup` ; dernier gérant protégé ; rôles autorisés ; mots de passe | ✅ `src/services/droits.js`, `comptes.js` — test `droits.js` |
+| Rôles supplémentaires (magasinier, production, comptable) | ✅ |
+| Journal d'audit | ✅ table `journal_audit`, écran Réglages › Journal d'audit |
+| CORS restreint, en-têtes de protection, HTTPS | ✅ `CORS_ORIGINS`, `TLS_CERT`/`TLS_KEY` ou proxy (DEPLOIEMENT.md) |
+| Audit `innerHTML` | ✅ échappement systématique, `attrJs()` pour les attributs, balises refusées côté serveur |
+| Tests automatiques à chaque modification | ✅ `.github/workflows/tests.yml` |
+| Restauration de sauvegarde testée | ✅ `npm run restaurer`, `npm run test:restauration` |
+| Ventes / paiements simultanés | ✅ test `concurrence.js` |
+| Contrôle qualité des lots | ✅ test `qualite.js` |
+| Rappel de lot (clients livrés) | ✅ |
+| Coût réel par lot, marges | ✅ test `gestion.js` |
+| Paiements fournisseurs, reliquats d'achats | ✅ |
+| Facture par e-mail | ✅ (SMTP à configurer) |
+| Découpage de la console en fichiers | ✅ `admin/src/` assemblé par `npm run console`, vérifié en CI |
+| **El Fatoora (TTN / TEIF, signature TunTrust)** | ⏳ non intégré : sources officielles de format et d'accès à obtenir de TTN ; la facture porte déjà son numéro unique et un contrôle des mentions (menu ⋯ de la facture) |
+| Validation fiscale (TVA, FODEC, timbre, avoirs) | ⏳ à faire par le comptable |
+
+### Valeurs de départ de la qualité (à confirmer avec le laboratoire)
+Huile d'olive vierge extra — règlement délégué (UE) 2022/2104 : acidité ≤ 0,8 %, peroxyde ≤ 20 meq O₂/kg, K232 ≤ 2,50, K270 ≤ 0,22, ΔK ≤ 0,01.
+Huiles de graines vierges — Codex Stan 210 : indice d'acide ≤ 4 mg KOH/g, peroxyde ≤ 15 meq O₂/kg (certaines versions du Codex indiquent 10).
+Tous ces seuils se modifient dans Réglages › Paramètres qualité.
+
+### Limites connues
+- Le coût d'un lot de graines sans achat enregistré demande un prix : le saisir sur la fiche produit (« Coût standard ») ou sur le lot (« 💰 Coût du lot »).
+- Le tourteau n'est pas valorisé (tout le coût est porté par l'huile).
+- Les opérations d'écriture des nouveaux écrans (analyses, paiements fournisseurs, e-mail) demandent d'être en ligne : elles ne passent pas par la file hors ligne.

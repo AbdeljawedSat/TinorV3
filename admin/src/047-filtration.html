@@ -1,0 +1,35 @@
+      <!-- ===== FILTRATION ===== -->
+      <div class="view" id="view-filtration">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Filtration</h1><p>Filtration d'un ou plusieurs lots de presse</p></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btnGhost" id="filtrationExportDocxBtn">⬇ DOCX</button>
+            <button class="btnGhost" id="filtrationExportXlsxBtn">⬇ XLSX</button>
+            <button class="btnGhost" id="filtrationExportPdfBtn">⬇ PDF</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:0;">
+          <div style="padding:14px 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Produit ou N° de lot</label>
+              <input type="text" id="filtrationFilterTexte" class="formInput" placeholder="ex: Sésame ou 03-F-001">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="filtrationFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="filtrationFilterDateFin" class="formInput">
+            </div>
+            <button class="btnGhost" id="filtrationFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N° Lot</th><th>Produit</th><th>Date</th><th>Filtre</th><th class="num">Déchet</th><th class="num">Produit</th><th class="num">Rendement</th><th></th></tr></thead>
+            <tbody id="filtrationBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

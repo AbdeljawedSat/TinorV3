@@ -1,0 +1,35 @@
+      <!-- ===== FACTURES ===== -->
+      <div class="view" id="view-factures">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Factures</h1><p id="facturesCount">Chargement…</p></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btnGhost" id="facturesExportDocxBtn">⬇ DOCX</button>
+            <button class="btnGhost" id="facturesExportXlsxBtn">⬇ XLSX</button>
+            <button class="btnGhost" id="facturesExportPdfBtn">⬇ PDF</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:0;">
+          <div style="padding:14px 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Client ou N° de facture</label>
+              <input type="text" id="facturesFilterTexte" class="formInput" placeholder="ex: Amira ou FAC-0012">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="facturesFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="facturesFilterDateFin" class="formInput">
+            </div>
+            <button class="btnGhost" id="facturesFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Statut</th><th class="num">Total TTC</th><th class="num">Payé</th><th class="num">Solde</th><th></th></tr></thead>
+            <tbody id="facturesBody"><tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

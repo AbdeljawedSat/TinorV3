@@ -1,0 +1,8 @@
+  /* ---------- Confort visuel (V3.3) ---------- */
+  .num, td.num{font-variant-numeric:tabular-nums;}
+  .rowActionBtn{padding:6px 11px; font-size:12px; border-radius:7px;}
+  .rowActions{gap:7px;}
+  tbody td{padding-top:11px; padding-bottom:11px;}
+  @media (max-width:700px){ .rowActionBtn, .etapeBtn{min-height:36px; padding:7px 12px;} }
+  #menuContextuel.feuille{font-size:15px; border-radius:12px; padding:6px; box-shadow:0 -6px 28px rgba(0,0,0,.22);}
+  #menuContextuel.feuille .menuContextuelItem{padding:12px 14px !important;}

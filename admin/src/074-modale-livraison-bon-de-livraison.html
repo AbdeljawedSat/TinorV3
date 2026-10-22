@@ -1,0 +1,26 @@
+<!-- ============ MODALE : LIVRAISON (bon de livraison) ============ -->
+<div class="modalOverlay" id="livraisonOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="livraisonTitre">Livrer</h2><div class="sub" id="livraisonSous"></div></div>
+      <button class="modalClose" id="livraisonFermer">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="livraisonErreur" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;"></div>
+      <div style="display:grid; grid-template-columns:1fr 2fr; gap:10px;">
+        <div><label class="formLbl" style="margin-top:0;">Date de livraison</label><input type="date" id="livraisonDate" class="formInput"></div>
+        <div><label class="formLbl" style="margin-top:0;">Notes (transporteur, adresse…)</label><input type="text" id="livraisonNotes" class="formInput"></div>
+      </div>
+      <table style="margin-top:12px;">
+        <thead><tr><th>Produit</th><th class="num">Commandé</th><th class="num">Déjà livré</th><th class="num">Reste</th><th>À livrer</th></tr></thead>
+        <tbody id="livraisonLignes"></tbody>
+      </table>
+      <div class="rowMeta" style="font-size:11.5px; margin-top:8px;">Livraison partielle possible : le reste pourra être livré plus tard ou « soldé » (il revient alors en stock).</div>
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="livraisonToutReste">Tout le reste</button>
+      <div style="display:flex; gap:8px;"><button class="btnGhost" id="livraisonAnnuler">Annuler</button><button class="btnPrimary" id="livraisonValider">Créer le bon de livraison</button></div>
+    </div>
+  </div>
+</div>
+

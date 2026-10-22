@@ -1,0 +1,43 @@
+<!-- ============ MODALE : FORMULAIRE CLIENT ============ -->
+<div class="modalOverlay" id="clientModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="clientModalTitle">Nouveau client</h2></div>
+      <button class="modalClose" id="clientModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="clientFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="clientId">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="clientNom" class="formInput">
+      <label class="formLbl">Téléphone</label>
+      <input type="text" id="clientTel" class="formInput">
+      <label class="formLbl">Ville</label>
+      <input type="text" id="clientVille" class="formInput">
+      <label class="formLbl">E-mail (envoi des factures)</label>
+      <input type="email" id="clientEmail" class="formInput" maxlength="150">
+      <label class="formLbl">Matricule fiscal</label>
+      <input type="text" id="clientMatriculeFiscal" class="formInput">
+      <label class="formLbl">Type</label>
+      <select id="clientType" class="formInput">
+        <option value="particulier">Particulier</option>
+        <option value="pharmacie">Pharmacie</option>
+        <option value="revendeur">Revendeur</option>
+        <option value="export">Export</option>
+      </select>
+      <label class="formLbl">Remise par défaut (optionnel)</label>
+      <select id="clientRemise" class="formInput"><option value="">— Aucune —</option></select>
+      <div class="rowMeta" style="margin:-4px 0 12px;">Pré-sélectionnée automatiquement pour ce client lors d'une nouvelle commande.</div>
+      <label class="formLbl">Notes</label>
+      <textarea id="clientNotes" class="formInput" rows="2"></textarea>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="clientFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="clientCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="clientSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

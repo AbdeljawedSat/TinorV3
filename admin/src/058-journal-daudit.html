@@ -1,0 +1,22 @@
+      <!-- ===== JOURNAL D'AUDIT ===== -->
+      <div class="view" id="view-journal">
+        <div class="pageHead"><h1>Journal d'audit</h1><p>Qui a fait quoi, quand et depuis quelle adresse — écritures, refus de droits et connexions</p></div>
+        <div class="panel" style="padding:16px 18px;">
+          <div class="numCtx" style="align-items:end;">
+            <div><label>Du</label><input type="date" id="jrDu"></div>
+            <div><label>Au</label><input type="date" id="jrAu"></div>
+            <div><label>Utilisateur</label><select id="jrUser"><option value="">Tous</option></select></div>
+            <div><label>Rubrique</label><select id="jrRub"><option value="">Toutes</option></select></div>
+            <div><label>Contient</label><input type="text" id="jrQ" placeholder="n° de facture, produit…"></div>
+            <button class="btnPrimary" id="jrGo">Afficher</button>
+            <button class="btnGhost" id="jrCsv">Exporter en CSV</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <table>
+            <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Rubrique</th><th>Résultat</th><th>Adresse</th><th>Détail</th></tr></thead>
+            <tbody id="jrBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

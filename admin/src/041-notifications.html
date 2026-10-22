@@ -1,0 +1,30 @@
+      <!-- ===== NOTIFICATIONS ===== -->
+      <div class="view" id="view-synchro">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Synchronisation</h1><p>Travail hors ligne : opérations en attente, à corriger et envoyées</p></div>
+          <div style="display:flex; gap:8px;"><button class="btnPrimary" id="synchroMaintenant">🔄 Synchroniser maintenant</button></div>
+        </div>
+        <div class="panel"><div id="synchroEtat" style="padding:14px 18px;"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2 id="synchroCorrigerTitre">À corriger</h2><div class="sub">Refusées par le serveur au retour du réseau : corrigez puis renvoyez — rien n'est perdu</div></div></div><div id="synchroCorriger" class="hlListe"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2 id="synchroAttenteTitre">En attente d'envoi</h2><div class="sub">Enregistrées sur cet appareil, envoyées automatiquement dès que la connexion revient</div></div></div><div id="synchroAttente" class="hlListe"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2>Envoyées récemment</h2><div class="sub">Numéro provisoire → numéro définitif attribué par le serveur</div></div></div><div id="synchroHistorique"></div></div>
+        <div class="panel hlBloc"><div class="panelHead"><div><h2>Cet appareil</h2><div class="sub">Copie locale des données, session hors ligne (7 jours)</div></div>
+          <button class="btnGhost" id="synchroEffacer">Effacer les données de cet appareil</button></div></div>
+      </div>
+
+      <div class="view" id="view-notifications">
+        <div class="pageHead"><h1>Notifications</h1><p>Alertes de stock et commandes bloquées — résolvables une fois le stock rectifié</p></div>
+        <div class="panel">
+          <div class="panelHead">
+            <div class="filterRow">
+              <span class="chip active" data-filter="EN_ATTENTE">En attente</span>
+              <span class="chip" data-filter="">Toutes</span>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Titre</th><th>Message</th><th>Commande</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="notificationsBody"><tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

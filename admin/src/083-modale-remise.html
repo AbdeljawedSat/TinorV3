@@ -1,0 +1,46 @@
+<!-- ============ MODALE : REMISE ============ -->
+<div class="modalOverlay" id="remiseModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="remiseModalTitle">Nouvelle remise</h2></div>
+      <button class="modalClose" id="remiseModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="remiseFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="remiseId">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="remiseNom" class="formInput" placeholder="ex: 9+1 offert">
+      <label class="formLbl">Type</label>
+      <select id="remiseType" class="formInput">
+        <option value="pourcentage">Pourcentage</option>
+        <option value="lot">Offre spéciale (achetés / offerts)</option>
+      </select>
+      <div id="remisePourcentageFields">
+        <label class="formLbl">Pourcentage de remise</label>
+        <input type="number" step="0.01" id="remisePourcentage" class="formInput" placeholder="ex: 15">
+      </div>
+      <div id="remiseLotFields" style="display:none;">
+        <label class="formLbl">Unités achetées</label>
+        <input type="number" step="1" id="remiseAchete" class="formInput" placeholder="ex: 9">
+        <label class="formLbl">Unités offertes</label>
+        <input type="number" step="1" id="remiseGratuit" class="formInput" placeholder="ex: 1">
+        <div class="structLocked" style="margin-top:8px;">Exemple : 9 achetées + 1 offerte = "9 achetées, la 10ème offerte".</div>
+      </div>
+      <label class="formLbl">Catégorie</label>
+      <select id="remiseCategorie" class="formInput">
+        <option value="client">Client</option>
+        <option value="promo">Promotion</option>
+        <option value="saisonnier">Saisonnier</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="remiseFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="remiseCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="remiseSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

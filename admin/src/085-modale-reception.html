@@ -1,0 +1,36 @@
+<!-- ============ MODALE : RÉCEPTION ============ -->
+<div class="modalOverlay" id="receptionModalOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modalHead">
+      <div><h2>Nouvelle réception</h2><div class="sub">Crée automatiquement un lot par ligne</div></div>
+      <button class="modalClose" id="receptionModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="receptionFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Rattacher à un achat (optionnel — sinon réception directe)</label>
+      <select id="receptionAchat" class="formInput"><option value="">— Aucun (réception directe) —</option></select>
+      <label class="formLbl">Fournisseur</label>
+      <select id="receptionFournisseur" class="formInput"></select>
+      <label class="chkLbl" style="margin-top:6px;"><input type="checkbox" id="receptionToutesCategories"> Toutes catégories (ignorer le filtre par type de fournisseur)</label>
+      <label class="formLbl">Local de destination</label>
+      <select id="receptionLocal" class="formInput"></select>
+      <label class="formLbl">Date</label>
+      <input type="date" id="receptionDate" class="formInput">
+
+      <label class="formLbl" style="margin-top:16px; font-weight:600;">Lignes</label>
+      <div id="receptionLignesRows"></div>
+      <button class="btnGhost" id="receptionAddLigneBtn" style="margin-top:6px;">＋ Ajouter une ligne</button>
+
+      <label class="formLbl">Notes</label>
+      <input type="text" id="receptionNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="receptionFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="receptionCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="receptionSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

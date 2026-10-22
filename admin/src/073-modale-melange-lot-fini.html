@@ -1,0 +1,31 @@
+<!-- ============ MODALE : MÉLANGE (lot fini) ============ -->
+<div class="modalOverlay" id="melangeOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modalHead">
+      <div><h2>Nouveau mélange</h2><div class="sub">Huile 1 + huile 2 (facultative) → lot fini</div></div>
+      <button class="modalClose" id="melangeFermer">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="melangeErreur" style="color:var(--danger); font-size:12px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Date</label>
+      <input type="date" id="melangeDate" class="formInput">
+      <label class="formLbl" style="margin-top:12px; font-weight:600;">Huile 1 (x1x1)</label>
+      <div style="display:flex; gap:8px;"><select id="melangeLot1" class="formInput" style="flex:1; min-width:0;"></select>
+        <input type="number" id="melangeQte1" class="formInput" style="width:110px;" min="0" step="1" placeholder="ml"></div>
+      <label class="formLbl" style="margin-top:12px; font-weight:600;">Huile 2 (x2x2) — facultative</label>
+      <div style="display:flex; gap:8px;"><select id="melangeLot2" class="formInput" style="flex:1; min-width:0;"></select>
+        <input type="number" id="melangeQte2" class="formInput" style="width:110px;" min="0" step="1" placeholder="ml"></div>
+      <div id="melangeApercu" class="repKpi" style="margin-top:14px;"></div>
+      <label class="formLbl">Notes</label>
+      <input type="text" id="melangeNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="melangeAnnuler">Annuler</button>
+        <button class="btnPrimary" id="melangeEnregistrer">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

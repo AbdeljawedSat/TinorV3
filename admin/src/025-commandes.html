@@ -1,0 +1,43 @@
+      <!-- ===== COMMANDES ===== -->
+      <div class="view" id="view-commandes">
+        <div class="pageHead" style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div><h1>Commandes</h1><p id="commandesCount">Chargement…</p></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btnGhost" id="commandesExportDocxBtn">⬇ DOCX</button>
+            <button class="btnGhost" id="commandesExportXlsxBtn">⬇ XLSX</button>
+            <button class="btnGhost" id="commandesExportPdfBtn">⬇ PDF</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panelHead">
+            <div class="filterRow" id="commandesFilterRow">
+              <span class="chip active" data-filter="">Toutes</span>
+              <span class="chip" data-filter="en_attente">En attente</span>
+              <span class="chip" data-filter="confirmee">Confirmées</span>
+              <span class="chip" data-filter="livree">Livrées</span>
+              <span class="chip" data-filter="payee">Payées</span>
+              <span class="chip" data-filter="annulee">Annulées</span>
+            </div>
+          </div>
+          <div style="padding:0 18px 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:220px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Client ou N° de commande</label>
+              <input type="text" id="commandesFilterTexte" class="formInput" placeholder="ex: Amira ou BC-0012">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="commandesFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="commandesFilterDateFin" class="formInput">
+            </div>
+            <button class="btnGhost" id="commandesFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+          <table>
+            <thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Statut</th><th class="num">Total</th><th></th></tr></thead>
+            <tbody id="commandesBody"><tr><td colspan="6" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

@@ -1,0 +1,37 @@
+<!-- ============ MODALE : NOUVEAU LOT (MANUEL) ============ -->
+<div class="modalOverlay" id="lotManuelModalOverlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modalHead">
+      <div><h2>Nouveau lot (manuel)</h2><div class="sub">Stock initial ou correction — hors flux réception/presse/filtration/conditionnement</div></div>
+      <button class="modalClose" id="lotManuelModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="lotManuelFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Produit</label>
+      <select id="lotManuelProduit" class="formInput"></select>
+      <label class="formLbl">Motif</label>
+      <select id="lotManuelOrigine" class="formInput">
+        <option value="INVENTAIRE">Inventaire (comptage physique)</option>
+        <option value="AUTRE">Autre (stock initial, correction...)</option>
+      </select>
+      <label class="formLbl">Quantité initiale</label>
+      <input type="number" step="0.001" id="lotManuelQuantite" class="formInput">
+      <label class="formLbl">Local</label>
+      <select id="lotManuelLocal" class="formInput"><option value="">— Non précisé —</option></select>
+      <label class="formLbl">Date de production (optionnel)</label>
+      <input type="date" id="lotManuelDateProduction" class="formInput">
+      <label class="formLbl">Date d'expiration (optionnel)</label>
+      <input type="date" id="lotManuelDateExpiration" class="formInput">
+      <label class="formLbl">Notes</label>
+      <input type="text" id="lotManuelNotes" class="formInput" placeholder="ex: reprise du stock existant au démarrage">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="lotManuelFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="lotManuelCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="lotManuelSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

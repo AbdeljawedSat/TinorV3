@@ -1,0 +1,29 @@
+      <!-- ===== MARGES & COÛTS ===== -->
+      <div class="view" id="view-marges">
+        <div class="pageHead"><h1>Marges &amp; coûts</h1><p>Coût réel de production par lot et marge par produit, client et mois</p></div>
+        <div class="panel" style="padding:16px 18px;">
+          <div class="numCtx" style="align-items:end;">
+            <div><label>Du</label><input type="date" id="mgDu"></div><div><label>Au</label><input type="date" id="mgAu"></div>
+            <div><label>Regrouper par</label><select id="mgPar"><option value="produit">Produit</option><option value="client">Client</option><option value="mois">Mois</option></select></div>
+            <button class="btnPrimary" id="mgGo">Afficher</button>
+          </div>
+        </div>
+        <div class="kpiRow" id="mgKpi" style="margin-top:14px;"></div>
+        <div class="panel" style="margin-top:14px;">
+          <table><thead><tr><th id="mgColNom">Produit</th><th class="num">Quantité</th><th class="num">CA HT</th><th class="num">Coût</th><th class="num">Marge</th><th class="num">Marge %</th><th>Coût connu ?</th></tr></thead>
+            <tbody id="mgBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody></table>
+        </div>
+        <div class="rowMeta" id="mgNote" style="margin:8px 4px;"></div>
+        <div class="panel" style="padding:16px 18px; margin-top:14px;">
+          <div class="rowMeta"><b>Frais d'étape</b> (main-d'œuvre, énergie, entretien…) ajoutés au coût de chaque lot fabriqué, <b>par unité produite</b> (litre d'huile ; flacon pour le conditionnement). Réservé au gérant.</div>
+          <div class="numCtx" style="margin-top:8px; align-items:end;">
+            <div><label>Presse (DT/L)</label><input type="number" step="any" min="0" id="frPresse" style="width:100px"></div>
+            <div><label>Filtration (DT/L)</label><input type="number" step="any" min="0" id="frFiltration" style="width:100px"></div>
+            <div><label>Mélange (DT/L)</label><input type="number" step="any" min="0" id="frMelange" style="width:100px"></div>
+            <div><label>Conditionnement (DT/flacon)</label><input type="number" step="any" min="0" id="frCond" style="width:100px"></div>
+            <button class="btnGhost" id="frEnregistrer">Enregistrer</button>
+          </div>
+          <div class="rowMeta" style="margin-top:8px;">Le coût d'un lot reçu vient du prix de la ligne d'achat ; pour une matière première sans achat enregistré, saisissez-le dans « 💰 Coût du lot » (registre des lots). Le tourteau n'est pas valorisé.</div>
+        </div>
+      </div>
+
