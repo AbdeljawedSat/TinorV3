@@ -944,6 +944,7 @@
           <a data-view="factures" data-etape="4"><span>Factures</span><span class="cnt afaire" style="display:none;"></span></a>
           <a data-view="paiements" data-etape="5"><span>Paiements</span><span class="cnt afaire" style="display:none;"></span></a>
           <a data-view="avoirs" class="sousEtape"><span>Avoirs</span></a>
+          <a data-view="marges"><span>Marges &amp; coûts</span></a>
           <div class="navSous">Clients et tarifs</div>
           <a data-view="clients"><span>Clients</span></a>
           <a data-view="remises"><span>Remises</span></a>
@@ -983,6 +984,7 @@
         <div class="navChildren">
           <a data-view="achats"><span>Achats</span></a>
           <a data-view="receptions"><span>Réceptions MP</span></a>
+          <a data-view="paiements-fournisseurs"><span>Paiements fournisseurs</span></a>
           <a data-view="fournisseurs"><span>Fournisseurs</span><span class="cnt" style="display:none;"></span></a>
           <a data-view="certificats"><span>Certificats Bio</span></a>
         </div>
@@ -2124,6 +2126,51 @@
         </div>
       </div>
 
+      <!-- ===== MARGES & COÛTS ===== -->
+      <div class="view" id="view-marges">
+        <div class="pageHead"><h1>Marges &amp; coûts</h1><p>Coût réel de production par lot et marge par produit, client et mois</p></div>
+        <div class="panel" style="padding:16px 18px;">
+          <div class="numCtx" style="align-items:end;">
+            <div><label>Du</label><input type="date" id="mgDu"></div><div><label>Au</label><input type="date" id="mgAu"></div>
+            <div><label>Regrouper par</label><select id="mgPar"><option value="produit">Produit</option><option value="client">Client</option><option value="mois">Mois</option></select></div>
+            <button class="btnPrimary" id="mgGo">Afficher</button>
+          </div>
+        </div>
+        <div class="kpiRow" id="mgKpi" style="margin-top:14px;"></div>
+        <div class="panel" style="margin-top:14px;">
+          <table><thead><tr><th id="mgColNom">Produit</th><th class="num">Quantité</th><th class="num">CA HT</th><th class="num">Coût</th><th class="num">Marge</th><th class="num">Marge %</th><th>Coût connu ?</th></tr></thead>
+            <tbody id="mgBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody></table>
+        </div>
+        <div class="rowMeta" id="mgNote" style="margin:8px 4px;"></div>
+        <div class="panel" style="padding:16px 18px; margin-top:14px;">
+          <div class="rowMeta"><b>Frais d'étape</b> (main-d'œuvre, énergie, entretien…) ajoutés au coût de chaque lot fabriqué, <b>par unité produite</b> (litre d'huile ; flacon pour le conditionnement). Réservé au gérant.</div>
+          <div class="numCtx" style="margin-top:8px; align-items:end;">
+            <div><label>Presse (DT/L)</label><input type="number" step="any" min="0" id="frPresse" style="width:100px"></div>
+            <div><label>Filtration (DT/L)</label><input type="number" step="any" min="0" id="frFiltration" style="width:100px"></div>
+            <div><label>Mélange (DT/L)</label><input type="number" step="any" min="0" id="frMelange" style="width:100px"></div>
+            <div><label>Conditionnement (DT/flacon)</label><input type="number" step="any" min="0" id="frCond" style="width:100px"></div>
+            <button class="btnGhost" id="frEnregistrer">Enregistrer</button>
+          </div>
+          <div class="rowMeta" style="margin-top:8px;">Le coût d'un lot reçu vient du prix de la ligne d'achat ; pour une matière première sans achat enregistré, saisissez-le dans « 💰 Coût du lot » (registre des lots). Le tourteau n'est pas valorisé.</div>
+        </div>
+      </div>
+
+      <!-- ===== PAIEMENTS FOURNISSEURS ===== -->
+      <div class="view" id="view-paiements-fournisseurs">
+        <div class="pageHead"><h1>Paiements fournisseurs</h1><p>Ce qui reste à payer sur chaque achat, solde par fournisseur</p></div>
+        <div class="kpiRow" id="pfKpi"></div>
+        <div class="panel" style="margin-top:14px;">
+          <table><thead><tr><th>Fournisseur</th><th class="num">Achats TTC</th><th class="num">Payé</th><th class="num">Reste à payer</th></tr></thead><tbody id="pfFournisseurs"></tbody></table>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <table><thead><tr><th>Achat</th><th>Fournisseur</th><th>Date</th><th>Statut</th><th class="num">Total TTC</th><th class="num">Payé</th><th class="num">Reste</th><th></th></tr></thead><tbody id="pfAchats"></tbody></table>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <div class="panelHead"><div><h2>Paiements enregistrés</h2></div></div>
+          <table><thead><tr><th>Date</th><th>Fournisseur</th><th>Achat</th><th>Mode</th><th class="num">Montant</th><th></th></tr></thead><tbody id="pfListe"></tbody></table>
+        </div>
+      </div>
+
       <!-- ===== PARAMÈTRES QUALITÉ ===== -->
       <div class="view" id="view-qualite-parametres">
         <div class="pageHead"><h1>Paramètres qualité</h1><p>Seuils des analyses de lots (gérant) — un lot hors seuils est bloqué automatiquement</p></div>
@@ -2320,6 +2367,8 @@
       <input type="number" step="0.001" id="produitPrix" class="formInput">
       <label class="formLbl">Seuil d'alerte stock bas (optionnel)</label>
       <input type="number" step="0.001" id="produitStockMin" class="formInput">
+      <label class="formLbl">Coût standard HT (DT par unité) <span class="rowMeta">— sert au calcul des marges pour une matière première sans prix d'achat enregistré</span></label>
+      <input type="number" step="0.001" min="0" id="produitCoutStandard" class="formInput">
       <div class="rowMeta" style="margin:-4px 0 12px;">Une alerte apparaît au Tableau de bord si le stock total disponible passe sous ce seuil.</div>
       <div style="display:flex; gap:16px; margin-top:6px; flex-wrap:wrap;">
         <label class="chkLbl"><input type="checkbox" id="produitVendable"> Vendable</label>
@@ -2357,6 +2406,8 @@
       <input type="text" id="clientTel" class="formInput">
       <label class="formLbl">Ville</label>
       <input type="text" id="clientVille" class="formInput">
+      <label class="formLbl">E-mail (envoi des factures)</label>
+      <input type="email" id="clientEmail" class="formInput" maxlength="150">
       <label class="formLbl">Matricule fiscal</label>
       <input type="text" id="clientMatriculeFiscal" class="formInput">
       <label class="formLbl">Type</label>
@@ -3148,6 +3199,39 @@
   </div>
 </div>
 
+<!-- ============ MODALE : COÛT D'UN LOT ============ -->
+<div class="modalOverlay" id="coutModalOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modalHead">
+      <div><h2 id="coutModalTitle">Coût du lot</h2><div class="sub">Calculé d'après les achats et les lots utilisés, plus les frais d'étape</div></div>
+      <button class="modalClose" id="coutModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:70vh; overflow-y:auto;">
+      <div id="coutResume"></div>
+      <table style="width:100%; margin-top:10px;"><thead><tr><th>Lot utilisé</th><th class="num">Quantité</th><th class="num">Coût unitaire</th><th class="num">Montant</th></tr></thead><tbody id="coutDetail"></tbody></table>
+      <div class="rowMeta" style="margin-top:12px;"><b>Coût saisi à la main</b> (matière première sans achat enregistré, correction) — laissez vide pour le calcul automatique :</div>
+      <div class="numCtx" style="margin-top:6px; align-items:end;"><div><label>DT par unité du lot (HT)</label><input type="number" step="any" min="0" id="coutManuel"></div><button class="btnGhost" id="coutEnregistrer">Enregistrer</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODALE : PAIEMENT D'UN ACHAT ============ -->
+<div class="modalOverlay" id="pfModalOverlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modalHead"><div><h2 id="pfModalTitle">Payer un fournisseur</h2><div class="sub" id="pfModalSub"></div></div><button class="modalClose" id="pfModalCloseBtn">×</button></div>
+    <div style="padding:16px 20px;">
+      <div class="numCtx">
+        <div><label>Date</label><input type="date" id="pfDate"></div>
+        <div><label>Montant (DT)</label><input type="number" step="0.001" min="0" id="pfMontant"></div>
+        <div><label>Mode</label><select id="pfMode"><option value="especes">Espèces</option><option value="cheque">Chèque</option><option value="virement">Virement</option><option value="traite">Traite</option><option value="autre">Autre</option></select></div>
+        <div><label>Référence</label><input type="text" id="pfRef" maxlength="60"></div>
+      </div>
+      <div class="status" id="pfStatus" style="margin-top:10px; color:var(--danger,#b3261e);"></div>
+    </div>
+    <div class="modalFoot"><button class="btnGhost" id="pfAnnuler">Annuler</button><button class="btnPrimary" id="pfEnregistrer">Enregistrer le paiement</button></div>
+  </div>
+</div>
+
 <!-- ============ MODALE : ANALYSES QUALITÉ D'UN LOT ============ -->
 <div class="modalOverlay" id="qualiteModalOverlay">
   <div class="modal" style="max-width:720px;">
@@ -3777,6 +3861,121 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('numOp').onchange = (e) => numChoisir(e.target.value);
   document.getElementById('numSave').onclick = numEnregistrer;
   ['numCDate', 'numCP1', 'numCP2', 'numCProd'].forEach(id => document.getElementById(id).addEventListener('input', numApercuDiffere));
+
+  // ---------- Marges, coûts, paiements fournisseurs, e-mail ----------
+  const fmtNum = (v, n = 3) => v === null || v === undefined ? '—' : Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: n });
+  async function chargerMarges() {
+    const p = new URLSearchParams({ par: document.getElementById('mgPar').value });
+    ['mgDu', 'mgAu'].forEach((id, i) => { const v = document.getElementById(id).value; if (v) p.set(i ? 'au' : 'du', v); });
+    const r = await apiFetch('/couts/marges?' + p.toString());
+    const t = r.total;
+    document.getElementById('mgColNom').textContent = { produit: 'Produit', client: 'Client', mois: 'Mois' }[r.par];
+    const tuile = (titre, val, sous = '') => `<div class="kpiCard"><div class="lbl">${titre}</div><div class="val num">${val}</div><div class="delta" style="${sous ? '' : 'display:none;'}">${sous}</div></div>`;
+    document.getElementById('mgKpi').innerHTML = tuile("Chiffre d'affaires HT", fmtDT(t.ca_ht), t.avoirs_ht ? `dont avoirs à déduire : ${fmtDT(t.avoirs_ht)}` : '')
+      + tuile('Coût des marchandises', fmtDT(t.cout)) + tuile('Marge', fmtDT(t.marge), t.marge_pct === null ? '' : `${fmtNum(t.marge_pct, 1)} % du CA à coût connu`)
+      + tuile('Sans coût connu', fmtDT(t.ca_sans_cout), `${fmtNum(t.quantite_sans_cout, 2)} unité(s) — à renseigner`);
+    document.getElementById('mgBody').innerHTML = r.groupes.map(g => `<tr><td>${esc(g.nom)}</td><td class="num">${fmtNum(g.quantite, 2)}</td><td class="num">${fmtDT(g.ca_ht)}</td>
+      <td class="num">${fmtDT(g.cout)}</td><td class="num"><b>${fmtDT(g.marge)}</b></td><td class="num">${g.marge_pct === null ? '—' : fmtNum(g.marge_pct, 1) + ' %'}</td>
+      <td>${g.quantite_sans_cout > 0 ? `<span class="pill warn">${fmtNum(g.quantite_sans_cout, 2)} sans coût</span>` : '<span class="pill good">oui</span>'}</td></tr>`).join('')
+      || '<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Aucune livraison sur cette période.</td></tr>';
+    document.getElementById('mgNote').textContent = r.note;
+    const f = await apiFetch('/couts/frais');
+    document.getElementById('frPresse').value = f.frais_presse; document.getElementById('frFiltration').value = f.frais_filtration;
+    document.getElementById('frMelange').value = f.frais_melange; document.getElementById('frCond').value = f.frais_conditionnement;
+    ['frPresse', 'frFiltration', 'frMelange', 'frCond', 'frEnregistrer'].forEach(id => { document.getElementById(id).disabled = !isGerant(); });
+  }
+  document.getElementById('mgGo').onclick = () => chargerMarges().catch(e => notifier(e.message, 'erreur'));
+  document.getElementById('mgPar').onchange = () => chargerMarges().catch(e => notifier(e.message, 'erreur'));
+  document.getElementById('frEnregistrer').onclick = async () => {
+    try {
+      await apiFetch('/couts/frais', { method: 'PUT', body: JSON.stringify({ frais_presse: document.getElementById('frPresse').value || 0, frais_filtration: document.getElementById('frFiltration').value || 0,
+        frais_melange: document.getElementById('frMelange').value || 0, frais_conditionnement: document.getElementById('frCond').value || 0 }) });
+      notifier("Frais d'étape enregistrés.", 'succes'); chargerMarges();
+    } catch (e) { notifier(e.message, 'erreur'); }
+  };
+
+  let COUT_LOT = null;
+  async function ouvrirCoutLot(numero) {
+    try { COUT_LOT = await apiFetch(`/couts/lot/${encodeURIComponent(numero)}`); } catch (e) { notifier(e.message, 'erreur'); return; }
+    const c = COUT_LOT, lot = APP_DATA.lots.find(l => l.numero_lot === numero);
+    document.getElementById('coutModalTitle').textContent = `Coût — ${numero}`;
+    const origine = { achat: "prix d'achat (ligne d'achat rattachée)", standard: 'coût standard du produit (fiche produit)', manuel: 'coût saisi à la main', compose: 'calculé à partir des lots utilisés', inconnu: 'inconnu' }[c.source];
+    document.getElementById('coutResume').innerHTML = `<div class="numLegal ${c.cout === null ? 'ko' : ''}"><b>${esc(c.produit_nom || '')}</b> — coût unitaire : <b>${c.cout === null ? 'inconnu' : fmtNum(c.cout, 4) + ' DT'}</b> (${origine})${c.frais_unitaire ? ` · frais d'étape inclus : ${fmtNum(c.frais_unitaire, 4)} DT/unité` : ''}</div>`;
+    document.getElementById('coutDetail').innerHTML = (c.detail || []).map(d => `<tr><td class="lotCode">${esc(d.numero_lot)}</td><td class="num">${fmtNum(d.quantite)}</td><td class="num">${d.cout_unitaire === null ? '<span class="pill warn">inconnu</span>' : fmtNum(d.cout_unitaire, 4)}</td><td class="num">${d.montant === null ? '—' : fmtDT(d.montant)}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="rowMeta">Lot de départ : pas de lot utilisé.</td></tr>';
+    document.getElementById('coutManuel').value = c.cout_saisi === null ? '' : c.cout_saisi;
+    document.getElementById('coutEnregistrer').dataset.id = lot ? lot.id : '';
+    document.getElementById('coutEnregistrer').disabled = !lot;
+    document.getElementById('coutModalOverlay').classList.add('open');
+  }
+  document.getElementById('coutModalCloseBtn').onclick = () => document.getElementById('coutModalOverlay').classList.remove('open');
+  document.getElementById('coutEnregistrer').onclick = async (e) => {
+    try {
+      await apiFetch(`/couts/lot/${e.target.dataset.id}`, { method: 'PUT', body: JSON.stringify({ cout_unitaire: document.getElementById('coutManuel').value === '' ? null : document.getElementById('coutManuel').value }) });
+      notifier('Coût enregistré.', 'succes'); ouvrirCoutLot(COUT_LOT.numero_lot);
+    } catch (err) { notifier(err.message, 'erreur'); }
+  };
+
+  // Paiements fournisseurs
+  let PF = { achat: null };
+  async function chargerPaiementsFournisseurs() {
+    const [sit, liste] = await Promise.all([apiFetch('/paiements-fournisseurs/situation'), apiFetch('/paiements-fournisseurs')]);
+    document.getElementById('pfKpi').innerHTML = `<div class="kpiCard"><div class="lbl">Total à payer aux fournisseurs</div><div class="val num">${fmtDT(sit.total_du)}</div></div>`
+      + `<div class="kpiCard"><div class="lbl">Achats avec reste à payer</div><div class="val num">${sit.achats.filter(a => a.reste > 0.0005).length}</div></div>`;
+    document.getElementById('pfFournisseurs').innerHTML = sit.fournisseurs.map(f => `<tr><td>${esc(f.nom)}</td><td class="num">${fmtDT(f.total_ttc)}</td><td class="num">${fmtDT(f.paye)}</td><td class="num"><b>${fmtDT(f.reste)}</b></td></tr>`).join('') || '<tr><td colspan="4" class="rowMeta">Aucun achat.</td></tr>';
+    const lab = { commande: 'Commandé', partiel: 'Partiel', receptionne: 'Réceptionné', cloture: 'Clôturé' };
+    document.getElementById('pfAchats').innerHTML = sit.achats.map(a => `<tr><td class="lotCode">${esc(a.numero)}</td><td>${esc(a.fournisseur_nom)}</td><td class="rowMeta">${fmtDate(a.date_achat)}</td><td>${lab[a.statut] || a.statut}</td>
+      <td class="num">${fmtDT(a.total_ttc)}</td><td class="num">${fmtDT(a.paye)}</td><td class="num"><b>${fmtDT(a.reste)}</b></td>
+      <td class="rowActions">${a.reste > 0.0005 ? `<button class="rowActionBtn" onclick="ouvrirPaiementFournisseur(${a.achat_id})">Payer</button>` : '<span class="pill good">Soldé</span>'}</td></tr>`).join('') || '<tr><td colspan="8" class="rowMeta">Aucun achat à payer.</td></tr>';
+    PF.achats = sit.achats;
+    document.getElementById('pfListe').innerHTML = liste.map(p => `<tr style="${p.annule_le ? 'opacity:.55; text-decoration:line-through;' : ''}"><td class="rowMeta">${fmtDate(p.date_paiement)}</td><td>${esc(p.fournisseur_nom)}</td><td>${esc(p.achat_numero || '')}</td>
+      <td>${esc(p.mode)}${p.reference ? ' · ' + esc(p.reference) : ''}</td><td class="num">${fmtDT(p.montant)}</td>
+      <td class="rowActions">${p.annule_le ? `<span class="rowMeta">annulé : ${esc(p.annule_motif || '')}</span>` : (isGerant() ? `<button class="rowActionBtn" onclick="annulerPaiementFournisseur(${p.id})">Annuler…</button>` : '')}</td></tr>`).join('') || '<tr><td colspan="6" class="rowMeta">Aucun paiement.</td></tr>';
+  }
+  function ouvrirPaiementFournisseur(achatId) {
+    const a = (PF.achats || []).find(x => x.achat_id === achatId); if (!a) return;
+    PF.achat = a;
+    document.getElementById('pfModalTitle').textContent = `Payer ${a.fournisseur_nom}`;
+    document.getElementById('pfModalSub').textContent = `Achat ${a.numero} — reste à payer ${fmtDT(a.reste)}`;
+    document.getElementById('pfDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('pfMontant').value = a.reste; document.getElementById('pfRef').value = ''; document.getElementById('pfStatus').textContent = '';
+    document.getElementById('pfModalOverlay').classList.add('open');
+  }
+  async function annulerPaiementFournisseur(id) {
+    const motif = await confirmer('Le paiement reste visible, barré, avec son motif, et ne compte plus.', { titre: 'Annuler ce paiement ?', ok: 'Annuler le paiement', non: 'Garder', danger: true, saisie: { label: 'Motif (obligatoire)', placeholder: 'ex. erreur de saisie…' } });
+    if (!motif) return;
+    try { await apiFetch(`/paiements-fournisseurs/${id}/annuler`, { method: 'POST', body: JSON.stringify({ motif }) }); chargerPaiementsFournisseurs(); } catch (e) { notifier(e.message, 'erreur'); }
+  }
+  ['pfModalCloseBtn', 'pfAnnuler'].forEach(id => document.getElementById(id).onclick = () => document.getElementById('pfModalOverlay').classList.remove('open'));
+  document.getElementById('pfEnregistrer').onclick = async () => {
+    try {
+      await apiFetch('/paiements-fournisseurs', { method: 'POST', body: JSON.stringify({ achat_id: PF.achat.achat_id, date_paiement: document.getElementById('pfDate').value, montant: document.getElementById('pfMontant').value,
+        mode: document.getElementById('pfMode').value, reference: document.getElementById('pfRef').value }) });
+      document.getElementById('pfModalOverlay').classList.remove('open'); notifier('Paiement enregistré.', 'succes'); chargerPaiementsFournisseurs();
+    } catch (e) { document.getElementById('pfStatus').textContent = e.message; }
+  };
+
+  async function controlerMentionsFacture(id) {
+    try {
+      const r = await apiFetch(`/factures/${id}/conformite`);
+      await confirmer(r.conforme ? 'Toutes les mentions obligatoires contrôlées sont présentes.\n\n' + r.facture_electronique : 'Mentions manquantes :\n• ' + r.manque.join('\n• ') + '\n\n' + r.facture_electronique,
+        { titre: r.conforme ? 'Facture complète' : 'Facture incomplète', ok: 'OK', non: 'Fermer' });
+    } catch (e) { notifier(e.message, 'erreur'); }
+  }
+  // Envoi d'une facture par e-mail (pièce jointe Word)
+  async function envoyerFactureParEmail(factureId) {
+    const f = await apiFetch(`/factures/${factureId}`);
+    const client = APP_DATA.clients.find(c => c.id === f.client_id);
+    const adresse = await confirmer(`La facture ${f.numero} sera envoyée en pièce jointe (Word).${client && client.email ? `\nE-mail enregistré du client : ${client.email}` : '\nAucun e-mail enregistré pour ce client : saisissez-le ici (et ajoutez-le sur sa fiche).'}`,
+      { titre: 'Envoyer la facture par e-mail', ok: 'Envoyer', saisie: { label: 'Adresse e-mail (3 maximum, séparées par une virgule)', placeholder: client && client.email ? client.email : 'client@exemple.tn' } });
+    if (!adresse) return;
+    try {
+      const spec = specFacture(f);
+      const corps = { ...spec, lignes: spec.lignes.map(l => l.map(v => String(v ?? '').replace(/<[^>]+>/g, ''))) };
+      const r = await apiFetch('/exports/envoyer-document', { method: 'POST', body: JSON.stringify({ spec: corps, a: adresse }) });
+      notifier(`Facture ${f.numero} envoyée à ${r.destinataires.join(', ')}.`, 'succes');
+    } catch (e) { notifier(e.message, 'erreur'); }
+  }
 
   // ---------- Qualité des lots : analyses, paramètres, rappel de lot ----------
   const Q = { lot: null, profils: [], params: {} };
@@ -4467,6 +4666,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('produitType').value = p ? p.type_article : 'PRODUIT_FABRIQUE';
     document.getElementById('produitPrix').value = p && p.prix_vente != null ? p.prix_vente : '';
     document.getElementById('produitStockMin').value = p && p.stock_min != null ? p.stock_min : '';
+    document.getElementById('produitCoutStandard').value = p && p.cout_standard != null ? p.cout_standard : '';
     document.getElementById('produitVendable').checked = p ? !!p.vendable : false;
     document.getElementById('produitAchetable').checked = p ? !!p.achetable : false;
     document.getElementById('produitFabriquable').checked = p ? !!p.fabriquable : false;
@@ -4666,6 +4866,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       type_article: document.getElementById('produitType').value,
       prix_vente: document.getElementById('produitPrix').value ? Number(document.getElementById('produitPrix').value) : null,
       stock_min: document.getElementById('produitStockMin').value ? Number(document.getElementById('produitStockMin').value) : null,
+      cout_standard: document.getElementById('produitCoutStandard').value ? Number(document.getElementById('produitCoutStandard').value) : null,
       vendable: document.getElementById('produitVendable').checked,
       achetable: document.getElementById('produitAchetable').checked,
       fabriquable: document.getElementById('produitFabriquable').checked,
@@ -4703,6 +4904,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('clientNom').value = c ? c.nom : '';
     document.getElementById('clientTel').value = c && c.tel ? c.tel : '';
     document.getElementById('clientVille').value = c && c.ville ? c.ville : '';
+    document.getElementById('clientEmail').value = c && c.email ? c.email : '';
     document.getElementById('clientMatriculeFiscal').value = c && c.matricule_fiscal ? c.matricule_fiscal : '';
     document.getElementById('clientType').value = c ? c.type : 'particulier';
     populateSelect(document.getElementById('clientRemise'), REF_DATA.remises, 'id', 'nom', '— Aucune —');
@@ -4720,6 +4922,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       nom: document.getElementById('clientNom').value.trim(),
       tel: document.getElementById('clientTel').value.trim() || null,
       ville: document.getElementById('clientVille').value.trim() || null,
+      email: document.getElementById('clientEmail').value.trim() || null,
       matricule_fiscal: document.getElementById('clientMatriculeFiscal').value.trim() || null,
       type: document.getElementById('clientType').value,
       remise_id: document.getElementById('clientRemise').value ? Number(document.getElementById('clientRemise').value) : null,
@@ -6385,6 +6588,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       items.push({ label: '🖨 Imprimer / PDF', action: () => imprimerFacture(id) });
       items.push({ label: '⬇ Word (.docx)', action: () => exportFactureDocx(id) });
       items.push({ label: '⬇ Excel (.xlsx)', action: () => exportFactureXlsx(id) });
+      items.push({ label: '✉ Envoyer par e-mail…', action: () => envoyerFactureParEmail(id) });
+      items.push({ label: '✔ Contrôler les mentions obligatoires', action: () => controlerMentionsFacture(id) });
       const actifs = APP_DATA.paiements.filter(p => p.facture_id === id && !p.annule_le);
       if (isGerant() && actifs.length) {
         items.push(null);
@@ -9366,6 +9571,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         { label: '📊 Voir la répartition', action: () => openRepartitionModal(l.numero_lot) },
         { label: '🏷 Imprimer l\'étiquette', action: () => imprimerEtiquetteLot(l.id) },
         { label: '🧪 Analyses qualité', action: () => ouvrirQualite(l.numero_lot) },
+        { label: '💰 Coût du lot', action: () => ouvrirCoutLot(l.numero_lot) },
         { label: '⚠ Rappel de lot (clients livrés)', action: () => ouvrirRappel(l.numero_lot) },
         { label: '⧉ Voir en Traçabilité', action: () => {
           document.querySelector('a[data-view="tracabilite"]').dispatchEvent(new Event('click', { bubbles: true }));
@@ -10309,7 +10515,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires', reprise:'view-reprise',
     notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
-    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', journal:'view-journal', 'qualite-parametres':'view-qualite-parametres', apropos:'view-apropos'
+    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', journal:'view-journal', 'qualite-parametres':'view-qualite-parametres', marges:'view-marges', 'paiements-fournisseurs':'view-paiements-fournisseurs', apropos:'view-apropos'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
@@ -10324,7 +10530,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
     fournisseurs:['Achats & Système','Fournisseurs'], certificats:['Achats & Système','Certificats Bio'],
     locaux:['Achats & Système','Locaux & Zones'], employes:['Achats & Système','Employés'],
-    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], journal:['Achats & Système','Journal d\'audit'], 'qualite-parametres':['Achats & Système','Paramètres qualité'], apropos:['Achats & Système','À propos']
+    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], journal:['Achats & Système','Journal d\'audit'], 'qualite-parametres':['Achats & Système','Paramètres qualité'], marges:['Ventes','Marges & coûts'], 'paiements-fournisseurs':['Achats & Système','Paiements fournisseurs'], apropos:['Achats & Système','À propos']
   };
 
   document.querySelectorAll('#navScroll .navGroup').forEach(g => {
@@ -10385,6 +10591,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       chargerListeBackups();
     }
     if (key === 'apropos') chargerApropos();
+    if (key === 'marges' && TOKEN) chargerMarges().catch(e => notifier(e.message, 'erreur'));
+    if (key === 'paiements-fournisseurs' && TOKEN) chargerPaiementsFournisseurs().catch(e => notifier(e.message, 'erreur'));
     if (key === 'qualite-parametres' && TOKEN) chargerParametresQualite().catch(e => notifier(e.message, 'erreur'));
     if (key === 'journal' && TOKEN) chargerJournal().catch(e => notifier(e.message, 'erreur'));
     if (key === 'numerotation' && TOKEN) chargerNumerotation().catch(e => notifier(e.message, 'error'));
@@ -11322,7 +11530,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     presse: 'presse', filtration: 'filtre', melanges: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', reprise: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
-    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', journal: 'parametre', 'qualite-parametres': 'parametre', apropos: 'parametre',
+    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', journal: 'parametre', 'qualite-parametres': 'parametre', marges: 'stats', 'paiements-fournisseurs': 'achat', apropos: 'parametre',
   };
   const iconeEcran = (vue, classe = 'ecranIc') => ICONE_ECRAN[vue] ? `<svg class="${classe}" aria-hidden="true"><use href="#e-${ICONE_ECRAN[vue]}"/></svg>` : '';
   document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.dataset.rubrique = RUBRIQUE_CLE[g.querySelector('.lbl').textContent] || ''; });

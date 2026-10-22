@@ -118,6 +118,8 @@ function createApp(pool) {
   app.use('/api/recettes', acces, require('./routes/recettes')(pool));
   app.use('/api/ordres-production', acces, require('./routes/ordresProduction')(pool));
   app.use('/api/settings', acces, require('./routes/settings')(pool));
+  app.use('/api/paiements-fournisseurs', acces, require('./routes/paiementsFournisseurs')(pool));
+  app.use('/api/couts', acces, require('./routes/couts')(pool));
   app.use('/api/qualite', acces, require('./routes/qualite')(pool));
   app.use('/api/audit', acces, require('./routes/audit')(pool));
   app.use('/api/numerotation', acces, require('./routes/numerotation')(pool));

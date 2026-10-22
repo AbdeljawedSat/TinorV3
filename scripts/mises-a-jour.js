@@ -56,6 +56,24 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V4 — coûts : coût unitaire saisi sur un lot, frais d'étape (main-d'œuvre, énergie), e-mail du client, paiements fournisseurs.
+  if (!(await colonneExiste(conn, 'lots', 'cout_unitaire'))) {
+    await conn.query('ALTER TABLE lots ADD COLUMN cout_unitaire DECIMAL(12,4) NULL');
+    journal('✓ Mise à jour : lots.cout_unitaire ajoutée.');
+  }
+  for (const col of ['frais_presse', 'frais_filtration', 'frais_melange', 'frais_conditionnement']) {
+    if (!(await colonneExiste(conn, 'settings', col))) await conn.query(`ALTER TABLE settings ADD COLUMN ${col} DECIMAL(10,4) NOT NULL DEFAULT 0`);
+  }
+  if (!(await colonneExiste(conn, 'clients', 'email'))) {
+    await conn.query('ALTER TABLE clients ADD COLUMN email VARCHAR(150) NULL');
+    journal('✓ Mise à jour : clients.email ajoutée (envoi des factures par e-mail).');
+  }
+  const [pf] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'paiements_fournisseurs'");
+  if (!pf[0].n) {
+    await conn.query(SQL_PAIEMENTS_FOURNISSEURS);
+    journal('✓ Mise à jour : table paiements_fournisseurs créée.');
+  }
+
   // V4 — contrôle qualité des lots : paramètres avec seuils, analyses (en-tête dans controles_qualite) et leurs résultats.
   for (const [col, type] of [['laboratoire', 'VARCHAR(120) NULL'], ['reference_rapport', 'VARCHAR(60) NULL'], ['profil', 'VARCHAR(20) NULL'],
     ['conforme', 'TINYINT(1) NULL'], ['derogation_motif', 'VARCHAR(255) NULL'], ['created_by', 'INT NULL']]) {
@@ -250,6 +268,27 @@ CREATE TABLE IF NOT EXISTS controle_resultats (
   max_valeur  DECIMAL(12,4) NULL,
   conforme    TINYINT(1) NOT NULL,
   FOREIGN KEY (controle_id) REFERENCES controles_qualite(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_PAIEMENTS_FOURNISSEURS = `CREATE TABLE IF NOT EXISTS paiements_fournisseurs (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  fournisseur_id INT NOT NULL,
+  achat_id       INT NULL,
+  date_paiement  DATE NOT NULL,
+  montant        DECIMAL(12,3) NOT NULL,
+  mode           VARCHAR(20) NOT NULL DEFAULT 'especes',
+  reference      VARCHAR(60) NULL,
+  notes          VARCHAR(250) NULL,
+  annule_le      DATETIME NULL,
+  annule_motif   VARCHAR(255) NULL,
+  annule_par     INT NULL,
+  created_by     INT NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id),
+  FOREIGN KEY (achat_id) REFERENCES achats(id),
+  INDEX idx_pf_achat (achat_id),
+  INDEX idx_pf_fournisseur (fournisseur_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

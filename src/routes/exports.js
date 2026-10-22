@@ -43,6 +43,20 @@ module.exports = function (pool) {
     envoyerFichier(res, buffer, nom, fmt);
   });
 
+  // ---------- Envoi d'un document de vente par e-mail (pièce jointe Word, même « spec » que l'export) ----------
+  router.post('/envoyer-document', async (req, res) => {
+    const { spec, a, message } = req.body || {};
+    if (!spec || !spec.titre || !Array.isArray(spec.colonnes) || !Array.isArray(spec.lignes)) return res.status(400).json({ error: 'Document incomplet.' });
+    require('../services/courriel').destinataires(a); // adresses vérifiées avant de fabriquer le document
+    const buffer = await buildDocumentDocx(spec);
+    const nom = `${spec.titre}_${spec.numero || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'document';
+    const societe = (spec.societe && spec.societe.nom) || 'Jardins de Jerba';
+    const sujet = `${spec.titre}${spec.numero ? ' ' + spec.numero : ''} — ${societe}`;
+    const texte = `${String(message || '').slice(0, 1000) || 'Bonjour,\n\nVeuillez trouver ci-joint votre document.'}\n\nCordialement,\n${societe}`;
+    const r = await require('../services/courriel').envoyer({ a, sujet, texte, pieces: [{ filename: `${nom}.docx`, content: buffer }] });
+    res.json({ ok: true, destinataires: r.destinataires, apercu: r.apercu ? { taille: r.apercu.length } : undefined });
+  });
+
   // ---------- Stock (tous lots avec quantité > 0) ----------
   router.get('/stock', async (req, res) => {
     const format = req.query.format === 'docx' ? 'docx' : 'xlsx';

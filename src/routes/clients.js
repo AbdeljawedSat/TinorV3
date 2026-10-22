@@ -56,22 +56,22 @@ module.exports = function (pool) {
   });
 
   router.post('/', async (req, res) => {
-    const { nom, tel, ville, matricule_fiscal, type, remise_id, notes } = req.body;
+    const { nom, tel, ville, matricule_fiscal, type, remise_id, notes, email } = req.body;
     if (!nom) return res.status(400).json({ error: 'nom est requis.' });
     const insertRes = await pool.query(
-      `INSERT INTO clients (nom, tel, ville, matricule_fiscal, type, remise_id, notes)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [nom, tel || null, ville || null, matricule_fiscal || null, type || 'particulier', remise_id || null, notes || null]
+      `INSERT INTO clients (nom, tel, ville, matricule_fiscal, type, remise_id, notes, email)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [nom, tel || null, ville || null, matricule_fiscal || null, type || 'particulier', remise_id || null, notes || null, email || null]
     );
     const result = await pool.query('SELECT * FROM clients WHERE id = $1', [insertRes.insertId]);
     res.status(201).json(result.rows[0]);
   });
 
   router.put('/:id', async (req, res) => {
-    const { nom, tel, ville, matricule_fiscal, type, remise_id, notes } = req.body;
+    const { nom, tel, ville, matricule_fiscal, type, remise_id, notes, email } = req.body;
     const updateRes = await pool.query(
-      `UPDATE clients SET nom=$1, tel=$2, ville=$3, matricule_fiscal=$4, type=$5, remise_id=$6, notes=$7 WHERE id=$8`,
-      [nom, tel || null, ville || null, matricule_fiscal || null, type || 'particulier', remise_id || null, notes || null, req.params.id]
+      `UPDATE clients SET nom=$1, tel=$2, ville=$3, matricule_fiscal=$4, type=$5, remise_id=$6, notes=$7, email=$9 WHERE id=$8`,
+      [nom, tel || null, ville || null, matricule_fiscal || null, type || 'particulier', remise_id || null, notes || null, req.params.id, email || null]
     );
     if (!updateRes.affectedRows) return res.status(404).json({ error: 'Client introuvable.' });
     const result = await pool.query('SELECT * FROM clients WHERE id = $1', [req.params.id]);

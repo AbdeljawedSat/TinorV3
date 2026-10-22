@@ -15,7 +15,7 @@ const ADMIN_ECRITURE = new Set(['settings']);         // lecture ouverte (nom de
 const ECRITURE = {
   magasinier: new Set(['lots', 'receptions', 'inventaires', 'reprises', 'controle-stock', 'stock-mouvements', 'locaux', 'notifications', 'alertes', 'achats', 'fournisseurs', 'certificats', 'qualite', 'auth']),
   production: new Set(['presse', 'filtration', 'melanges', 'conditionnement', 'recettes', 'ordres-production', 'lots', 'qualite', 'notifications', 'auth']),
-  comptable: new Set(['factures', 'paiements', 'avoirs', 'achats', 'fournisseurs', 'clients', 'remises', 'exports', 'paiements-fournisseurs', 'auth']),
+  comptable: new Set(['factures', 'paiements', 'avoirs', 'achats', 'fournisseurs', 'clients', 'remises', 'exports', 'paiements-fournisseurs', 'couts', 'auth']),
 };
 
 // Renvoie null si l'accès est permis, sinon le message de refus.

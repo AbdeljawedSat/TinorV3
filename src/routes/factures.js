@@ -27,6 +27,23 @@ module.exports = function (pool) {
     res.json(result.rows);
   });
 
+  // Mentions obligatoires d'une facture tunisienne (identification du vendeur et du client assujetti, numéro, date, montants) :
+  // renvoie ce qui manque. Contrôle d'aide : la validation fiscale reste celle du comptable ; la transmission El Fatoora (TTN)
+  // n'est pas encore intégrée.
+  router.get('/:id/conformite', async (req, res) => {
+    const f = (await pool.query('SELECT f.*, c.matricule_fiscal AS client_mf, c.type AS client_type, c.ville AS client_ville FROM factures f LEFT JOIN clients c ON c.id = f.client_id WHERE f.id = $1', [req.params.id])).rows[0];
+    if (!f) return res.status(404).json({ error: 'Facture introuvable.' });
+    const e = (await pool.query('SELECT entreprise_nom, entreprise_adresse, entreprise_matricule_fiscal FROM settings WHERE id = 1')).rows[0] || {};
+    const manque = [];
+    if (!e.entreprise_nom) manque.push('Raison sociale du vendeur (Paramètres › Société)');
+    if (!e.entreprise_adresse) manque.push('Adresse du vendeur (Paramètres › Société)');
+    if (!e.entreprise_matricule_fiscal) manque.push('Matricule fiscal du vendeur (Paramètres › Société)');
+    if (!f.client_nom) manque.push('Nom du client');
+    if (f.client_type && f.client_type !== 'particulier' && !f.client_mf) manque.push(`Matricule fiscal du client « ${f.client_nom} » (client professionnel)`);
+    if (!f.numero) manque.push('Numéro de facture');
+    res.json({ conforme: manque.length === 0, manque, facture_electronique: 'Transmission El Fatoora (TTN / format TEIF, signature TunTrust) non intégrée : à traiter avec votre comptable.' });
+  });
+
   router.get('/:id', async (req, res) => {
     const facRes = await pool.query('SELECT * FROM factures WHERE id = $1', [req.params.id]);
     if (!facRes.rows[0]) return res.status(404).json({ error: 'Facture introuvable.' });

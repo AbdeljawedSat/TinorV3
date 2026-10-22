@@ -32,7 +32,17 @@ module.exports = function (pool) {
        WHERE al.achat_id = $1`,
       [req.params.id]
     );
-    res.json({ ...achatRes.rows[0], lignes: lignesRes.rows });
+    const recu = await pool.query(
+      `SELECT rl.produit_id, SUM(rl.quantite) AS q FROM reception_lignes rl JOIN receptions r ON r.id = rl.reception_id WHERE r.achat_id = $1 GROUP BY rl.produit_id`, [req.params.id]);
+    const parProduit = new Map(recu.rows.map(x => [x.produit_id, Number(x.q)]));
+    // Réception partielle : la quantité reçue d'un produit est répartie sur ses lignes d'achat dans l'ordre.
+    const lignes = lignesRes.rows.map(l => {
+      const dispo = parProduit.get(l.produit_id) || 0;
+      const part = Math.min(dispo, Number(l.quantite));
+      parProduit.set(l.produit_id, dispo - part);
+      return { ...l, qte_recue: part, reste_a_recevoir: Math.round((Number(l.quantite) - part) * 1000) / 1000 };
+    });
+    res.json({ ...achatRes.rows[0], lignes });
   });
 
   // Crée un achat avec ses lignes en une fois. total_ht/tva/total_ttc recalculés
