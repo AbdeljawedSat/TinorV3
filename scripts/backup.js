@@ -26,14 +26,14 @@ const JOURS_A_GARDER = Number(process.env.BACKUP_RETENTION_DAYS || 30);
 function horodatage() {
   const d = new Date();
   const pad = n => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}h${pad(d.getMinutes())}m${pad(d.getSeconds())}`;
 }
 
-function faireSauvegarde() {
+function faireSauvegarde(prefixe = 'tinor') {
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
 
-    const nomFichier = `tinor_${DB_NAME}_${horodatage()}.sql`;
+    const nomFichier = `${prefixe}_${DB_NAME}_${horodatage()}.sql`;
     const cheminComplet = path.join(BACKUP_DIR, nomFichier);
 
     // Le mot de passe est passé via une variable d'environnement plutôt que

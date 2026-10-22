@@ -19,7 +19,10 @@
     "backup:test": "node scripts/backup.js --test",
     "test:stock": "node test/stock/run.js",
     "importer:registres": "node scripts/importer-registres.js",
-    "creer:reel": "node scripts/creer-reel.js"
+    "creer:reel": "node scripts/creer-reel.js",
+    "restaurer": "node scripts/restaurer.js",
+    "test:restauration": "node scripts/verifier-sauvegarde.js",
+    "verifier": "node scripts/verifier-syntaxe.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
