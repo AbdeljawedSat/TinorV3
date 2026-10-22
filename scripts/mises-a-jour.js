@@ -56,6 +56,28 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V4 — journal d'audit (qui a fait quoi).
+  const [ja] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'journal_audit'");
+  if (!ja[0].n) {
+    await conn.query(SQL_JOURNAL_AUDIT);
+    journal('✓ Mise à jour : table journal_audit créée (journal d\'audit).');
+  }
+
+  // V4 — rôles supplémentaires (magasinier, production, comptable) : la contrainte « gerant ou vendeur » est élargie.
+  const [chk] = await conn.query(`
+    SELECT tc.CONSTRAINT_NAME AS nom, cc.CHECK_CLAUSE AS clause
+    FROM information_schema.TABLE_CONSTRAINTS tc
+    JOIN information_schema.CHECK_CONSTRAINTS cc
+      ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+    WHERE tc.TABLE_SCHEMA = DATABASE() AND tc.TABLE_NAME = 'users' AND tc.CONSTRAINT_TYPE = 'CHECK'`);
+  const ancienRole = chk.find(c => /gerant/.test(c.clause) && !/magasinier/.test(c.clause));
+  if (ancienRole) {
+    try { await conn.query(`ALTER TABLE users DROP CONSTRAINT \`${ancienRole.nom}\``); } // MySQL 8
+    catch { await conn.query(`ALTER TABLE users MODIFY role VARCHAR(20) NOT NULL DEFAULT 'vendeur'`); } // MariaDB : contrainte portée par la colonne
+    await conn.query(`ALTER TABLE users ADD CONSTRAINT users_role_chk CHECK (role IN ('gerant','vendeur','magasinier','production','comptable'))`);
+    journal('✓ Mise à jour : rôles magasinier, production et comptable acceptés.');
+  }
+
   // V3.3 — numérotation configurable des opérations (format actuel / proposé / personnalisé).
   const [nf] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'numerotation_formats'");
   if (!nf[0].n) {
@@ -172,6 +194,25 @@ const SQL_NUMEROTATION_FORMATS = `CREATE TABLE IF NOT EXISTS numerotation_format
   date_application DATE NULL,
   updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   updated_by       INT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_JOURNAL_AUDIT = `CREATE TABLE IF NOT EXISTS journal_audit (
+  id          BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  user_id     INT NULL,
+  username    VARCHAR(40) NULL,
+  role        VARCHAR(20) NULL,
+  methode     VARCHAR(8) NOT NULL,
+  chemin      VARCHAR(200) NOT NULL,
+  rubrique    VARCHAR(40) NOT NULL DEFAULT '',
+  entite_id   VARCHAR(40) NULL,
+  statut_http SMALLINT NOT NULL,
+  ip          VARCHAR(45) NULL,
+  resume      TEXT NULL,
+  INDEX idx_audit_date (cree_le),
+  INDEX idx_audit_rubrique (rubrique),
+  INDEX idx_audit_user (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

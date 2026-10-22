@@ -996,6 +996,7 @@
           <a data-view="employes"><span>Employés</span></a>
           <a data-view="locaux"><span>Locaux &amp; Zones</span></a>
           <a data-view="numerotation"><span>Numérotation</span></a>
+          <a data-view="journal"><span>Journal d'audit</span></a>
           <a data-view="apropos"><span>À propos</span></a>
         </div>
       </div>
@@ -2121,6 +2122,28 @@
         </div>
       </div>
 
+      <!-- ===== JOURNAL D'AUDIT ===== -->
+      <div class="view" id="view-journal">
+        <div class="pageHead"><h1>Journal d'audit</h1><p>Qui a fait quoi, quand et depuis quelle adresse — écritures, refus de droits et connexions</p></div>
+        <div class="panel" style="padding:16px 18px;">
+          <div class="numCtx" style="align-items:end;">
+            <div><label>Du</label><input type="date" id="jrDu"></div>
+            <div><label>Au</label><input type="date" id="jrAu"></div>
+            <div><label>Utilisateur</label><select id="jrUser"><option value="">Tous</option></select></div>
+            <div><label>Rubrique</label><select id="jrRub"><option value="">Toutes</option></select></div>
+            <div><label>Contient</label><input type="text" id="jrQ" placeholder="n° de facture, produit…"></div>
+            <button class="btnPrimary" id="jrGo">Afficher</button>
+            <button class="btnGhost" id="jrCsv">Exporter en CSV</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:14px;">
+          <table>
+            <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Rubrique</th><th>Résultat</th><th>Adresse</th><th>Détail</th></tr></thead>
+            <tbody id="jrBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- ===== À PROPOS ===== -->
       <div class="view" id="view-apropos">
         <div class="pageHead"><h1>À propos</h1><p>La console de gestion des Jardins de Jerba</p></div>
@@ -2210,7 +2233,7 @@
       <div id="mdpFormError" style="color:var(--danger); font-size:11.5px; margin:10px 0 0; display:none;"></div>
       <label class="formLbl">Mot de passe actuel</label>
       <input type="password" id="mdpAncien" class="formInput" autocomplete="current-password">
-      <label class="formLbl">Nouveau mot de passe (8 caractères minimum)</label>
+      <label class="formLbl">Nouveau mot de passe (10 caractères minimum)</label>
       <input type="password" id="mdpNouveau" class="formInput" autocomplete="new-password">
       <label class="formLbl">Confirmer le nouveau mot de passe</label>
       <input type="password" id="mdpConfirmation" class="formInput" autocomplete="new-password">
@@ -2834,8 +2857,12 @@
       <label class="formLbl">Rôle</label>
       <select id="userRole" class="formInput">
         <option value="vendeur">Vendeur</option>
+        <option value="magasinier">Magasinier (stock, réceptions, achats)</option>
+        <option value="production">Production (presse, filtration, mélange, conditionnement, qualité)</option>
+        <option value="comptable">Comptable (factures, paiements, avoirs, achats)</option>
         <option value="gerant">Gérant</option>
       </select>
+      <div class="rowMeta" style="margin-top:4px;">Tous les rôles peuvent consulter ; seul le gérant gère les utilisateurs, les paramètres et les sauvegardes.</div>
       <label class="chkLbl" style="margin-top:12px;"><input type="checkbox" id="userActif" checked> Actif</label>
     </div>
     <div class="modalFoot">
@@ -3398,6 +3425,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   <button type="button" data-onglet="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Plus</button>
 </nav>
 <script>
+  // Échappement HTML de toute valeur saisie par un utilisateur avant insertion dans une page (noms, notes, numéros…).
+  // Texte inséré dans un onclick="f('…')" : d'abord protégé pour JavaScript (apostrophe, barre oblique), puis pour HTML.
+  function attrJs(v) { return esc(String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'")); }
+  function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   // ============================================================================
   // COUCHE API — connexion à tinor-api-v3 (Express + MariaDB), plus de données
   // fictives : tout ce qui suit vient réellement de la base.
@@ -3471,6 +3502,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   })();
   let TOKEN = null; // gardé en mémoire JS uniquement (pas de stockage navigateur)
   let CURRENT_USER = null;
+  const LIBELLES_ROLES = { gerant: 'Gérant', vendeur: 'Vendeur', magasinier: 'Magasinier', production: 'Production', comptable: 'Comptable' };
   function isGerant() { return CURRENT_USER && CURRENT_USER.role === 'gerant'; }
 
   // Appel à l'API. Sans réseau (voir « HORS LIGNE ») : lectures depuis la copie
@@ -3555,7 +3587,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const sel = document.getElementById('numOp');
     const groupes = {};
     NUM.liste.forEach(o => (groupes[o.groupe] = groupes[o.groupe] || []).push(o));
-    sel.innerHTML = Object.entries(groupes).map(([g, l]) => `<optgroup label="${g}">${l.map(o => `<option value="${o.cle}">${o.nom}</option>`).join('')}</optgroup>`).join('');
+    sel.innerHTML = Object.entries(groupes).map(([g, l]) => `<optgroup label="${g}">${l.map(o => `<option value="${o.cle}">${esc(o.nom)}</option>`).join('')}</optgroup>`).join('');
     sel.value = NUM.cle;
     numChoisir(NUM.cle);
   }
@@ -3687,6 +3719,35 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('numSave').onclick = numEnregistrer;
   ['numCDate', 'numCP1', 'numCP2', 'numCProd'].forEach(id => document.getElementById(id).addEventListener('input', numApercuDiffere));
 
+  // ---------- Journal d'audit ----------
+  let JOURNAL = [];
+  const ACTIONS_JOURNAL = { POST: 'Création / action', PUT: 'Modification', PATCH: 'Modification', DELETE: 'Suppression' };
+  async function chargerJournal() {
+    const p = new URLSearchParams();
+    [['du', 'jrDu'], ['au', 'jrAu'], ['utilisateur', 'jrUser'], ['rubrique', 'jrRub'], ['q', 'jrQ']].forEach(([k, id]) => { const v = document.getElementById(id).value; if (v) p.set(k, v); });
+    const r = await apiFetch('/audit?' + p.toString());
+    JOURNAL = r.lignes;
+    const garde = (id, liste) => { const el = document.getElementById(id), v = el.value; el.innerHTML = el.options[0].outerHTML + liste.map(x => `<option>${esc(x)}</option>`).join(''); el.value = v; };
+    garde('jrUser', r.utilisateurs); garde('jrRub', r.rubriques);
+    document.getElementById('jrBody').innerHTML = r.lignes.map(l => {
+      const refuse = l.statut_http === 403 || l.statut_http === 401 || l.statut_http === 429;
+      const action = l.chemin.startsWith('/api/auth/login') ? 'Connexion' : (ACTIONS_JOURNAL[l.methode] || l.methode);
+      return `<tr><td style="white-space:nowrap">${new Date(l.cree_le).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' })}</td>
+        <td>${esc(l.username || '—')}<div class="rowMeta">${esc(LIBELLES_ROLES[l.role] || '')}</div></td><td>${action}</td>
+        <td>${esc(l.rubrique)}${l.entite_id ? ` <span class="rowMeta">n°${esc(l.entite_id)}</span>` : ''}<div class="rowMeta">${esc(l.methode)} ${esc(l.chemin)}</div></td>
+        <td style="color:${refuse ? 'var(--danger,#b3261e)' : 'inherit'}">${refuse ? '✖ Refusé' : '✔'} <span class="rowMeta">${l.statut_http}</span></td>
+        <td class="rowMeta">${esc(l.ip || '')}</td><td class="rowMeta" style="max-width:340px; word-break:break-all;">${esc((l.resume || '').slice(0, 300))}</td></tr>`;
+    }).join('') || '<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Aucune entrée.</td></tr>';
+  }
+  document.getElementById('jrGo').onclick = () => chargerJournal().catch(e => notifier(e.message, 'erreur'));
+  document.getElementById('jrCsv').onclick = () => {
+    const csv = [['date', 'utilisateur', 'rôle', 'méthode', 'chemin', 'statut', 'adresse', 'détail']].concat(JOURNAL.map(l => [l.cree_le, l.username, l.role, l.methode, l.chemin, l.statut_http, l.ip, l.resume]))
+      .map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = `journal-audit-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  };
+
   // ---------- À propos : date de mise à jour et version RÉEL / TEST d'après /api/health ----------
   async function chargerApropos() {
     try {
@@ -3768,9 +3829,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const who = document.querySelector('.sidebarFoot .who');
       const role = document.querySelector('.sidebarFoot .role');
       if (who) who.textContent = `${user.employe_prenom || ''} ${user.employe_nom || user.username}`.trim();
-      if (role) role.textContent = user.role === 'gerant' ? 'Gérant' : 'Vendeur';
+      if (role) role.textContent = LIBELLES_ROLES[user.role] || user.role;
       const utilisateursLink = document.querySelector('a[data-view="utilisateurs"]');
       if (utilisateursLink) utilisateursLink.style.display = isGerant() ? '' : 'none';
+      document.querySelectorAll('a[data-view="journal"], a[data-view="qualite-parametres"]').forEach(a => { a.style.display = isGerant() ? '' : 'none'; });
       majEnvironnement();
       await loadAllData();
     };
@@ -3833,7 +3895,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const ancien = document.getElementById('mdpAncien').value, nouveau = document.getElementById('mdpNouveau').value;
     const montrer = (m) => { err.textContent = m; err.style.display = 'block'; };
     if (!ancien) return montrer('Saisissez votre mot de passe actuel.');
-    if (nouveau.length < 8) return montrer('Le nouveau mot de passe doit faire au moins 8 caractères.');
+    if (nouveau.length < 10) return montrer('Le nouveau mot de passe doit faire au moins 10 caractères.');
     if (nouveau !== document.getElementById('mdpConfirmation').value) return montrer('La confirmation ne correspond pas.');
     try {
       await apiFetch('/auth/mot-de-passe', { method: 'POST', body: JSON.stringify({ ancien, nouveau }) });
@@ -4001,15 +4063,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         ? ` <span class="pill warn" title="Ce produit a un format mais son unité n'est pas 'Unité' — vérifiez sa fiche">⚠ unité</span>`
         : '';
       return `<tr data-id="${p.id}">
-        <td class="lotCode">${p.code}</td>
-        <td>${p.nom}${alerte}</td>
+        <td class="lotCode">${esc(p.code)}</td>
+        <td>${esc(p.nom)}${alerte}</td>
         <td class="rowMeta">${p.type_article}</td>
         <td class="num">${p.prix_vente != null ? fmtDT(p.prix_vente) : '—'}</td>
         <td class="num">${p.stock_actuel} ${p.unite_symbole || ''}</td>
         <td class="rowActions">
           <button class="rowActionBtn" onclick="openProduitModal(${p.id})">Modifier</button>
           ${estGraine(p) ? `<button class="rowActionBtn" onclick="openDerivesModal(${p.id})" title="Huile vrac, filtrée, flacons">🌱 Dérivés</button>` : ''}
-          ${isGerant() ? `<button class="rowActionBtn danger" onclick="askDelete('produits', ${p.id}, '${p.nom.replace(/'/g, "\\'")}', renderProduits)">Supprimer</button>` : ''}
+          ${isGerant() ? `<button class="rowActionBtn danger" onclick="askDelete('produits', ${p.id}, '${attrJs(p.nom)}', renderProduits)">Supprimer</button>` : ''}
         </td>
       </tr>`;
     }).join('');
@@ -4047,10 +4109,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!clientsVus.length) { body.innerHTML = `<tr><td colspan="8" class="videAction">Aucun client dans cette vue.</td></tr>`; return; }
     body.innerHTML = clientsVus.map(c => `
       <tr data-id="${c.id}">
-        <td>${c.nom}${c.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
-        <td class="rowMeta">${c.type}</td>
-        <td>${c.ville || '—'}</td>
-        <td class="rowMeta">${c.matricule_fiscal || '—'}</td>
+        <td>${esc(c.nom)}${c.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
+        <td class="rowMeta">${esc(c.type)}</td>
+        <td>${esc(c.ville || '—')}</td>
+        <td class="rowMeta">${esc(c.matricule_fiscal || '—')}</td>
         <td class="rowMeta">${c.remise_nom || '—'}</td>
         <td class="num">${fmtDT(c.total_achete)}</td>
         <td class="num">${Number(c.solde) > 0.0005 ? `<b style="color:var(--warn);">${fmtDT(c.solde)}</b>` : Number(c.solde) < -0.0005 ? fmtSolde(c.solde) : '<span class="rowMeta">—</span>'}</td>
@@ -4058,7 +4120,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           <button class="rowActionBtn" onclick="nouvelleCommandePour(${c.id})">＋ Commande</button>
           ${c.en_attente_envoi ? '' : `<button class="rowActionBtn" onclick="ouvrirReleve(${c.id})">Relevé</button>
           <button class="rowActionBtn" onclick="openClientModal(${c.id})">Modifier</button>`}
-          ${isGerant() && !c.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('clients', ${c.id}, '${c.nom.replace(/'/g, "\\'")}', renderClients)">Supprimer</button>` : ''}
+          ${isGerant() && !c.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('clients', ${c.id}, '${attrJs(c.nom)}', renderClients)">Supprimer</button>` : ''}
         </td>
       </tr>`).join('');
     cablerMenuContextuel('clientsBody', (id) => {
@@ -4082,7 +4144,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       document.getElementById('releveTitre').textContent = `Relevé de compte — ${r.client.nom}`;
       document.getElementById('releveResume').innerHTML = `Facturé <b>${fmtDT(r.total_facture)}</b> · Payé <b>${fmtDT(r.total_paye)}</b> · ${r.solde < -0.0005 ? `<b>${fmtSolde(r.solde)}</b>` : `Reste dû <b style="color:${r.solde > 0.0005 ? 'var(--warn)' : 'var(--good)'};">${fmtDT(r.solde)}</b>`}`;
       document.getElementById('releveBody').innerHTML = r.operations.length ? r.operations.map(o => `
-        <tr><td class="rowMeta num">${fmtDate(o.date)}</td><td>${o.libelle}</td>
+        <tr><td class="rowMeta num">${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td>
           <td class="num">${o.debit ? fmtDT(o.debit) : ''}</td><td class="num">${o.credit ? fmtDT(o.credit) : ''}</td><td class="num"><b>${fmtDT(o.solde)}</b></td></tr>`).join('')
         : `<tr><td colspan="5" class="videAction">Aucune facture pour ce client.</td></tr>`;
       document.getElementById('releveOverlay').classList.add('open');
@@ -4119,15 +4181,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const bioLabel = { certifie: '<span class="pill good">Certifié</span>', conversion: '<span class="pill warn">Conversion</span>', non_bio: '<span class="pill grey">Non bio</span>' };
     body.innerHTML = APP_DATA.fournisseurs.map(f => `
       <tr data-id="${f.id}">
-        <td>${f.nom}${f.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
-        <td class="rowMeta">${f.type}</td>
-        <td class="rowMeta">${f.matricule_fiscal || '—'}</td>
-        <td>${f.localisation || '—'}</td>
+        <td>${esc(f.nom)}${f.en_attente_envoi ? ' <span class="pill warn" style="white-space:nowrap;" title="Créé hors ligne : il sera envoyé au retour du réseau">⏳ en attente</span>' : ''}</td>
+        <td class="rowMeta">${esc(f.type)}</td>
+        <td class="rowMeta">${esc(f.matricule_fiscal || '—')}</td>
+        <td>${esc(f.localisation || '—')}</td>
         <td>${bioLabel[f.statut_bio] || f.statut_bio}</td>
         <td class="${f.certificat_numero ? 'lotCode' : 'rowMeta'}">${f.certificat_numero || '—'}</td>
         <td class="rowActions">
           ${f.en_attente_envoi ? '' : `<button class="rowActionBtn" onclick="openFournisseurModal(${f.id})">Modifier</button>`}
-          ${isGerant() && !f.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('fournisseurs', ${f.id}, '${f.nom.replace(/'/g, "\\'")}', renderFournisseurs)">Supprimer</button>` : ''}
+          ${isGerant() && !f.en_attente_envoi ? `<button class="rowActionBtn danger" onclick="askDelete('fournisseurs', ${f.id}, '${attrJs(f.nom)}', renderFournisseurs)">Supprimer</button>` : ''}
         </td>
       </tr>`).join('');
     cablerMenuContextuel('fournisseursBody', (id) => {
@@ -4270,7 +4332,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const aCreer = lignes.filter(l => !l.ex).length, ignores = lignes.length - aCreer;
     const dernierCode = APP_DATA.produits.reduce((m, p) => Math.max(m, parseInt(p.code, 10) || 0), 0);
     let prochain = dernierCode;
-    const ligHtml = lignes.map(l => `<tr><td class="num">${l.ex ? '—' : String(++prochain).padStart(2, '0')}</td><td><b>${esc(l.nom)}</b></td><td>${l.type}</td><td class="rowMeta">${esc(l.lie)}</td>
+    const ligHtml = lignes.map(l => `<tr><td class="num">${l.ex ? '—' : String(++prochain).padStart(2, '0')}</td><td><b>${esc(l.nom)}</b></td><td>${esc(l.type)}</td><td class="rowMeta">${esc(l.lie)}</td>
       <td><span class="dvSt ${l.ex ? 'exist' : ''}">${l.ex ? 'existe déjà — ignoré' : 'sera créé'}</span></td></tr>`).join('');
     const ligne = (cle, titre, nom, aide, tag, off) => `<div class="dvRow"><input type="checkbox" data-dv="${cle}" ${e[cle] ? 'checked' : ''} ${off ? 'disabled' : ''}>
         <div class="dvNom"><b>${esc(nom || titre)}</b><small>${aide}</small></div><span class="pill">${tag}</span></div>`;
@@ -4544,8 +4606,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.locaux.length) { body.innerHTML = `<tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Aucun local — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = APP_DATA.locaux.map(l => `
       <tr>
-        <td class="lotCode">${l.code}</td>
-        <td>${l.nom}</td>
+        <td class="lotCode">${esc(l.code)}</td>
+        <td>${esc(l.nom)}</td>
         <td class="rowMeta">${TYPE_LOCAL_LABEL[l.type_local] || l.type_local}</td>
         <td class="rowMeta">${l.nb_zones} zone${l.nb_zones > 1 ? 's' : ''} — <a href="#" class="link" onclick="openZonesModal(${l.id}); return false;">gérer</a></td>
         <td class="rowActions">
@@ -4592,7 +4654,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   async function refreshZonesList() {
     const zones = await apiFetch(`/locaux/${ZONES_CURRENT_LOCAL_ID}/zones`);
     document.getElementById('zonesBody').innerHTML = zones.length
-      ? zones.map(z => `<tr><td class="lotCode">${z.code}</td><td>${z.nom}</td></tr>`).join('')
+      ? zones.map(z => `<tr><td class="lotCode">${esc(z.code)}</td><td>${esc(z.nom)}</td></tr>`).join('')
       : `<tr><td colspan="2" class="rowMeta">Aucune zone pour l'instant.</td></tr>`;
   }
   async function openZonesModal(localId) {
@@ -4634,9 +4696,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     body.innerHTML = APP_DATA.employes.map(e => `
       <tr>
         <td class="lotCode">${e.matricule}</td>
-        <td>${e.nom} ${e.prenom || ''}</td>
-        <td class="rowMeta">${e.fonction || '—'}</td>
-        <td class="rowMeta">${e.telephone || '—'}</td>
+        <td>${esc(e.nom)} ${e.prenom || ''}</td>
+        <td class="rowMeta">${esc(e.fonction || '—')}</td>
+        <td class="rowMeta">${esc(e.telephone || '—')}</td>
         <td>${e.actif ? '<span class="pill good">Actif</span>' : '<span class="pill grey">Inactif</span>'}</td>
         <td class="rowActions">
           <button class="rowActionBtn" onclick="openEmployeModal(${e.id})">Modifier</button>
@@ -4699,14 +4761,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!rows.length) { body.innerHTML = `<tr><td colspan="9" class="rowMeta" style="text-align:center; padding:22px;">Aucun pressage pour ce filtre.</td></tr>`; return; }
     body.innerHTML = rows.map(p => `
       <tr>
-        <td class="lotCode">${p.numero_lot}</td>
-        <td>${p.produit_nom || '—'}${p.lots_graines ? `<div class="rowMeta" style="font-size:10.5px;">Graines : ${p.lots_graines}</div>` : ''}</td>
+        <td class="lotCode">${esc(p.numero_lot)}</td>
+        <td>${esc(p.produit_nom || '—')}${p.lots_graines ? `<div class="rowMeta" style="font-size:10.5px;">Graines : ${p.lots_graines}</div>` : ''}</td>
         <td class="rowMeta num">${fmtDate(p.date)}</td>
         <td class="num">${p.quantite_matiere_utilisee ?? '—'}</td>
         <td class="num">${p.quantite_tourteau ?? '—'}</td>
         <td class="num">${p.quantite_produite}</td>
         <td class="num">${p.rendement_reel != null ? (p.rendement_reel * 100).toFixed(1) + ' %' : '—'}</td>
-        <td class="rowMeta">${p.employe_nom || '—'}</td>
+        <td class="rowMeta">${esc(p.employe_nom || '—')}</td>
         <td class="rowActions"><button class="rowActionBtn" onclick="openPresseModal(${p.id})">Modifier</button></td>
       </tr>`).join('');
   }
@@ -4722,7 +4784,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return a.numero_lot.localeCompare(b.numero_lot);
     });
     selectEl.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') +
-      tri.map(l => `<option value="${l.id}">${l.numero_lot} — ${l.produit_nom} (dispo: ${l.quantite_actuelle})</option>`).join('');
+      tri.map(l => `<option value="${l.id}">${esc(l.numero_lot)} — ${esc(l.produit_nom)} (dispo: ${l.quantite_actuelle})</option>`).join('');
   }
 
   // Règle du pressage (identique à src/services/graines.js côté API) :
@@ -4776,7 +4838,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:6px;';
     row.innerHTML = `
       <select class="formInput" style="flex:1; margin:0;"><option value="">— Choisir un lot de graines —</option>
-        ${PRESSE_LOTS_GRAINES.map(l => `<option value="${l.id}">${l.numero_lot} — ${l.produit_nom} (dispo : ${Number(l.quantite_actuelle)} ${l.unite_symbole || ''})</option>`).join('')}</select>
+        ${PRESSE_LOTS_GRAINES.map(l => `<option value="${l.id}">${esc(l.numero_lot)} — ${esc(l.produit_nom)} (dispo : ${Number(l.quantite_actuelle)} ${l.unite_symbole || ''})</option>`).join('')}</select>
       <input type="number" step="0.001" min="0" class="formInput" placeholder="Quantité" style="width:110px; margin:0;">
       <button type="button" class="rowActionBtn" title="Retirer ce lot">✕</button>`;
     row.querySelector('select').value = lotId ? String(lotId) : '';
@@ -4828,7 +4890,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       }
       return `<div class="presseSortie" data-cle="${l.cle}" style="border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-bottom:8px;">
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <select class="formInput" style="flex:1; min-width:180px; margin:0;">${l.huiles.map(h => `<option value="${h.id}">${h.nom}</option>`).join('')}</select>
+          <select class="formInput" style="flex:1; min-width:180px; margin:0;">${l.huiles.map(h => `<option value="${h.id}">${esc(h.nom)}</option>`).join('')}</select>
           <input type="number" step="0.001" min="0" class="formInput qHuile" placeholder="Huile" title="Quantité d'huile obtenue" style="width:95px; margin:0;">
           <input type="number" step="0.001" min="0" class="formInput qTourteau" placeholder="Tourteau" title="Quantité de tourteau (optionnel)" style="width:95px; margin:0;">
         </div>
@@ -4916,7 +4978,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('presseResume').style.display = p ? 'block' : 'none';
     document.getElementById('presseQuantitesLockedNote').style.display = p ? 'block' : 'none';
     if (p) {
-      document.getElementById('presseResume').innerHTML = `<b>${p.produit_nom || ''}</b><br>
+      document.getElementById('presseResume').innerHTML = `<b>${esc(p.produit_nom || '')}</b><br>
         Graines utilisées : ${p.quantite_matiere_utilisee ?? '—'}${p.lots_graines ? ` (${p.lots_graines})` : ''}<br>
         Huile obtenue : ${p.quantite_produite} · Tourteau : ${p.quantite_tourteau ?? '—'}`;
     } else {
@@ -5003,8 +5065,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!rows.length) { body.innerHTML = `<tr><td colspan="8" class="rowMeta" style="text-align:center; padding:22px;">Aucune filtration pour ce filtre.</td></tr>`; return; }
     body.innerHTML = rows.map(f => `
       <tr>
-        <td class="lotCode">${f.numero_lot}</td>
-        <td>${f.produit_nom || '—'}${(f.composition || []).length > 1 ? `<div class="compoListe">${f.composition.map(c => `${nomCourtHuile(c.huile)} ${c.pourcentage} %`).join(' · ')}</div>` : ''}</td>
+        <td class="lotCode">${esc(f.numero_lot)}</td>
+        <td>${esc(f.produit_nom || '—')}${(f.composition || []).length > 1 ? `<div class="compoListe">${f.composition.map(c => `${nomCourtHuile(c.huile)} ${c.pourcentage} %`).join(' · ')}</div>` : ''}</td>
         <td class="rowMeta num">${fmtDate(f.date)}</td>
         <td class="rowMeta">${f.filtre_utilise || '—'}</td>
         <td class="num">${f.quantite_dechet ?? '—'}</td>
@@ -5031,7 +5093,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function filtrationSourceRow() {
     const lots = getFiltrationLotsDisponibles();
     const options = lots.length
-      ? lots.map(p => `<option value="${p.id}">${p.numero_lot} — ${p.produit_nom || ''}</option>`).join('')
+      ? lots.map(p => `<option value="${p.id}">${esc(p.numero_lot)} — ${esc(p.produit_nom || '')}</option>`).join('')
       : '';
     const row = document.createElement('div');
     row.className = 'structRow';
@@ -5313,8 +5375,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           }).join(', ')
         : '—';
       return `<tr>
-        <td class="lotCode">${c.numero_lot || '—'}</td>
-        <td>${c.produit_nom || '—'}</td>
+        <td class="lotCode">${esc(c.numero_lot || '—')}</td>
+        <td>${esc(c.produit_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(c.date)}</td>
         <td class="num">${c.qty} u</td>
         <td class="rowMeta num">${contenanceUnite}</td>
@@ -5487,7 +5549,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     row.className = 'srcCond';
     const groupe = (tag, titre) => {
       const l = COND_SOURCES.filter(s => s.tag === tag);
-      return l.length ? `<optgroup label="${titre}">${l.map(s => `<option value="${s.cle}">${s.numero_lot} — ${s.nom}</option>`).join('')}</optgroup>` : '';
+      return l.length ? `<optgroup label="${titre}">${l.map(s => `<option value="${s.cle}">${esc(s.numero_lot)} — ${esc(s.nom)}</option>`).join('')}</optgroup>` : '';
     };
     row.innerHTML = `
       <select class="srcLot formInput" style="margin:0;"><option value="">— Choisir un lot —</option>${groupe('Lot fini', 'Lot fini (mélange) — flacons au n° du mélange')}${groupe('Filtrée', 'Huile filtrée (filtration)')}${groupe('Vrac', 'Huile en vrac (presse)')}${groupe('Achat', 'Vrac acheté')}</select>
@@ -5762,7 +5824,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const groups = {};
     produits.forEach(p => { (groups[p.categorie_nom || 'Autres'] = groups[p.categorie_nom || 'Autres'] || []).push(p); });
     return Object.keys(groups).sort().map(cat =>
-      `<optgroup label="${cat}">${groups[cat].map(p => `<option value="${p.id}" ${attrsFn ? attrsFn(p) : ''}>${labelFn ? labelFn(p) : p.nom}</option>`).join('')}</optgroup>`
+      `<optgroup label="${cat}">${groups[cat].map(p => `<option value="${p.id}" ${attrsFn ? attrsFn(p) : ''}>${esc(labelFn ? labelFn(p) : p.nom)}</option>`).join('')}</optgroup>`
     ).join('');
   }
 
@@ -5789,13 +5851,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return;
     }
 
-    const remiseOpts = REF_DATA.remises.map(r => `<option value="${r.id}">${r.nom}</option>`).join('');
+    const remiseOpts = REF_DATA.remises.map(r => `<option value="${r.id}">${esc(r.nom)}</option>`).join('');
     const stockDispo = stockDisponiblePourProduit(produit.id);
     const tr = document.createElement('tr');
     tr.dataset.produitId = produit.id;
     tr.innerHTML = `
-      <td class="refCell">${produit.code || ''}</td>
-      <td>${produit.nom}</td>
+      <td class="refCell">${esc(produit.code || '')}</td>
+      <td>${esc(produit.nom)}</td>
       <td class="num"><input type="number" step="1" min="1" class="ligneQty" value="${qty}"></td>
       <td class="num stockCell${stockDispo <= 0 ? ' low' : ''}">${stockDispo}</td>
       <td class="num" data-col="puht">—</td>
@@ -5829,8 +5891,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       resultsEl.innerHTML = matches.length
         ? matches.map(p => `
           <div class="comboItem" data-id="${p.id}">
-            ${p.nom}
-            <div class="comboSub">${p.prix_vente != null ? fmtDT(p.prix_vente) : 'sans prix'} — ${p.code || ''} — stock ${stockDisponiblePourProduit(p.id)}</div>
+            ${esc(p.nom)}
+            <div class="comboSub">${p.prix_vente != null ? fmtDT(p.prix_vente) : 'sans prix'} — ${esc(p.code || '')} — stock ${stockDisponiblePourProduit(p.id)}</div>
           </div>`).join('')
         : `<div class="comboEmpty">Aucun produit trouvé.</div>`;
       resultsEl.style.display = 'block';
@@ -5992,8 +6054,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           const produit = APP_DATA.produits.find(p => p.id === l.produit_id);
           return `
           <tr>
-            <td class="refCell">${produit?.code || ''}</td>
-            <td>${l.produit_nom || l.produit_id}</td>
+            <td class="refCell">${esc(produit?.code || '')}</td>
+            <td>${esc(l.produit_nom || l.produit_id)}</td>
             <td class="num">${l.qty}</td>
             <td class="num">—</td>
             <td class="num">${fmtDT(puHt).replace(' DT', '')}</td>
@@ -6079,8 +6141,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }
     body.innerHTML = rows.map(f => `
       <tr data-id="${f.id}">
-        <td class="lotCode">${f.numero}</td>
-        <td>${f.client_nom || '—'}</td>
+        <td class="lotCode">${esc(f.numero)}</td>
+        <td>${esc(f.client_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(f.date_emission)}</td>
         <td>${f.statut === 'annulee' ? '<span class="pill danger">Annulée</span>' : '<span class="pill good">Émise</span>'}${pastilleAvoir(f)}</td>
         <td class="num">${fmtDT(f.total_ttc)}</td>
@@ -6301,7 +6363,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const w = window.open('', `facture_print_${factureId}_${Date.now()}`);
     if (!w) { notifier('Autorisez les pop-ups pour imprimer la facture.'); return; }
     w.document.open(); // vide explicitement tout contenu déjà présent avant d'écrire
-    w.document.write(`<html><head><meta charset="UTF-8"><title>Facture ${f.numero}</title>
+    w.document.write(`<html><head><meta charset="UTF-8"><title>Facture ${esc(f.numero)}</title>
       <style>${cssDocumentVente()}      </style></head><body>${factureHtmlContent(f)}
       <script>window.onload = () => window.print();<\/script>
       </body></html>`);
@@ -6395,14 +6457,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.users.length) { body.innerHTML = `<tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Aucun utilisateur.</td></tr>`; return; }
     body.innerHTML = APP_DATA.users.map(u => `
       <tr>
-        <td class="lotCode">${u.username}</td>
-        <td>${u.employe_nom ? `${u.employe_nom} ${u.employe_prenom || ''}` : '—'}</td>
-        <td class="rowMeta">${u.role === 'gerant' ? 'Gérant' : 'Vendeur'}</td>
+        <td class="lotCode">${esc(u.username)}</td>
+        <td>${u.employe_nom ? `${esc(u.employe_nom)} ${esc(u.employe_prenom || '')}` : '—'}</td>
+        <td class="rowMeta">${LIBELLES_ROLES[u.role] || u.role}</td>
         <td>${u.actif ? '<span class="pill good">Actif</span>' : '<span class="pill grey">Inactif</span>'}</td>
         <td class="rowActions">
           ${isGerant() ? `
             <button class="rowActionBtn" onclick="openUserModal(${u.id})">Modifier</button>
-            <button class="rowActionBtn danger" onclick="askDelete('users', ${u.id}, '${u.username.replace(/'/g, "\\'")}', renderUtilisateursAfterDelete)">Supprimer</button>` : '<span class="rowMeta">—</span>'}
+            <button class="rowActionBtn danger" onclick="askDelete('users', ${u.id}, '${attrJs(u.username)}', renderUtilisateursAfterDelete)">Supprimer</button>` : '<span class="rowMeta">—</span>'}
         </td>
       </tr>`).join('');
   }
@@ -6459,7 +6521,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.recettes.length) { body.innerHTML = `<tr><td colspan="3" class="rowMeta" style="text-align:center; padding:22px;">Aucune recette — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = APP_DATA.recettes.map(r => `
       <tr>
-        <td>${r.produit_nom || '—'}</td>
+        <td>${esc(r.produit_nom || '—')}</td>
         <td class="rowMeta">${r.nb_ingredients} ingrédient${r.nb_ingredients > 1 ? 's' : ''}</td>
         <td class="rowActions"><button class="rowActionBtn" onclick="openRecetteModal(${r.id})">Modifier</button></td>
       </tr>`).join('');
@@ -6467,7 +6529,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   function recetteIngredientRow(ingredientId, qte) {
     const options = APP_DATA.produits
-      .map(p => `<option value="${p.id}" ${ingredientId === p.id ? 'selected' : ''}>${p.nom}</option>`).join('');
+      .map(p => `<option value="${p.id}" ${ingredientId === p.id ? 'selected' : ''}>${esc(p.nom)}</option>`).join('');
     const row = document.createElement('div');
     row.className = 'structRow';
     row.style.gridTemplateColumns = '1fr 110px 32px';
@@ -6585,11 +6647,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!rows.length) { body.innerHTML = `<tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Aucune production pour ce filtre.</td></tr>`; return; }
     body.innerHTML = rows.map(o => `
       <tr>
-        <td class="lotCode">${o.numero_lot || '—'}</td>
-        <td>${o.produit_nom || '—'}</td>
+        <td class="lotCode">${esc(o.numero_lot || '—')}</td>
+        <td>${esc(o.produit_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(o.date)}</td>
         <td class="num">${o.qty_produite}</td>
-        <td class="rowMeta">${o.employe_nom || '—'}</td>
+        <td class="rowMeta">${esc(o.employe_nom || '—')}</td>
       </tr>`).join('');
   }
 
@@ -6638,7 +6700,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.grilles.length) { body.innerHTML = `<tr><td colspan="10" class="rowMeta" style="text-align:center; padding:22px;">Aucune grille — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = APP_DATA.grilles.map(g => `
       <tr>
-        <td>${g.produit_nom || '—'}</td>
+        <td>${esc(g.produit_nom || '—')}</td>
         <td class="num">${fmtDT(g.matiere)}</td>
         <td class="num">${g.prod}</td>
         <td class="num">${fmtDT(g.coutRevient)}${g.coutOverride ? ' <span class="pill warn">forcé</span>' : ''}</td>
@@ -6785,14 +6847,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!REF_DATA.remises.length) { body.innerHTML = `<tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Aucune remise — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = REF_DATA.remises.map(r => `
       <tr>
-        <td>${r.nom}${r.protege ? ' <span class="pill grey">protégée</span>' : ''}</td>
+        <td>${esc(r.nom)}${r.protege ? ' <span class="pill grey">protégée</span>' : ''}</td>
         <td class="rowMeta">${r.type === 'pourcentage' ? 'Pourcentage' : 'Offre spéciale'}</td>
         <td class="rowMeta">${r.type === 'pourcentage' ? `−${r.pourcentage}%` : `${r.achete} achetées + ${r.gratuit} offerte${r.gratuit > 1 ? 's' : ''}`}</td>
         <td class="rowMeta">${r.categorie}</td>
         <td class="rowActions">
           ${r.protege || !isGerant() ? '' : `
             <button class="rowActionBtn" onclick="openRemiseModal(${r.id})">Modifier</button>
-            <button class="rowActionBtn danger" onclick="askDelete('remises', ${r.id}, '${r.nom.replace(/'/g, "\\'")}', renderRemisesAfterDelete)">Supprimer</button>`}
+            <button class="rowActionBtn danger" onclick="askDelete('remises', ${r.id}, '${attrJs(r.nom)}', renderRemisesAfterDelete)">Supprimer</button>`}
         </td>
       </tr>`).join('');
   }
@@ -6860,8 +6922,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     body.innerHTML = APP_DATA.achats.map(a => {
       const [cls, label] = statutLabel[a.statut] || ['grey', a.statut];
       return `<tr>
-        <td class="lotCode">${a.numero}</td>
-        <td>${a.fournisseur_nom || '—'}</td>
+        <td class="lotCode">${esc(a.numero)}</td>
+        <td>${esc(a.fournisseur_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(a.date_achat)}</td>
         <td><span class="pill ${cls}">${label}</span></td>
         <td class="num">${fmtDT(a.total_ttc)}</td>
@@ -7016,9 +7078,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.receptions.length) { body.innerHTML = `<tr><td colspan="6" class="rowMeta" style="text-align:center; padding:22px;">Aucune réception — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = APP_DATA.receptions.map(r => `
       <tr>
-        <td class="lotCode">${r.numero}</td>
-        <td>${r.fournisseur_nom || '—'}</td>
-        <td class="rowMeta">${r.local_nom || '—'}</td>
+        <td class="lotCode">${esc(r.numero)}</td>
+        <td>${esc(r.fournisseur_nom || '—')}</td>
+        <td class="rowMeta">${esc(r.local_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(r.date_reception)}</td>
         <td class="rowMeta">${r.achat_id ? 'Sur achat' : 'Directe'}</td>
         <td class="num">${r.nb_lignes}</td>
@@ -7840,10 +7902,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         else if (format.poids) contenance = `${format.poids} g / unité`;
       }
       return `<tr>
-        <td class="lotCode">${p.code || '—'}</td>
-        <td>${p.nom || '—'}</td>
-        <td class="lotCode">${l.numero_lot}</td>
-        <td class="rowMeta">${local ? local.nom : '—'}</td>
+        <td class="lotCode">${esc(p.code || '—')}</td>
+        <td>${esc(p.nom || '—')}</td>
+        <td class="lotCode">${esc(l.numero_lot)}</td>
+        <td class="rowMeta">${esc(local ? local.nom : '—')}</td>
         <td>${pillStatut(l.statut)}</td>
         <td class="num">${l.quantite_actuelle} ${format ? 'u' : (p.unite_symbole || '')}</td>
         <td class="rowMeta num">${contenance}</td>
@@ -8057,8 +8119,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="rowMeta num">${fmtDate(m.date_mouvement)}</td>
         <td class="rowMeta">${TYPE_MOUVEMENT_LABEL[m.type_mouvement] || m.type_mouvement}</td>
         <td>${m.sens === 'ENTREE' ? '<span class="pill good">Entrée</span>' : m.sens === 'SORTIE' ? '<span class="pill warn">Sortie</span>' : '<span class="pill grey">Neutre</span>'}</td>
-        <td>${m.produit_nom || '—'}</td>
-        <td class="${m.numero_lot ? 'lotCode' : 'rowMeta'}">${m.numero_lot || '—'}</td>
+        <td>${esc(m.produit_nom || '—')}</td>
+        <td class="${m.numero_lot ? 'lotCode' : 'rowMeta'}">${esc(m.numero_lot || '—')}</td>
         <td class="num">${m.quantite}</td>
         <td class="rowMeta">${m.source_type || '—'}</td>
       </tr>`).join('');
@@ -8089,8 +8151,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!rows.length) { body.innerHTML = `<tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Aucune notification${NOTIF_FILTER === 'EN_ATTENTE' ? ' en attente — tout est à jour.' : '.'}</td></tr>`; return; }
     body.innerHTML = rows.map(n => `
       <tr>
-        <td>${n.titre}</td>
-        <td class="rowMeta" style="max-width:340px;">${n.message}</td>
+        <td>${esc(n.titre)}</td>
+        <td class="rowMeta" style="max-width:340px;">${esc(n.message)}</td>
         <td class="${n.commande_numero ? 'lotCode' : 'rowMeta'}">${n.commande_numero || '—'}</td>
         <td>${n.statut === 'EN_ATTENTE' ? '<span class="pill warn">En attente</span>' : '<span class="pill good">Résolue</span>'}</td>
         <td class="rowActions">
@@ -8173,9 +8235,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <tr data-id="${p.id}"${p.annule_le ? ' class="ligneAnnulee"' : ''}>
         <td class="rowMeta num">${fmtDate(p.date_paiement)}</td>
         <td class="lotCode">${p.facture_numero || '—'}</td>
-        <td>${p.client_nom || '—'}</td>
+        <td>${esc(p.client_nom || '—')}</td>
         <td class="rowMeta">${MODE_PAIEMENT_LABEL[p.mode] || p.mode}</td>
-        <td class="rowMeta">${p.reference || '—'}</td>
+        <td class="rowMeta">${esc(p.reference || '—')}</td>
         <td class="num"><span class="montant">${fmtDT(p.montant)}</span></td>
         <td class="rowActions">${p.annule_le
           ? `<span class="pill danger" title="${(p.annule_motif || '').replace(/"/g, '&quot;')}">Annulé</span><span class="rowMeta motifAnnul">${p.annule_motif || ''}</span>`
@@ -8243,7 +8305,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         ? detail.map(d => `
           <tr>
             <td class="lotCode">${d.commande_numero}</td>
-            <td>${d.client_nom}</td>
+            <td>${esc(d.client_nom)}</td>
             <td class="rowMeta num">${fmtDate(d.date_iso)}</td>
             <td class="num">${fmtDT(d.montant)}</td>
             <td>${d.facture_numero ? `<span class="lotCode">${d.facture_numero}</span>` : '<span class="rowMeta">Non facturée</span>'}</td>
@@ -8282,10 +8344,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         apiFetch('/stats/top-clients?limit=10'),
       ]);
       document.getElementById('statsTopProduitsBody').innerHTML = topProduits.length
-        ? topProduits.map(p => `<tr><td>${p.produit_nom}</td><td class="num">${p.quantite_totale}</td><td class="num rowMeta">${p.nb_commandes}</td></tr>`).join('')
+        ? topProduits.map(p => `<tr><td>${esc(p.produit_nom)}</td><td class="num">${p.quantite_totale}</td><td class="num rowMeta">${p.nb_commandes}</td></tr>`).join('')
         : `<tr><td colspan="3" class="rowMeta" style="text-align:center; padding:16px;">Aucune vente pour l'instant.</td></tr>`;
       document.getElementById('statsTopClientsBody').innerHTML = topClients.length
-        ? topClients.map(c => `<tr><td>${c.client_nom}</td><td class="num">${fmtDT(c.total)}</td><td class="num rowMeta">${c.nb_commandes}</td></tr>`).join('')
+        ? topClients.map(c => `<tr><td>${esc(c.client_nom)}</td><td class="num">${fmtDT(c.total)}</td><td class="num rowMeta">${c.nb_commandes}</td></tr>`).join('')
         : `<tr><td colspan="3" class="rowMeta" style="text-align:center; padding:16px;">Aucune commande.</td></tr>`;
     } catch (err) {
       console.error('Erreur chargement statistiques:', err.message);
@@ -8301,7 +8363,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (!APP_DATA.certificats.length) { body.innerHTML = `<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Aucun certificat — cliquez sur «＋ Nouveau».</td></tr>`; return; }
     body.innerHTML = APP_DATA.certificats.map(c => `
       <tr>
-        <td class="lotCode">${c.numero}</td>
+        <td class="lotCode">${esc(c.numero)}</td>
         <td class="rowMeta">${c.organisme}</td>
         <td class="rowMeta num">${fmtDate(c.date_delivrance)}</td>
         <td class="num">${fmtDate(c.date_expiration)}</td>
@@ -8309,7 +8371,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         <td class="num">${c.nb_fournisseurs}</td>
         <td class="rowActions">
           <button class="rowActionBtn" onclick="openCertificatModal(${c.id})">Modifier</button>
-          <button class="rowActionBtn danger" onclick="askDelete('certificats', ${c.id}, '${c.numero.replace(/'/g, "\\'")}', renderCertificatsAfterDelete)">Supprimer</button>
+          <button class="rowActionBtn danger" onclick="askDelete('certificats', ${c.id}, '${attrJs(c.numero)}', renderCertificatsAfterDelete)">Supprimer</button>
         </td>
       </tr>`).join('');
   }
@@ -8472,7 +8534,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           </tr>`).join('')
         : `<tr><td colspan="3" class="rowMeta">Aucune sauvegarde pour l'instant.</td></tr>`;
     } catch (err) {
-      body.innerHTML = `<tr><td colspan="3" class="rowMeta">Erreur : ${err.message}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="3" class="rowMeta">Erreur : ${esc(err.message)}</td></tr>`;
     }
   }
   document.getElementById('backupNowBtn')?.addEventListener('click', async () => {
@@ -8526,8 +8588,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     menu.innerHTML = items.map((it, i) => it === null
       ? `<div style="height:1px; background:var(--line); margin:4px 2px;"></div>`
       : it.desactive
-      ? `<div style="padding:7px 12px; color:var(--text-soft); opacity:.75; cursor:not-allowed;">${it.label}<div style="font-size:11px; margin-top:1px;">${it.desactive}</div></div>`
-      : `<div class="menuContextuelItem" data-idx="${i}" style="padding:8px 12px; border-radius:5px; cursor:pointer; color:${it.danger ? 'var(--danger)' : 'inherit'};">${it.label}</div>`
+      ? `<div style="padding:7px 12px; color:var(--text-soft); opacity:.75; cursor:not-allowed;">${esc(it.label)}<div style="font-size:11px; margin-top:1px;">${esc(it.desactive)}</div></div>`
+      : `<div class="menuContextuelItem" data-idx="${i}" style="padding:8px 12px; border-radius:5px; cursor:pointer; color:${it.danger ? 'var(--danger)' : 'inherit'};">${esc(it.label)}</div>`
     ).join('');
     menu.querySelectorAll('.menuContextuelItem').forEach(el => {
       el.addEventListener('mouseenter', () => el.style.background = 'var(--sand)');
@@ -8829,7 +8891,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   document.getElementById('qaPresse')?.addEventListener('click', () => actionRapide('presse'));
   document.getElementById('qaConditionnement')?.addEventListener('click', () => actionRapide('conditionnement'));
   document.getElementById('qaClient')?.addEventListener('click', () => actionRapide('clients'));
-  const GERANT_ONLY_VIEWS = new Set(['utilisateurs', 'remises', 'grille-prix']);
+  const GERANT_ONLY_VIEWS = new Set(['utilisateurs', 'remises', 'grille-prix', 'journal']);
   document.getElementById('btnNouveau').addEventListener('click', () => {
     if (GERANT_ONLY_VIEWS.has(CURRENT_VIEW_KEY) && !isGerant()) {
       notifier("Réservé au rôle Gérant.");
@@ -8870,8 +8932,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const dejaFacturee = facturees.has(c.id);
       const etape = prochaineEtapeCommande(c);
       return `<tr data-id="${c.id}">
-        <td class="lotCode">${c.numero}</td>
-        <td>${c.client_nom || '—'}</td>
+        <td class="lotCode">${esc(c.numero)}</td>
+        <td>${esc(c.client_nom || '—')}</td>
         <td class="rowMeta num">${fmtDate(c.date_iso)}</td>
         <td><div class="statutCell">
           <span class="pill ${cls}">${label}</span>
@@ -9068,14 +9130,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const bioLabel = { BIO: '<span class="pill good">Bio</span>', NON_BIO: '<span class="pill grey">Non bio</span>', EN_CONVERSION: '<span class="pill warn">Conversion</span>', A_VERIFIER: '<span class="pill grey">À vérifier</span>', BLOQUE: '<span class="pill danger">Bloqué</span>' };
     body.innerHTML = rows.map(l => `
       <tr data-id="${l.id}">
-        <td class="lotCode">${l.numero_lot}</td>
-        <td>${l.produit_nom || '—'}</td>
+        <td class="lotCode">${esc(l.numero_lot)}</td>
+        <td>${esc(l.produit_nom || '—')}</td>
         <td class="rowMeta">${{ presse: 'Presse', filtration: 'Filtration', melange: 'Mélange', conditionnement: 'Conditionnement' }[typeLotRegistre(l)] || l.origine}</td>
         <td class="rowMeta num">${fmtDate(l.date_production || l.created_at)}${celluleExpiration(l)}</td>
         <td>${bioLabel[l.bio_status] || l.bio_status}</td>
         <td>${pillStatut(l.statut)}</td>
         <td class="num">${l.quantite_actuelle} ${l.unite_symbole || ''}</td>
-        <td class="rowActions"><button class="rowActionBtn" onclick="openRepartitionModal('${l.numero_lot}')">Répartition</button> <button class="rowActionBtn" onclick="imprimerEtiquetteLot(${l.id})">Étiquette</button></td>
+        <td class="rowActions"><button class="rowActionBtn" onclick="openRepartitionModal('${attrJs(l.numero_lot)}')">Répartition</button> <button class="rowActionBtn" onclick="imprimerEtiquetteLot(${l.id})">Étiquette</button></td>
       </tr>`).join('');
     cablerMenuContextuel('lotsBody', (id) => {
       const l = APP_DATA.lots.find(x => x.id === id);
@@ -9100,14 +9162,14 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   async function chargerInventaires() {
     document.getElementById('invLocal').innerHTML = APP_DATA.locaux.length
-      ? APP_DATA.locaux.map(l => `<option value="${l.id}">${l.nom}</option>`).join('')
+      ? APP_DATA.locaux.map(l => `<option value="${l.id}">${esc(l.nom)}</option>`).join('')
       : `<option value="">Aucun local — créez-en un dans Locaux & Zones</option>`;
     try {
       INVENTAIRES = await apiFetch('/inventaires');
       renderInventaires();
       if (INVENTAIRE_OUVERT) await ouvrirInventaire(INVENTAIRE_OUVERT.id);
     } catch (err) {
-      document.getElementById('inventairesBody').innerHTML = `<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">${err.message}</td></tr>`;
+      document.getElementById('inventairesBody').innerHTML = `<tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">${esc(err.message)}</td></tr>`;
     }
   }
 
@@ -9119,9 +9181,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }
     body.innerHTML = INVENTAIRES.map(i => `
       <tr>
-        <td class="lotCode">${i.numero}</td>
+        <td class="lotCode">${esc(i.numero)}</td>
         <td class="rowMeta num">${fmtDate(i.date)}</td>
-        <td>${i.local_nom || '—'}</td>
+        <td>${esc(i.local_nom || '—')}</td>
         <td class="num">${i.nb_lignes}</td>
         <td class="num" style="${Number(i.nb_ecarts) ? 'color:var(--warn); font-weight:600;' : ''}">${i.nb_ecarts}</td>
         <td>${i.statut === 'en_cours' ? '<span class="pill warn">En cours</span>' : '<span class="pill good">Clôturé</span>'}</td>
@@ -9145,8 +9207,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       <button class="btnPrimary" onclick="cloturerInventaire()">Clôturer et ajuster le stock</button>` : '';
     document.getElementById('invLignesBody').innerHTML = inv.lignes.map(l => `
       <tr data-ligne="${l.id}">
-        <td class="lotCode">${l.numero_lot || '—'}</td>
-        <td>${l.produit_nom || '—'}</td>
+        <td class="lotCode">${esc(l.numero_lot || '—')}</td>
+        <td>${esc(l.produit_nom || '—')}</td>
         <td class="rowMeta num">${l.date_expiration ? fmtDate(l.date_expiration) : '—'}</td>
         <td class="num">${fmtQte(l.quantite_theorique)} ${l.unite_symbole || ''}</td>
         <td class="num">${enCours
@@ -9247,8 +9309,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('repartitionModalTitle').textContent = `Répartition — ${numero}`;
     const lot = APP_DATA.lots.find(l => l.numero_lot === numero);
     document.getElementById('repartitionBanner').innerHTML = lot ? `
-      <span class="lotCode" style="font-size:14px; padding:5px 10px;">${lot.numero_lot}</span>
-      <span style="margin-left:8px; font-weight:600;">${lot.produit_nom || ''}</span>
+      <span class="lotCode" style="font-size:14px; padding:5px 10px;">${esc(lot.numero_lot)}</span>
+      <span style="margin-left:8px; font-weight:600;">${esc(lot.produit_nom || '')}</span>
       <span class="rowMeta"> — reste ${lot.quantite_actuelle} ${lot.unite_symbole || ''}</span>` : '';
 
     const mouvements = await apiFetch(`/lots/${encodeURIComponent(numero)}/mouvements`);
@@ -9307,7 +9369,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const ids = produitsRupture.map(p => p.id);
       alertes.push({
         gravite: 'danger',
-        texte: `<b>${produitsRupture.length} produit${produitsRupture.length > 1 ? 's' : ''}</b> en rupture totale — ${produitsRupture.slice(0, 3).map(p => p.nom).join(', ')}${produitsRupture.length > 3 ? '…' : ''}`,
+        texte: `<b>${produitsRupture.length} produit${produitsRupture.length > 1 ? 's' : ''}</b> en rupture totale — ${produitsRupture.slice(0, 3).map(p => esc(p.nom)).join(', ')}${produitsRupture.length > 3 ? '…' : ''}`,
         action: () => allerVersProduitsFiltres(ids),
       });
     }
@@ -9315,7 +9377,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const ids = produitsSousSeuil.map(p => p.id);
       alertes.push({
         gravite: 'warn',
-        texte: `<b>${produitsSousSeuil.length} produit${produitsSousSeuil.length > 1 ? 's' : ''}</b> sous son seuil de stock — ${produitsSousSeuil.slice(0, 3).map(p => p.nom).join(', ')}${produitsSousSeuil.length > 3 ? '…' : ''}`,
+        texte: `<b>${produitsSousSeuil.length} produit${produitsSousSeuil.length > 1 ? 's' : ''}</b> sous son seuil de stock — ${produitsSousSeuil.slice(0, 3).map(p => esc(p.nom)).join(', ')}${produitsSousSeuil.length > 3 ? '…' : ''}`,
         action: () => allerVersProduitsFiltres(ids),
       });
     }
@@ -9353,7 +9415,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if (lotsPerimes.length) {
       alertes.push({
         gravite: 'danger',
-        texte: `<b>${lotsPerimes.length} lot${lotsPerimes.length > 1 ? 's' : ''}</b> périmé${lotsPerimes.length > 1 ? 's' : ''} encore en stock — ${lotsPerimes.slice(0, 3).map(l => l.numero_lot).join(', ')}${lotsPerimes.length > 3 ? '…' : ''} (cliquer pour les passer au statut Expiré)`,
+        texte: `<b>${lotsPerimes.length} lot${lotsPerimes.length > 1 ? 's' : ''}</b> périmé${lotsPerimes.length > 1 ? 's' : ''} encore en stock — ${lotsPerimes.slice(0, 3).map(l => esc(l.numero_lot)).join(', ')}${lotsPerimes.length > 3 ? '…' : ''} (cliquer pour les passer au statut Expiré)`,
         action: () => expirerLotsPerimes(lotsPerimes),
       });
     }
@@ -9362,7 +9424,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       const j = joursAvantExpiration(prochain);
       alertes.push({
         gravite: 'warn',
-        texte: `<b>${lotsBientotPerimes.length} lot${lotsBientotPerimes.length > 1 ? 's' : ''}</b> expire${lotsBientotPerimes.length > 1 ? 'nt' : ''} dans les 30 jours — le plus proche : ${prochain.numero_lot} (${prochain.produit_nom || ''}) ${j === 0 ? "aujourd'hui" : `dans ${j} jour${j > 1 ? 's' : ''}`}`,
+        texte: `<b>${lotsBientotPerimes.length} lot${lotsBientotPerimes.length > 1 ? 's' : ''}</b> expire${lotsBientotPerimes.length > 1 ? 'nt' : ''} dans les 30 jours — le plus proche : ${esc(prochain.numero_lot)} (${esc(prochain.produit_nom || '')}) ${j === 0 ? "aujourd'hui" : `dans ${j} jour${j > 1 ? 's' : ''}`}`,
         action: () => document.querySelector('a[data-view="lots"]').dispatchEvent(new Event('click', { bubbles: true })),
       });
     }
@@ -9438,7 +9500,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     apiFetch('/stats/top-produits?limit=5').then(top => {
       const body = document.getElementById('dashboardTopVentesBody');
       body.innerHTML = top.length
-        ? top.map(p => `<tr><td>${p.produit_nom}</td><td class="num">${p.quantite_totale}</td></tr>`).join('')
+        ? top.map(p => `<tr><td>${esc(p.produit_nom)}</td><td class="num">${p.quantite_totale}</td></tr>`).join('')
         : `<tr><td colspan="2" class="rowMeta" style="text-align:center; padding:16px;">Aucune vente pour l'instant.</td></tr>`;
     }).catch(() => {});
 
@@ -9451,7 +9513,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       row.className = 'alerteRow danger alerteEcartStock';
       row.innerHTML = `
         <span class="alerteBadge">Urgent</span>
-        <span class="alerteTexte"><b>${ctrl.nb_lots_en_ecart} lot${ctrl.nb_lots_en_ecart > 1 ? 's' : ''}</b> avec un écart de stock (quantité ≠ historique des mouvements)${negatifs ? ` dont ${negatifs} négatif${negatifs > 1 ? 's' : ''}` : ''} — ${ctrl.lots.slice(0, 3).map(l => l.numero_lot).join(', ')}${ctrl.lots.length > 3 ? '…' : ''} (cliquer pour régulariser)</span>
+        <span class="alerteTexte"><b>${ctrl.nb_lots_en_ecart} lot${ctrl.nb_lots_en_ecart > 1 ? 's' : ''}</b> avec un écart de stock (quantité ≠ historique des mouvements)${negatifs ? ` dont ${negatifs} négatif${negatifs > 1 ? 's' : ''}` : ''} — ${ctrl.lots.slice(0, 3).map(l => esc(l.numero_lot)).join(', ')}${ctrl.lots.length > 3 ? '…' : ''} (cliquer pour régulariser)</span>
         <span class="alerteFleche">Voir →</span>`;
       row.addEventListener('click', () => regulariserEcartsStock(ctrl));
       document.getElementById('dashboardAlertesPanel').style.display = 'block';
@@ -9466,7 +9528,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         panel.style.display = 'block';
         body.innerHTML = produits.map(p => `
           <tr>
-            <td>${p.nom}</td>
+            <td>${esc(p.nom)}</td>
             <td class="num" style="color:${p.marge_pct < 0 ? 'var(--danger)' : 'var(--warn, #b8860b)'};">${p.marge_pct}%</td>
           </tr>`).join('');
       } else {
@@ -9563,7 +9625,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     body.innerHTML = recent.map(it => `
       <tr>
         <td class="num rowMeta">${fmtDate(it.date)}</td>
-        <td>${it.type}</td>
+        <td>${esc(it.type)}</td>
         <td class="rowMeta">${it.detail}</td>
         <td class="num">${it.montant != null ? fmtDT(it.montant) : '—'}</td>
       </tr>`).join('');
@@ -9584,7 +9646,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const type = document.getElementById('tracType').value;
     const list = APP_DATA.lots.filter(l => type==='Tous types' || l.origine===type);
     const sel = document.getElementById('tracLot');
-    sel.innerHTML = list.map(l=>`<option value="${l.numero_lot}">${l.numero_lot} — ${l.produit_nom||''}</option>`).join('');
+    sel.innerHTML = list.map(l=>`<option value="${esc(l.numero_lot)}">${esc(l.numero_lot)} — ${esc(l.produit_nom||'')}</option>`).join('');
   }
   // Niveau dans la chaîne (1 = lien direct) et lot voisin : « utilisé dans » (amont) / « issu de » (aval).
   function tracLien(r, amont) {
@@ -9600,9 +9662,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }
     tbody.innerHTML = rows.map(r=>`
       <tr>
-        <td class="lotCode">${r.numero_lot}</td>
+        <td class="lotCode">${esc(r.numero_lot)}</td>
         <td>${r.produit||'—'}</td>
-        <td class="rowMeta">${r.origine || r.type}${tracLien(r, amont)}</td>
+        <td class="rowMeta">${esc(r.origine || r.type)}${tracLien(r, amont)}</td>
         <td class="num rowMeta">${fmtDate(r.date)}</td>
         <td class="num">${r.qte_utilisee ?? r.quantite ?? '—'}</td>
         <td class="num rowMeta">${r.qte_produite ?? '—'}</td>
@@ -9623,9 +9685,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.getElementById('tracChaineComplete').innerHTML = rows.map(r=>`
       <tr>
         <td class="rowMeta">${r.direction}</td>
-        <td class="lotCode">${r.numero}</td>
+        <td class="lotCode">${esc(r.numero)}</td>
         <td>${r.produit||'—'}</td>
-        <td class="rowMeta">${r.origine}</td>
+        <td class="rowMeta">${esc(r.origine)}</td>
         <td class="num rowMeta">${r.date}</td>
         <td class="num">${r.qte_utilisee ?? '—'}</td>
         <td class="num rowMeta">${r.qte_produite ?? '—'}</td>
@@ -9647,10 +9709,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         </div>`;
       })();
       document.getElementById('tracSelectedBanner').innerHTML = `
-        <span class="lotCode" style="font-size:14px; padding:5px 10px;">${lot.numero_lot}</span>
+        <span class="lotCode" style="font-size:14px; padding:5px 10px;">${esc(lot.numero_lot)}</span>
         <div style="flex:1; min-width:160px;">
-          <div style="font-weight:600; font-size:13.5px;">${lot.produit_nom||''}</div>
-          <div class="rowMeta">${lot.origine} — créé le ${fmtDate(lot.date_production||lot.created_at)}</div>
+          <div style="font-weight:600; font-size:13.5px;">${esc(lot.produit_nom||'')}</div>
+          <div class="rowMeta">${esc(lot.origine)} — créé le ${fmtDate(lot.date_production||lot.created_at)}</div>
         </div>
         ${pillFor(lot.statut)}
         ${champsPersoHtml}`;
@@ -9658,7 +9720,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       tracRenderTable('tracDescendants', data.descendants);
       tracRenderChaineComplete(lot, data.ascendants, data.descendants);
     } catch (err) {
-      document.getElementById('tracSelectedBanner').innerHTML = `<span class="rowMeta" style="color:var(--danger);">${err.message}</span>`;
+      document.getElementById('tracSelectedBanner').innerHTML = `<span class="rowMeta" style="color:var(--danger);">${esc(err.message)}</span>`;
     }
   }
   document.getElementById('tracType').addEventListener('change', tracPopulateLots);
@@ -9871,7 +9933,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const wrap = document.getElementById('structFieldRows');
     wrap.innerHTML = fields.map((f) => `
       <div class="structRow" data-id="${f.id}">
-        <input type="text" class="fNom" value="${f.nom}" ${f.verrouille ? 'disabled' : ''}>
+        <input type="text" class="fNom" value="${esc(f.nom)}" ${f.verrouille ? 'disabled' : ''}>
         <select class="fType" ${f.verrouille ? 'disabled' : ''}>
           ${FIELD_TYPE_API.map(t => `<option value="${t}" ${t === f.type_champ ? 'selected' : ''}>${FIELD_TYPE_LABEL[t]}</option>`).join('')}
         </select>
@@ -9920,11 +9982,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
   function renderChampPersoInput(champ, valeur) {
     const val = valeur != null ? valeur : '';
-    const label = `<label class="formLbl">${champ.nom}${champ.obligatoire ? ' *' : ''}</label>`;
-    if (champ.type_champ === 'nombre') return `${label}<input type="number" step="any" class="champPersoInput formInput" data-nom="${champ.nom}" data-obligatoire="${!!champ.obligatoire}" value="${val}">`;
-    if (champ.type_champ === 'date') return `${label}<input type="date" class="champPersoInput formInput" data-nom="${champ.nom}" data-obligatoire="${!!champ.obligatoire}" value="${val}">`;
-    if (champ.type_champ === 'case_a_cocher') return `<label class="chkLbl" style="margin-top:8px;"><input type="checkbox" class="champPersoInput" data-nom="${champ.nom}" data-type="case" ${val ? 'checked' : ''}> ${champ.nom}</label>`;
-    return `${label}<input type="text" class="champPersoInput formInput" data-nom="${champ.nom}" data-obligatoire="${!!champ.obligatoire}" value="${val}">`;
+    const label = `<label class="formLbl">${esc(champ.nom)}${champ.obligatoire ? ' *' : ''}</label>`;
+    if (champ.type_champ === 'nombre') return `${label}<input type="number" step="any" class="champPersoInput formInput" data-nom="${esc(champ.nom)}" data-obligatoire="${!!champ.obligatoire}" value="${esc(val)}">`;
+    if (champ.type_champ === 'date') return `${label}<input type="date" class="champPersoInput formInput" data-nom="${esc(champ.nom)}" data-obligatoire="${!!champ.obligatoire}" value="${esc(val)}">`;
+    if (champ.type_champ === 'case_a_cocher') return `<label class="chkLbl" style="margin-top:8px;"><input type="checkbox" class="champPersoInput" data-nom="${esc(champ.nom)}" data-type="case" ${val ? 'checked' : ''}> ${esc(champ.nom)}</label>`;
+    return `${label}<input type="text" class="champPersoInput formInput" data-nom="${esc(champ.nom)}" data-obligatoire="${!!champ.obligatoire}" value="${esc(val)}">`;
   }
   async function afficherChampsPerso(containerId, typeLot, valeurs = {}) {
     const container = document.getElementById(containerId);
@@ -10025,7 +10087,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires', reprise:'view-reprise',
     notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
-    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', apropos:'view-apropos'
+    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', journal:'view-journal', apropos:'view-apropos'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
@@ -10040,7 +10102,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
     fournisseurs:['Achats & Système','Fournisseurs'], certificats:['Achats & Système','Certificats Bio'],
     locaux:['Achats & Système','Locaux & Zones'], employes:['Achats & Système','Employés'],
-    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], apropos:['Achats & Système','À propos']
+    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], journal:['Achats & Système','Journal d\'audit'], apropos:['Achats & Système','À propos']
   };
 
   document.querySelectorAll('#navScroll .navGroup').forEach(g => {
@@ -10101,6 +10163,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       chargerListeBackups();
     }
     if (key === 'apropos') chargerApropos();
+    if (key === 'journal' && TOKEN) chargerJournal().catch(e => notifier(e.message, 'erreur'));
     if (key === 'numerotation' && TOKEN) chargerNumerotation().catch(e => notifier(e.message, 'error'));
 
     if(window.innerWidth <= 880) document.getElementById('sidebar').classList.remove('open');
@@ -10411,7 +10474,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Un clic sur une ligne ouvre sa fiche : tout le détail et toutes les
   // actions au même endroit (celles du menu « ⋯ »), les impossibles grisées
   // avec leur raison.
-  const esc = (v) => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function fermerFiche() { document.getElementById('fiche').classList.remove('open'); document.getElementById('ficheFond').classList.remove('open'); }
   function afficherFiche(type, titre, meta, corps, tbodyId, id) {
     document.getElementById('ficheTitre').innerHTML = `<div class="type">${type}</div><h2>${titre}</h2><div class="meta">${meta}</div>`;
@@ -11025,7 +11087,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     const h1 = vue?.querySelector('.pageHead h1');
     if (!h1 || vue.querySelector('.rubriqueRepere')) return;
     const r = rubriqueDe(a.dataset.view);
-    h1.insertAdjacentHTML('beforebegin', `<div class="rubriqueRepere">${r.icone}<span>${r.nom}</span></div>`);
+    h1.insertAdjacentHTML('beforebegin', `<div class="rubriqueRepere">${r.icone}<span>${esc(r.nom)}</span></div>`);
   });
 
   // ---------- Identité des rubriques (V3.3, ensemble A) ----------
@@ -11037,7 +11099,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     presse: 'presse', filtration: 'filtre', melanges: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', reprise: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
-    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', apropos: 'parametre',
+    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', journal: 'parametre', apropos: 'parametre',
   };
   const iconeEcran = (vue, classe = 'ecranIc') => ICONE_ECRAN[vue] ? `<svg class="${classe}" aria-hidden="true"><use href="#e-${ICONE_ECRAN[vue]}"/></svg>` : '';
   document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.dataset.rubrique = RUBRIQUE_CLE[g.querySelector('.lbl').textContent] || ''; });
@@ -11165,7 +11227,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     box.innerHTML = taches.map((t, i) => `
       <button type="button" class="aFaire" data-idx="${i}">
         <span class="nb${t.nb ? '' : ' ok'}">${t.nb || '✓'}</span>
-        <span class="txt">${t.titre}<small>${t.detail}</small></span>
+        <span class="txt">${esc(t.titre)}<small>${t.detail}</small></span>
         <span class="go">Ouvrir →</span>
       </button>`).join('');
     box.querySelectorAll('.aFaire').forEach(b => b.addEventListener('click', () => taches[Number(b.dataset.idx)].go()));

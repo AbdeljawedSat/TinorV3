@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { requireAuth } = require('./middleware/auth');
+const { appliquerDroits } = require('./services/droits');
 const { idempotence } = require('./middleware/idempotence');
 
 // Console (admin/tinor_admin.html) : relue quand le fichier change (mise à jour par git pull).
@@ -32,6 +33,16 @@ function miseAJourInstallee() {
   return versionInstallee;
 }
 
+const ORIGINES_AUTORISEES = () => String(process.env.CORS_ORIGINS || '').split(',').map(x => x.trim().replace(/\/$/, '')).filter(Boolean);
+function origineAutorisee(origine) {
+  if (!origine) return true; // pas d'en-tête Origin : outil local, même site, application native
+  if (origine === 'https://appassets.androidplatform.net') return true; // application Android
+  if (ORIGINES_AUTORISEES().includes(origine)) return true;
+  let h;
+  try { h = new URL(origine).hostname; } catch { return false; }
+  return h === 'localhost' || h === '127.0.0.1' || /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || h.endsWith('.local');
+}
+
 function createApp(pool) {
   const app = express();
   // Chrome / WebView récents : une page https (application Android) qui appelle
@@ -42,7 +53,17 @@ function createApp(pool) {
   });
   // Derrière un hébergeur (Railway, Render…), l'adresse réelle du client est dans X-Forwarded-For : TRUST_PROXY=1 l'active.
   if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY) || 1);
-  app.use(cors());
+  app.disable('x-powered-by');
+  // En-têtes de protection (équivalent minimal de helmet) ; HSTS seulement si la requête est arrivée en HTTPS.
+  app.use((req, res, next) => {
+    res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'SAMEORIGIN', 'Referrer-Policy': 'no-referrer',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' });
+    if (req.secure) res.set('Strict-Transport-Security', 'max-age=15552000');
+    next();
+  });
+  // CORS : la console servie par l'API (même adresse), l'application Android, localhost et le réseau local sont acceptés ;
+  // tout autre site doit être listé dans CORS_ORIGINS (adresses séparées par des virgules).
+  app.use(cors({ origin: (origine, rappel) => rappel(null, origineAutorisee(origine)) }));
   app.use(express.json({ limit: '8mb' })); // logo de la société envoyé avec les exports (data URI)
 
   // Console d'administration servie par l'API : https://<domaine>/ ouvre la
@@ -64,48 +85,52 @@ function createApp(pool) {
     environnement: require('./env').environnement(), // « TEST » → bandeau orange dans la console
     console: (() => { try { return consoleActuelle().version; } catch { return null; } })(), mise_a_jour: miseAJourInstallee() }));
 
+  const acces = [requireAuth, appliquerDroits(pool)]; // connecté + droits du rôle (voir services/droits.js)
+  app.use('/api', require('./middleware/saisie').refuserBalises);
+  app.use('/api', require('./middleware/audit').audit(pool));
   app.use('/api/auth', require('./routes/auth')(pool));
   // Opérations renvoyées par un téléphone (hors ligne) : jamais enregistrées deux fois.
   app.use('/api', idempotence(pool));
-  app.use('/api/sync', requireAuth, require('./routes/sync')(pool));
+  app.use('/api/sync', acces, require('./routes/sync')(pool));
 
-  app.use('/api/produits', requireAuth, require('./routes/produits')(pool));
-  app.use('/api', requireAuth, require('./routes/referentiels')(pool));
-  app.use('/api/lots', requireAuth, require('./routes/lots')(pool));
-  app.use('/api/lot-type-champs', requireAuth, require('./routes/lotTypeChamps')(pool));
-  app.use('/api/fournisseurs', requireAuth, require('./routes/fournisseurs')(pool));
-  app.use('/api/clients', requireAuth, require('./routes/clients')(pool));
-  app.use('/api/locaux', requireAuth, require('./routes/locaux')(pool));
-  app.use('/api/employes', requireAuth, require('./routes/employes')(pool));
-  app.use('/api/users', requireAuth, require('./routes/users')(pool));
-  app.use('/api/achats', requireAuth, require('./routes/achats')(pool));
-  app.use('/api/receptions', requireAuth, require('./routes/receptions')(pool));
-  app.use('/api/stock-mouvements', requireAuth, require('./routes/stockMouvements')(pool));
-  app.use('/api/notifications', requireAuth, require('./routes/notifications')(pool));
-  app.use('/api/remises', requireAuth, require('./routes/remises')(pool));
-  app.use('/api/commandes', requireAuth, require('./routes/commandes')(pool));
-  app.use('/api/factures', requireAuth, require('./routes/factures')(pool));
-  app.use('/api/livraisons', requireAuth, require('./routes/livraisons')(pool));
-  app.use('/api/proformas', requireAuth, require('./routes/proformas')(pool));
-  app.use('/api/presse', requireAuth, require('./routes/presse')(pool));
-  app.use('/api/filtration', requireAuth, require('./routes/filtration')(pool));
-  app.use('/api/melanges', requireAuth, require('./routes/melanges')(pool));
-  app.use('/api/conditionnement', requireAuth, require('./routes/conditionnement')(pool));
-  app.use('/api/recettes', requireAuth, require('./routes/recettes')(pool));
-  app.use('/api/ordres-production', requireAuth, require('./routes/ordresProduction')(pool));
-  app.use('/api/settings', requireAuth, require('./routes/settings')(pool));
-  app.use('/api/numerotation', requireAuth, require('./routes/numerotation')(pool));
-  app.use('/api/certificats', requireAuth, require('./routes/certificats')(pool));
-  app.use('/api/paiements', requireAuth, require('./routes/paiements')(pool));
-  app.use('/api/avoirs', requireAuth, require('./routes/avoirs')(pool));
-  app.use('/api/exports', requireAuth, require('./routes/exports')(pool));
-  app.use('/api/backup', requireAuth, require('./routes/backup')());
-  app.use('/api/stats', requireAuth, require('./routes/stats')(pool));
-  app.use('/api/grille-huiles', requireAuth, require('./routes/grilleHuiles')(pool));
-  app.use('/api/alertes', requireAuth, require('./routes/alertes')(pool));
-  app.use('/api/inventaires', requireAuth, require('./routes/inventaires')(pool));
-  app.use('/api/reprises', requireAuth, require('./routes/reprises')(pool)); // reprise du stock existant (n° de lot gardés)
-  app.use('/api/controle-stock', requireAuth, require('./routes/controleStock')(pool));
+  app.use('/api/produits', acces, require('./routes/produits')(pool));
+  app.use('/api', acces, require('./routes/referentiels')(pool));
+  app.use('/api/lots', acces, require('./routes/lots')(pool));
+  app.use('/api/lot-type-champs', acces, require('./routes/lotTypeChamps')(pool));
+  app.use('/api/fournisseurs', acces, require('./routes/fournisseurs')(pool));
+  app.use('/api/clients', acces, require('./routes/clients')(pool));
+  app.use('/api/locaux', acces, require('./routes/locaux')(pool));
+  app.use('/api/employes', acces, require('./routes/employes')(pool));
+  app.use('/api/users', acces, require('./routes/users')(pool));
+  app.use('/api/achats', acces, require('./routes/achats')(pool));
+  app.use('/api/receptions', acces, require('./routes/receptions')(pool));
+  app.use('/api/stock-mouvements', acces, require('./routes/stockMouvements')(pool));
+  app.use('/api/notifications', acces, require('./routes/notifications')(pool));
+  app.use('/api/remises', acces, require('./routes/remises')(pool));
+  app.use('/api/commandes', acces, require('./routes/commandes')(pool));
+  app.use('/api/factures', acces, require('./routes/factures')(pool));
+  app.use('/api/livraisons', acces, require('./routes/livraisons')(pool));
+  app.use('/api/proformas', acces, require('./routes/proformas')(pool));
+  app.use('/api/presse', acces, require('./routes/presse')(pool));
+  app.use('/api/filtration', acces, require('./routes/filtration')(pool));
+  app.use('/api/melanges', acces, require('./routes/melanges')(pool));
+  app.use('/api/conditionnement', acces, require('./routes/conditionnement')(pool));
+  app.use('/api/recettes', acces, require('./routes/recettes')(pool));
+  app.use('/api/ordres-production', acces, require('./routes/ordresProduction')(pool));
+  app.use('/api/settings', acces, require('./routes/settings')(pool));
+  app.use('/api/audit', acces, require('./routes/audit')(pool));
+  app.use('/api/numerotation', acces, require('./routes/numerotation')(pool));
+  app.use('/api/certificats', acces, require('./routes/certificats')(pool));
+  app.use('/api/paiements', acces, require('./routes/paiements')(pool));
+  app.use('/api/avoirs', acces, require('./routes/avoirs')(pool));
+  app.use('/api/exports', acces, require('./routes/exports')(pool));
+  app.use('/api/backup', acces, require('./routes/backup')());
+  app.use('/api/stats', acces, require('./routes/stats')(pool));
+  app.use('/api/grille-huiles', acces, require('./routes/grilleHuiles')(pool));
+  app.use('/api/alertes', acces, require('./routes/alertes')(pool));
+  app.use('/api/inventaires', acces, require('./routes/inventaires')(pool));
+  app.use('/api/reprises', acces, require('./routes/reprises')(pool)); // reprise du stock existant (n° de lot gardés)
+  app.use('/api/controle-stock', acces, require('./routes/controleStock')(pool));
 
   app.use((err, req, res, next) => {
     console.error(err);
@@ -116,3 +141,4 @@ function createApp(pool) {
 }
 
 module.exports = createApp;
+module.exports.origineAutorisee = origineAutorisee;
