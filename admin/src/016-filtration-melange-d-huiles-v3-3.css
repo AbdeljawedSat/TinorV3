@@ -1,0 +1,7 @@
+  /* ---------- Filtration : mélange d'huiles (V3.3) ---------- */
+  .melangeCase{margin-top:12px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--sand);}
+  .melangeCase:has(input:checked){background:#E3F0F9; border-color:#9CC3E0;}
+  .srcPart{font-size:12px; font-weight:800; color:var(--accent); text-align:right;}
+  #filtrationComposition{margin-top:8px;} #filtrationComposition .barreCompo{display:flex; height:10px; border-radius:6px; overflow:hidden; background:var(--line);}
+  #filtrationComposition .barreCompo i{display:block;} #filtrationComposition .txt{font-size:11.5px; color:var(--text-soft); margin-top:3px;}
+  .compoListe{font-size:11px; color:var(--text-soft);}

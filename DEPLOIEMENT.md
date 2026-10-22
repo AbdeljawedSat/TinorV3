@@ -59,3 +59,29 @@ API_URL=https://<votre-domaine>.up.railway.app/api node scripts/seed_test_comple
 
 À faire **avant** de changer le mot de passe admin (le script se connecte avec `admin` / `changeme`),
 et uniquement sur une base vide.
+
+
+## HTTPS, e-mail et sécurité (V4)
+
+**HTTPS** — deux possibilités :
+1. *Derrière un proxy* (hébergeur type Railway/Render, ou Caddy / nginx) : le proxy fournit le certificat, TinOR reste en HTTP sur son port. Définir `TRUST_PROXY=1`
+   pour que l'adresse réelle des clients soit connue (limite des essais de connexion, journal d'audit). Exemple Caddy (`Caddyfile`) :
+   ```
+   tinor.exemple.tn {
+       reverse_proxy 127.0.0.1:3001
+   }
+   ```
+2. *Direct* : `TLS_CERT=/chemin/fullchain.pem` et `TLS_KEY=/chemin/privkey.pem` dans `.env` ; TinOR écoute alors en HTTPS.
+
+Avec HTTPS, l'en-tête `Strict-Transport-Security` est envoyé automatiquement.
+
+**CORS** — la console servie par l'API, l'application Android et le réseau local fonctionnent sans réglage. Une autre adresse (site, domaine différent) se déclare dans
+`CORS_ORIGINS=https://autre.exemple.tn` (plusieurs : séparées par des virgules).
+
+**E-mail des factures** — dans `.env` : `SMTP_HOST`, `SMTP_PORT` (587 ou 465), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`. Sans `SMTP_HOST`, le menu « ✉ Envoyer par e-mail » répond
+« non configuré ». Renseigner l'e-mail du client sur sa fiche l'enregistre comme adresse par défaut.
+
+**Mot de passe et clé** — changer le mot de passe de `admin` (À propos › Changer mon mot de passe, 10 caractères minimum) et définir une longue `JWT_SECRET` aléatoire dans `.env`
+(`openssl rand -hex 32`), faute de quoi les connexions sont à refaire à chaque redémarrage.
+
+**Sauvegarde et restauration** — voir `scripts/README_SAUVEGARDE.md`. Vérifier régulièrement qu'une sauvegarde se restaure : `npm run test:restauration`.

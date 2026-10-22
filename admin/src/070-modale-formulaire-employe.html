@@ -1,0 +1,32 @@
+<!-- ============ MODALE : FORMULAIRE EMPLOYÉ ============ -->
+<div class="modalOverlay" id="employeModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="employeModalTitle">Nouvel employé</h2></div>
+      <button class="modalClose" id="employeModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="employeFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="employeId">
+      <label class="formLbl">Matricule</label>
+      <input type="text" id="employeMatricule" class="formInput" placeholder="ex: EMP-002">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="employeNom" class="formInput">
+      <label class="formLbl">Prénom</label>
+      <input type="text" id="employePrenom" class="formInput">
+      <label class="formLbl">Fonction</label>
+      <input type="text" id="employeFonction" class="formInput" placeholder="ex: Presseur, Vendeuse...">
+      <label class="formLbl">Téléphone</label>
+      <input type="text" id="employeTelephone" class="formInput">
+      <label class="chkLbl" style="margin-top:12px;"><input type="checkbox" id="employeActif" checked> Actif</label>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="employeFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="employeCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="employeSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,57 @@
+<!-- ============ MODALE : CONDITIONNEMENT ============ -->
+<div class="modalOverlay" id="conditionnementModalOverlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modalHead">
+      <div><h2>Nouveau conditionnement</h2><div class="sub">Huile en vrac ou filtrée → huile en flacon</div></div>
+      <button class="modalClose" id="conditionnementModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="conditionnementFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <div id="conditionnementLockedNote" class="structLocked" style="display:none;">Le produit, la quantité et les sources sont figés une fois le conditionnement enregistré — seuls la date et la note restent modifiables.</div>
+      <input type="hidden" id="conditionnementModalId">
+      <label class="formLbl">Date</label>
+      <input type="date" id="conditionnementDate" class="formInput">
+
+      <div class="etapeCond" data-saisie><span class="n">1</span>Source utilisée <small>(huile en vrac ou filtrée)</small></div>
+      <label class="chkLbl melangeCase" data-saisie><input type="checkbox" id="conditionnementMelange"> <b>Mélange de plusieurs huiles</b> <span class="rowMeta">(sésame + nigelle…)</span></label>
+      <div id="conditionnementSourcesRows" style="margin-top:8px;"></div>
+      <button class="btnGhost" id="conditionnementAddSourceBtn" style="margin-top:2px;">＋ Ajouter une source</button>
+
+      <div class="etapeCond"><span class="n">2</span>Format et quantité</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div><label class="formLbl" style="margin-top:0;">Format (contenance d'une unité)</label><select id="conditionnementFormat" class="formInput"></select></div>
+        <div><label class="formLbl" style="margin-top:0;">Nombre d'unités</label><input type="number" step="1" min="1" id="conditionnementQty" class="formInput"></div>
+      </div>
+      <div id="conditionnementCalcul" class="condAuto" style="display:none;"></div>
+
+      <div class="etapeCond"><span class="n">3</span>Produit fini</div>
+      <select id="conditionnementProduit" class="formInput"></select>
+      <div id="conditionnementNouveauBloc" style="display:none;">
+        <label class="formLbl" style="margin-top:0;">Nom du nouveau produit fini (proposé, modifiable)</label>
+        <input type="text" id="conditionnementNouveauNom" class="formInput">
+        <div class="rowMeta" style="font-size:11.5px; margin-top:3px;">Créé à l'enregistrement : format choisi, unité « pièce », source = l'huile utilisée. Le prix se règle ensuite dans Produits.</div>
+      </div>
+      <div data-saisie style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        <label class="chkLbl melangeCase" style="margin:0;"><input type="checkbox" id="conditionnementTous"> Afficher tous les produits finis</label>
+        <label class="chkLbl melangeCase" style="margin:0;"><input type="checkbox" id="conditionnementNouveau"> Nouveau produit fini</label>
+      </div>
+
+      <div class="etapeCond" data-saisie><span class="n">4</span>Consommables <small>(proposés automatiquement, modifiables)</small></div>
+      <div id="conditionnementConsommablesRows"></div>
+      <button class="btnGhost" id="conditionnementAddConsommableBtn" style="margin-top:2px;">＋ Ajouter un consommable</button>
+      <div id="conditionnementBilan" class="condBilan" style="display:none;"></div>
+
+      <label class="formLbl">Note</label>
+      <input type="text" id="conditionnementNote" class="formInput">
+      <div id="conditionnementChampsPerso"></div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="conditionnementFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="conditionnementCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="conditionnementSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

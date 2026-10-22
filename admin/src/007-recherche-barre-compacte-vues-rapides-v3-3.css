@@ -1,0 +1,28 @@
+  /* ---------- Recherche : barre compacte + vues rapides (V3.3) ---------- */
+  .barreCompacte{flex-wrap:nowrap !important; align-items:center !important; gap:8px !important;}
+  .barreCompacte > div > label{display:none !important;}
+  .barreCompacte > div{min-width:0 !important;}
+  .barreCompacte .barreTexte{flex:1 1 auto !important;}
+  .periodeWrap{position:relative; flex:none;}
+  .periodeBtn{white-space:nowrap;} .periodeBtn.actif{border-color:var(--accent); color:var(--accent); background:var(--accent-fond);}
+  .periodeMenu{position:absolute; top:calc(100% + 6px); right:0; z-index:30; background:var(--paper); border:1px solid var(--line); border-radius:11px;
+    box-shadow:0 12px 30px rgba(14,58,74,.16); padding:6px; min-width:230px; display:flex; flex-direction:column; gap:2px;}
+  .periodeMenu[hidden], .periodeDates[hidden]{display:none !important;}
+  .periodeMenu > button{text-align:left; background:none; border:0; padding:8px 10px; border-radius:7px; font:inherit; font-size:13px; cursor:pointer; color:var(--text);}
+  .periodeMenu > button:hover, .periodeMenu > button.choisi{background:var(--accent-fond);}
+  .periodeDates{display:flex; gap:8px; padding:6px; flex-wrap:wrap;}
+  .periodeDates > div{flex:1 1 100px; min-width:0 !important;}
+  .periodeDates label{display:block !important; font-size:11px; color:var(--text-soft); margin-bottom:3px;}
+  .jetonsFiltres{display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:0 18px 10px;}
+  .jetonsFiltres:empty{display:none;}
+  .jetonFiltre{display:inline-flex; align-items:center; gap:4px; background:var(--accent-fond); color:var(--accent); border-radius:20px; padding:3px 4px 3px 11px; font-size:12px; font-weight:600;}
+  .jetonFiltre button{border:0; background:none; color:inherit; font-size:15px; line-height:1; padding:0 5px; border-radius:20px; cursor:pointer;}
+  .lienEffacer{border:0; background:none; color:var(--accent); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; padding:3px 6px;}
+  .vuesRapides{display:flex; gap:2px; overflow-x:auto; border-bottom:1px solid var(--line); padding:0 12px; scrollbar-width:thin;}
+  .vueRapide{background:none; border:0; border-bottom:2px solid transparent; padding:11px 12px 9px; font:inherit; font-size:13px; font-weight:600; color:var(--text-soft);
+    cursor:pointer; white-space:nowrap; display:inline-flex; gap:7px; align-items:center;}
+  .vueRapide .nbVue{font-size:11px; background:var(--sand); border-radius:20px; padding:0 7px; min-width:20px; text-align:center; font-variant-numeric:tabular-nums;}
+  .vueRapide[aria-selected="true"]{color:var(--text); border-bottom-color:var(--accent);}
+  .vueRapide[aria-selected="true"] .nbVue{background:var(--accent-fond); color:var(--accent);}
+  .vueRapide:hover{color:var(--text);}
+  @media (max-width:700px){ .barreCompacte{flex-wrap:wrap !important;} .barreCompacte .barreTexte{flex:1 1 100% !important;} .vuesRapides{padding:0 6px;} .vueRapide{padding:10px 9px 8px;} .periodeMenu{right:auto; left:0;} .jetonsFiltres{padding:0 12px 8px;} }

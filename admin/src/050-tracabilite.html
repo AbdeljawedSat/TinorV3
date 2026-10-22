@@ -1,0 +1,67 @@
+      <!-- ===== TRAÇABILITÉ ===== -->
+      <div class="view" id="view-tracabilite">
+        <div class="pageHead">
+          <h1>Traçabilité</h1>
+          <p>Choisissez un lot pour remonter à son origine (ascendants) ou voir où il a été utilisé (descendants)</p>
+        </div>
+
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="panelHead">
+            <div><h2>Sélection du lot</h2><div class="sub">Filtrez par type puis choisissez le N° de lot</div></div>
+            <button class="btnGhost" id="openLotStructureBtn">⚙ Structure des lots</button>
+          </div>
+          <div style="padding:16px 18px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:1; min-width:180px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Type de lot</label>
+              <select id="tracType" style="width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-family:'Inter',sans-serif; font-size:12.5px; background:var(--sand);"></select>
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">N° de lot</label>
+              <select id="tracLot" style="width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:var(--sand);"></select>
+            </div>
+            <button class="btnPrimary" id="tracSearchBtn" style="height:35px;">Rechercher</button>
+            <button class="btnGhost" id="tracRappelBtn" style="height:35px;" title="Quels clients ont reçu ce lot ou ses dérivés">⚠ Rappel de lot</button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:18px;">
+          <div style="padding:16px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;" id="tracSelectedBanner"></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:18px;">
+          <div class="panelHead">
+            <div><h2>↑ Lots ascendants</h2><div class="sub">D'où provient ce lot — matière ou lots intermédiaires utilisés</div></div>
+          </div>
+          <table>
+            <thead><tr><th>N° Lot</th><th>Produit</th><th>Origine</th><th class="num">Date</th><th class="num">Qté utilisée</th><th class="num">Qté produite</th></tr></thead>
+            <tbody id="tracAscendants"></tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panelHead">
+            <div><h2>↓ Lots descendants</h2><div class="sub">Où ce lot a été utilisé — production ou conditionnement en aval</div></div>
+          </div>
+          <table>
+            <thead><tr><th>N° Lot</th><th>Produit</th><th>Origine</th><th class="num">Date</th><th class="num">Qté utilisée</th><th class="num">Qté produite</th></tr></thead>
+            <tbody id="tracDescendants"></tbody>
+          </table>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <div class="panelHead">
+            <div><h2>Chaîne complète</h2><div class="sub">Ascendants, lot sélectionné et descendants réunis — vue exportable</div></div>
+            <div class="filterRow">
+              <button class="btnGhost" id="tracExportDocxBtn">⬇ DOCX</button>
+              <button class="btnGhost" id="tracExportXlsxBtn">⬇ XLSX</button>
+              <button class="btnGhost" id="tracExportPdfBtn">⬇ PDF</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Direction</th><th>N° Lot</th><th>Produit</th><th>Origine</th><th class="num">Date</th><th class="num">Qté utilisée</th><th class="num">Qté produite</th></tr></thead>
+            <tbody id="tracChaineComplete"></tbody>
+          </table>
+          <div id="tracExportStatus" style="padding:0 18px 14px; font-size:11.5px; color:var(--good); font-weight:600; opacity:0; transition:opacity .2s ease;"></div>
+        </div>
+      </div>
+

@@ -1,0 +1,42 @@
+<!-- ============ MODALE : FILTRATION ============ -->
+<div class="modalOverlay" id="filtrationModalOverlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modalHead">
+      <div><h2>Nouvelle filtration</h2><div class="sub">Peut combiner plusieurs lots de presse</div></div>
+      <button class="modalClose" id="filtrationModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="filtrationFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <div id="filtrationLockedNote" class="structLocked" style="display:none;">Le produit, la quantité et les sources sont figés une fois la filtration enregistrée — seuls le filtre utilisé et les notes restent modifiables.</div>
+      <input type="hidden" id="filtrationModalId">
+      <label class="formLbl">Date</label>
+      <input type="date" id="filtrationDate" class="formInput">
+      <label class="chkLbl melangeCase"><input type="checkbox" id="filtrationMultiMatiere"> <b>Mélange de plusieurs huiles</b> <span class="rowMeta">(sésame + nigelle…)</span></label>
+      <label class="formLbl" style="margin-top:14px; font-weight:600;">Lots de presse source</label>
+      <div id="filtrationSourcesRows"></div>
+      <button class="btnGhost" id="filtrationAddSourceBtn" style="margin-top:6px;">＋ Ajouter une source</button>
+      <div id="filtrationComposition" style="display:none;"></div>
+      <label class="formLbl">Produit obtenu</label>
+      <select id="filtrationProduit" class="formInput"></select>
+      <button type="button" class="lienEffacer" id="filtrationCreerMelange" style="display:none; padding:6px 0;">＋ Créer un autre produit mélange</button>
+      <button type="button" class="lienEffacer" id="filtrationCreerFiltree" style="display:none; padding:6px 0;"></button>
+      <label class="formLbl">Filtre utilisé (optionnel)</label>
+      <input type="text" id="filtrationFiltre" class="formInput">
+      <label class="formLbl">Quantité déchet (optionnel)</label>
+      <input type="number" step="0.001" id="filtrationQteDechet" class="formInput">
+      <label class="formLbl">Quantité produite (huile filtrée)</label>
+      <input type="number" step="0.001" id="filtrationQteProduite" class="formInput">
+      <label class="formLbl">Notes</label>
+      <input type="text" id="filtrationNotes" class="formInput">
+      <div id="filtrationChampsPerso"></div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="filtrationFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="filtrationCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="filtrationSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

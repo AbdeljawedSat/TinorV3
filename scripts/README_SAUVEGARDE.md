@@ -66,3 +66,21 @@ mysql -u tinor -p tinor_v3 < backups\nom_du_fichier.sql
 ```
 
 ⚠️ Cette commande **remplace** les données existantes par celles de la sauvegarde — à utiliser uniquement en cas de problème réel, pas par curiosité.
+
+
+---
+
+## Restaurer une sauvegarde (V4)
+
+**1. Vérifier qu'une sauvegarde est bonne, sans rien risquer** — la restaurer dans une autre base :
+```powershell
+node scripts\restaurer.js backups\tinor_tinor_reel_2026-10-22_02h00m00.sql --vers tinor_verification
+```
+(ou `npm run test:restauration` : fait une sauvegarde, la restaure dans une base temporaire, compare chaque table et supprime la base temporaire).
+
+**2. Reprise après incident** — remplacer la base en service :
+```powershell
+node scripts\restaurer.js backups\tinor_tinor_reel_2026-10-22_02h00m00.sql --ecraser --confirmer
+```
+Une sauvegarde de sécurité de l'état actuel est d'abord faite (`tinor_avant-restauration_…`). Relancer ensuite TinOR.
+La création d'une base (`--vers`) peut demander un compte administrateur : `DB_ADMIN_USER` et `DB_ADMIN_PASSWORD` dans `.env`.

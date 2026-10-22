@@ -1,0 +1,34 @@
+<style>
+  :root{
+    --ink:#0E3A4A;
+    --ink-soft:#154656;
+    --ink-nest:#174C5E;
+    --ink-nest-hover:#1F5D70;
+    --ink-line:#1C5062;
+    --sand:#F3F6F6;
+    --paper:#FFFFFF;
+    --line:#DCE5E7;
+    --brass:#A97D2F;
+    --brass-dim:#C9A662;
+    --text:#1A1E1B;
+    --text-soft:#6B6A5E;
+    --good:#3F6B4A;
+    --good-bg:#E8F0E8;
+    --warn:#B4631E;
+    --warn-bg:#FBEDDE;
+    --danger:#A23B2E;
+    --danger-bg:#FBE7E3;
+    --grey:#8C8A7C;
+    --grey-bg:#EEEBE0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; height:100%;}
+  body{
+    background:var(--sand);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums;}
+

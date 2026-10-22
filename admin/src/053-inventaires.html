@@ -1,0 +1,77 @@
+      <!-- ===== INVENTAIRES ===== -->
+      <div class="view" id="view-inventaires">
+        <div class="pageHead"><h1>Inventaires</h1><p>Comptage physique du stock par local — les écarts sont ajustés et tracés à la clôture</p></div>
+        <div class="panel" id="invNouveauPanel" style="padding:16px 18px; display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+          <div>
+            <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Local à inventorier</label>
+            <select id="invLocal" style="min-width:220px; padding:8px 10px; border:1px solid var(--line); border-radius:7px; background:var(--sand);"></select>
+          </div>
+          <label style="display:flex; gap:6px; align-items:center; font-size:12.5px; padding-bottom:9px;">
+            <input type="checkbox" id="invSansLocal" checked> Inclure les lots sans emplacement
+          </label>
+          <button class="btnPrimary" id="invOuvrirBtn">＋ Ouvrir un inventaire</button>
+        </div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>N°</th><th>Date</th><th>Local</th><th class="num">Lots</th><th class="num">Écarts</th><th>Statut</th><th></th></tr></thead>
+            <tbody id="inventairesBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="panel" id="invDetailPanel" style="display:none;">
+          <div class="panelHead" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div><h2 id="invDetailTitre"></h2><div class="sub" id="invDetailSub"></div></div>
+            <div id="invDetailActions" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+          </div>
+          <table>
+            <thead><tr><th>N° lot</th><th>Produit</th><th>Expiration</th><th class="num">Théorique</th><th class="num">Compté</th><th class="num">Écart</th></tr></thead>
+            <tbody id="invLignesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="view" id="view-reprise">
+        <div class="pageHead"><h1>Reprise du stock</h1><p>Démarrage avec vos données réelles : le stock existant importé depuis Excel ou CSV — les numéros de lot sont gardés tels quels</p></div>
+        <div class="panel" style="padding:16px 18px;">
+          <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+            <div><label class="formLbl" style="margin-top:0;">Date de reprise (stock initial)</label><input type="date" id="repriseDate" class="formInput" style="margin:0;"></div>
+            <div><label class="formLbl" style="margin-top:0;">Local par défaut</label><select id="repriseLocal" class="formInput" style="margin:0; min-width:200px;"></select></div>
+            <button class="btnGhost" type="button" id="repriseModeleBtn">⬇ Télécharger le modèle Excel</button>
+          </div>
+          <label id="repriseZone" class="repriseZone" for="repriseFichier">
+            <input type="file" id="repriseFichier" accept=".xlsx,.csv,.txt" hidden>
+            <b>Déposez votre fichier Excel (.xlsx) ou CSV ici</b>, ou cliquez pour le choisir
+            <span>Une ligne par lot : N° lot · Produit (code ou nom) · Quantité — puis, si vous les avez : étape, dates, local, bio, lot fournisseur, remarque</span>
+          </label>
+        </div>
+        <div class="panel" id="repriseApercu" style="display:none;">
+          <div class="panelHead" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div><h2 id="repriseApercuTitre">Aperçu</h2><div class="sub" id="repriseApercuSub"></div></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btnGhost" type="button" id="repriseAnnulerApercu">Abandonner</button>
+              <button class="btnPrimary" type="button" id="repriseImporterBtn">Importer</button>
+            </div>
+          </div>
+          <div class="tableWrap" style="overflow-x:auto;"><table style="min-width:1100px;">
+            <thead><tr><th>Ligne</th><th>N° lot (gardé)</th><th>Produit</th><th class="num">Quantité</th><th>Étape</th><th>Production</th><th>Expiration</th><th>Local</th><th>Bio</th><th>Contrôle</th><th>Ignorer</th></tr></thead>
+            <tbody id="repriseLignes"></tbody>
+          </table></div>
+        </div>
+        <div class="panel">
+          <div class="panelHead"><h2>Reprises effectuées</h2><div class="sub">Une reprise peut être annulée tant qu'aucun de ses lots n'a servi (vente, production, inventaire)</div></div>
+          <table>
+            <thead><tr><th>N°</th><th>Date de reprise</th><th>Fichier</th><th class="num">Lots</th><th>Par</th><th>État</th><th></th></tr></thead>
+            <tbody id="reprisesBody"><tr><td colspan="7" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="view" id="view-locaux">
+        <div class="pageHead"><h1>Locaux &amp; Zones</h1><p>Dépôts, ateliers, points de vente — et leurs zones internes</p></div>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Code</th><th>Nom</th><th>Type</th><th>Zones</th><th></th></tr></thead>
+            <tbody id="locauxBody"><tr><td colspan="5" class="rowMeta" style="text-align:center; padding:22px;">Chargement…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+

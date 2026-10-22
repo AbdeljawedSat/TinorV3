@@ -1,0 +1,17 @@
+<!-- ============ MODALE : PAIEMENT D'UN ACHAT ============ -->
+<div class="modalOverlay" id="pfModalOverlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modalHead"><div><h2 id="pfModalTitle">Payer un fournisseur</h2><div class="sub" id="pfModalSub"></div></div><button class="modalClose" id="pfModalCloseBtn">×</button></div>
+    <div style="padding:16px 20px;">
+      <div class="numCtx">
+        <div><label>Date</label><input type="date" id="pfDate"></div>
+        <div><label>Montant (DT)</label><input type="number" step="0.001" min="0" id="pfMontant"></div>
+        <div><label>Mode</label><select id="pfMode"><option value="especes">Espèces</option><option value="cheque">Chèque</option><option value="virement">Virement</option><option value="traite">Traite</option><option value="autre">Autre</option></select></div>
+        <div><label>Référence</label><input type="text" id="pfRef" maxlength="60"></div>
+      </div>
+      <div class="status" id="pfStatus" style="margin-top:10px; color:var(--danger,#b3261e);"></div>
+    </div>
+    <div class="modalFoot"><button class="btnGhost" id="pfAnnuler">Annuler</button><button class="btnPrimary" id="pfEnregistrer">Enregistrer le paiement</button></div>
+  </div>
+</div>
+

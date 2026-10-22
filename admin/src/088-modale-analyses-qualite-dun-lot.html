@@ -1,0 +1,32 @@
+<!-- ============ MODALE : ANALYSES QUALITÉ D'UN LOT ============ -->
+<div class="modalOverlay" id="qualiteModalOverlay">
+  <div class="modal" style="max-width:720px;">
+    <div class="modalHead">
+      <div><h2 id="qualiteModalTitle">Analyses qualité</h2><div class="sub">Seuils appliqués automatiquement : un lot hors seuils est bloqué, un lot conforme est libéré</div></div>
+      <button class="modalClose" id="qualiteModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:72vh; overflow-y:auto;">
+      <div id="qualiteBanner" style="margin-bottom:12px;"></div>
+      <div class="rowMeta" style="margin-bottom:4px;">Analyses déjà enregistrées</div>
+      <div id="qualiteListe" style="margin-bottom:16px;"></div>
+      <div class="rowMeta" style="margin-bottom:6px;"><b>Nouvelle analyse</b></div>
+      <div class="numCtx">
+        <div><label>Type d'huile</label><select id="qProfil"></select></div>
+        <div><label>Date de l'analyse</label><input type="date" id="qDate"></div>
+        <div><label>Laboratoire</label><input type="text" id="qLabo" maxlength="120"></div>
+        <div><label>N° du rapport</label><input type="text" id="qRef" maxlength="60"></div>
+      </div>
+      <div id="qChamps" class="numCtx" style="margin-top:10px;"></div>
+      <div id="qVerdict" class="numLegal" style="margin-top:10px;"></div>
+      <div class="numCtx" style="margin-top:6px;">
+        <div><label>Décision</label><select id="qDecision"></select></div>
+        <div id="qDerogBloc" style="display:none; flex:1; min-width:240px;"><label>Motif de la dérogation (gérant)</label><input type="text" id="qDerog" maxlength="255" style="width:100%"></div>
+      </div>
+      <label class="formLbl" style="margin-top:8px;">Remarques</label>
+      <input type="text" id="qNotes" class="formInput" maxlength="250">
+    </div>
+    <div class="modalFoot"><span class="status" id="qStatus"></span>
+      <button class="btnGhost" id="qFermer">Fermer</button><button class="btnPrimary" id="qEnregistrer">Enregistrer l'analyse</button></div>
+  </div>
+</div>
+

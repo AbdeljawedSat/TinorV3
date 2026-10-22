@@ -1,0 +1,73 @@
+      <!-- ===== STATISTIQUES ===== -->
+      <div class="view" id="view-stats">
+        <div class="pageHead"><h1>Statistiques</h1><p>Synthèse des ventes — calculée à partir des commandes et factures réelles</p></div>
+        <div class="filterRow" style="margin-bottom:16px;">
+          <span class="chip active statsTabBtn" data-tab="apercu">Vue d'ensemble</span>
+          <span class="chip statsTabBtn" data-tab="ca">Chiffre d'affaires</span>
+          <span class="chip statsTabBtn" data-tab="classements">Classements</span>
+        </div>
+
+        <div class="statsTabPane" data-tab="apercu">
+        <div class="kpiGrid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px;">
+          <div class="kpiCard"><div class="val" id="statsCA">—</div><div class="lbl">Chiffre d'affaires (factures émises)</div></div>
+          <div class="kpiCard"><div class="val" id="statsEncaisse">—</div><div class="lbl">Encaissé</div></div>
+          <div class="kpiCard"><div class="val" id="statsEnAttente">—</div><div class="lbl">Solde restant dû</div></div>
+          <div class="kpiCard"><div class="val" id="statsPanierMoyen">—</div><div class="lbl">Panier moyen (commande)</div></div>
+        </div>
+        </div>
+
+        <div class="statsTabPane" data-tab="ca" style="display:none;">
+        <div class="panel">
+          <div class="panelHead"><div><h2>Chiffre d'affaires filtrable</h2><div class="sub">Par période, par client, par produit — combinables</div></div></div>
+          <div style="padding:14px 18px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Du</label>
+              <input type="date" id="caFilterDateDebut" class="formInput">
+            </div>
+            <div style="min-width:150px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Au</label>
+              <input type="date" id="caFilterDateFin" class="formInput">
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Client</label>
+              <select id="caFilterClient" class="formInput"><option value="">— Tous les clients —</option></select>
+            </div>
+            <div style="flex:1; min-width:180px;">
+              <label style="display:block; font-size:11px; color:var(--text-soft); margin-bottom:5px;">Produit / Matière</label>
+              <select id="caFilterProduit" class="formInput"><option value="">— Tous les produits —</option></select>
+            </div>
+            <button class="btnGhost" id="caFilterResetBtn">✕ Réinitialiser</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding:4px 18px 18px;">
+            <div class="kpiCard"><div class="val" id="caResultTotal">—</div><div class="lbl">Chiffre d'affaires</div></div>
+            <div class="kpiCard"><div class="val" id="caResultNbCommandes">—</div><div class="lbl">Commandes concernées</div></div>
+            <div class="kpiCard"><div class="val" id="caResultQuantite">—</div><div class="lbl">Quantité vendue</div></div>
+          </div>
+          <div style="padding:0 18px 18px;">
+            <h3 style="margin:0 0 8px; font-size:13px;">Détail des ventes</h3>
+            <table>
+              <thead><tr><th>Commande</th><th>Client</th><th>Date</th><th class="num">Montant</th><th>Facture</th><th></th></tr></thead>
+              <tbody id="caDetailBody"><tr><td colspan="6" class="rowMeta" style="text-align:center; padding:16px;">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        </div>
+
+        <div class="statsTabPane" data-tab="classements" style="display:none;">
+        <div class="panel">
+          <div class="panelHead"><div><h2>Meilleures ventes par produit</h2><div class="sub">Cumul des quantités vendues, toutes commandes confondues</div></div></div>
+          <table>
+            <thead><tr><th>Produit</th><th class="num">Quantité vendue</th><th class="num">Nb commandes</th></tr></thead>
+            <tbody id="statsTopProduitsBody"></tbody>
+          </table>
+        </div>
+        <div class="panel" style="margin-top:16px;">
+          <div class="panelHead"><div><h2>Meilleurs clients</h2><div class="sub">Cumul du montant commandé</div></div></div>
+          <table>
+            <thead><tr><th>Client</th><th class="num">Total commandé</th><th class="num">Nb commandes</th></tr></thead>
+            <tbody id="statsTopClientsBody"></tbody>
+          </table>
+        </div>
+        </div>
+      </div>
+

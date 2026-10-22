@@ -116,7 +116,13 @@ module.exports = function (pool) {
       }
 
       if (achat_id) {
-        await pool.query(`UPDATE achats SET statut = 'receptionne' WHERE id = $1`, [achat_id]);
+        // « Réceptionné » seulement si tout ce qui était commandé est arrivé ; sinon « partiel » (le reliquat reste à recevoir).
+        const reste = await pool.query(
+          `SELECT COUNT(*) AS n FROM (
+             SELECT al.produit_id, SUM(al.quantite) AS cmd,
+                    (SELECT COALESCE(SUM(rl.quantite), 0) FROM reception_lignes rl JOIN receptions r ON r.id = rl.reception_id WHERE r.achat_id = $1 AND rl.produit_id = al.produit_id) AS recu
+             FROM achat_lignes al WHERE al.achat_id = $1 GROUP BY al.produit_id) t WHERE t.recu < t.cmd - 0.0005`, [achat_id]);
+        await pool.query(`UPDATE achats SET statut = $1 WHERE id = $2 AND statut NOT IN ('annule','cloture')`, [Number(reste.rows[0].n) ? 'partiel' : 'receptionne', achat_id]);
       }
 
       const result = await pool.query('SELECT * FROM receptions WHERE id = $1', [receptionId]);

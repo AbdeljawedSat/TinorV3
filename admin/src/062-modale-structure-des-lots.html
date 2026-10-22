@@ -1,0 +1,31 @@
+<!-- ============ MODALE : STRUCTURE DES LOTS ============ -->
+<div class="modalOverlay" id="structOverlay">
+  <div class="modal">
+    <div class="modalHead">
+      <div>
+        <h2>Structure des lots</h2>
+        <div class="sub">Définissez, pour chaque type de lot, les champs à saisir</div>
+      </div>
+      <button class="modalClose" id="structCloseBtn">×</button>
+    </div>
+    <div class="modalBody">
+      <div class="structTypeList" id="structTypeList"></div>
+      <div class="structFields">
+        <div class="structLocked" id="structLockedNote"></div>
+        <div class="structHead">
+          <span>Nom du champ</span><span>Type</span><span>Obligatoire</span><span></span>
+        </div>
+        <div id="structFieldRows"></div>
+        <button class="btnGhost" id="addStructFieldBtn" style="margin-top:6px;">＋ Ajouter un champ</button>
+      </div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="structStatus">✓ Structure enregistrée</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="structCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="structSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

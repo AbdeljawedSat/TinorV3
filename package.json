@@ -1,6 +1,6 @@
 {
   "name": "tinor-api-v3",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "API backend TinOR V3 — BD Gestion Commerciale V3 (Express + MariaDB)",
   "main": "src/server.js",
   "scripts": {
@@ -19,7 +19,11 @@
     "backup:test": "node scripts/backup.js --test",
     "test:stock": "node test/stock/run.js",
     "importer:registres": "node scripts/importer-registres.js",
-    "creer:reel": "node scripts/creer-reel.js"
+    "creer:reel": "node scripts/creer-reel.js",
+    "restaurer": "node scripts/restaurer.js",
+    "test:restauration": "node scripts/verifier-sauvegarde.js",
+    "verifier": "node scripts/verifier-syntaxe.js",
+    "console": "node scripts/construire-console.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -29,6 +33,7 @@
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.23.3"
+    "mysql2": "^3.23.3",
+    "nodemailer": "^10.2.1"
   }
 }

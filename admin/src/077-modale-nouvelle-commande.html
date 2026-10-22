@@ -1,0 +1,67 @@
+<!-- ============ MODALE : NOUVELLE COMMANDE ============ -->
+<div class="modalOverlay" id="commandeModalOverlay">
+  <div class="modal" style="max-width:920px;">
+    <div class="modalHead">
+      <div><h2>Nouvelle commande</h2><div class="sub">Une ou plusieurs lignes, remise optionnelle par ligne</div></div>
+      <button class="modalClose" id="commandeModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="commandeFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <div id="commandeLignesLockedNote" class="structLocked" style="display:none;">Les lignes sont figées une fois la commande enregistrée (déjà répercutées sur le stock) — seules les notes restent modifiables.</div>
+      <input type="hidden" id="commandeId">
+      <label class="formLbl">Client</label>
+      <select id="commandeClient" class="formInput"></select>
+      <label class="formLbl">Statut initial</label>
+      <select id="commandeStatutInitial" class="formInput">
+        <option value="en_attente">En attente</option>
+        <option value="confirmee" selected>Confirmée</option>
+      </select>
+
+      <label class="formLbl" style="margin-top:16px; font-weight:600;">Lignes</label>
+      <div class="ligneCmdStageHead">
+        <span>Produit</span><span>PU HT</span><span>Remise</span><span>Prix TTC</span><span>Qté</span><span>Total</span><span></span>
+      </div>
+      <div class="ligneCmdStageRow" id="commandeStageRow">
+        <div class="comboWrap">
+          <input type="text" class="formInput" id="commandeStageSearch" placeholder="Rechercher un produit…" autocomplete="off">
+          <input type="hidden" id="commandeStageProduitId">
+          <div class="comboResults" id="commandeStageResults"></div>
+        </div>
+        <div class="ligneNum" id="commandeStagePuht" data-label="PU HT">—</div>
+        <select class="formInput" id="commandeStageRemise"><option value="">Sans remise</option></select>
+        <div class="ligneNum" id="commandeStageTtc" data-label="Prix TTC">—</div>
+        <input type="number" step="1" min="1" class="formInput" id="commandeStageQty" value="1">
+        <div class="ligneNum ligneTotal" id="commandeStageTotal" data-label="Total">—</div>
+        <button type="button" class="delField" id="commandeStageClearBtn" title="Vider">✕</button>
+      </div>
+      <div class="stageInfo" id="commandeStageInfo">Tapez un nom de produit, Entrée pour choisir, puis la quantité et Entrée pour ajouter.</div>
+      <button type="button" class="btnPrimary" id="commandeStageAddBtn" style="margin:8px 0 16px; font-size:12.5px; padding:7px 16px;">＋ Ajouter la ligne <span style="opacity:.6; font-weight:400;">(Entrée)</span></button>
+
+      <div class="cmdTableWrap">
+        <table class="cmdTable">
+          <thead>
+            <tr><th>Réf.</th><th>Désignation</th><th class="num">Qté</th><th class="num">Stock</th><th class="num">P.U. HT</th><th>Remise</th><th class="num">Total HT</th><th class="num">Total TTC</th><th></th></tr>
+          </thead>
+          <tbody id="commandeLignesRows">
+            <tr id="commandeLignesEmptyRow"><td colspan="9" class="rowMeta" style="text-align:center; padding:14px;">Configurez une ligne ci-dessus puis cliquez "＋ Ajouter au tableau".</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <label class="formLbl">Notes</label>
+      <input type="text" id="commandeNotes" class="formInput">
+
+      <div style="text-align:right; margin-top:14px; font-family:'Fraunces',serif; font-size:16px;">
+        Total estimé : <span class="num" id="commandeTotalPreview">0,000 DT</span>
+      </div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="commandeFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="commandeCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="commandeSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

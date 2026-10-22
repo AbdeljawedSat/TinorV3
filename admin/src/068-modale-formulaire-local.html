@@ -1,0 +1,38 @@
+<!-- ============ MODALE : FORMULAIRE LOCAL ============ -->
+<div class="modalOverlay" id="localModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="localModalTitle">Nouveau local</h2></div>
+      <button class="modalClose" id="localModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="localFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="localId">
+      <label class="formLbl">Code</label>
+      <input type="text" id="localCode" class="formInput" placeholder="ex: STOCK1">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="localNom" class="formInput">
+      <label class="formLbl">Type</label>
+      <select id="localType" class="formInput">
+        <option value="MP">Matière première</option>
+        <option value="EMBALLAGE">Emballage</option>
+        <option value="PRODUCTION">Production</option>
+        <option value="PRODUITS_FINIS">Produits finis</option>
+        <option value="QUARANTAINE">Quarantaine</option>
+        <option value="CONSOMMABLE">Consommable</option>
+        <option value="BOUTIQUE">Boutique</option>
+        <option value="AUTRE">Autre</option>
+      </select>
+      <label class="formLbl">Adresse (optionnel)</label>
+      <input type="text" id="localAdresse" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="localFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="localCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="localSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

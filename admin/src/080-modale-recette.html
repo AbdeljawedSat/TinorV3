@@ -1,0 +1,40 @@
+<!-- ============ MODALE : RECETTE ============ -->
+<div class="modalOverlay" id="recetteModalOverlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modalHead">
+      <div><h2 id="recetteModalTitle">Nouvelle recette</h2><div class="sub">Composition d'un produit fabriqué</div></div>
+      <button class="modalClose" id="recetteModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="recetteFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="recetteId">
+      <label class="formLbl">Produit fini</label>
+      <select id="recetteProduit" class="formInput"></select>
+      <div id="recetteProduitInfo" class="rowMeta" style="font-size:11.5px; margin-top:3px; display:none;"></div>
+      <label class="chkLbl melangeCase" style="margin-top:8px;"><input type="checkbox" id="recetteNouveauProduit"> <b>Nouveau produit fini</b> <span class="rowMeta">(créé avec la recette)</span></label>
+      <div id="recetteNouveauBloc" style="display:none;">
+        <label class="formLbl">Nom du nouveau produit</label>
+        <input type="text" id="recetteNpNom" class="formInput" placeholder="ex. Savon Nigelle — 100g">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div><label class="formLbl">Catégorie</label><select id="recetteNpCategorie" class="formInput"></select></div>
+          <div><label class="formLbl">Unité</label><select id="recetteNpUnite" class="formInput"></select></div>
+          <div><label class="formLbl">Format (optionnel)</label><select id="recetteNpFormat" class="formInput"></select></div>
+          <div><label class="formLbl">Prix de vente TTC (optionnel)</label><input type="number" step="0.001" min="0" id="recetteNpPrix" class="formInput"></div>
+        </div>
+      </div>
+      <label class="formLbl" style="margin-top:16px; font-weight:600;">Ingrédients (par unité produite)</label>
+      <div id="recetteIngredientsRows"></div>
+      <button class="btnGhost" id="recetteAddIngredientBtn" style="margin-top:6px;">＋ Ajouter un ingrédient</button>
+      <label class="formLbl">Notes</label>
+      <input type="text" id="recetteNotes" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="recetteFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="recetteCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="recetteSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

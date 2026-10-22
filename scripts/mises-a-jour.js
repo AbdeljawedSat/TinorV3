@@ -56,6 +56,63 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V4 — coûts : coût unitaire saisi sur un lot, frais d'étape (main-d'œuvre, énergie), e-mail du client, paiements fournisseurs.
+  if (!(await colonneExiste(conn, 'lots', 'cout_unitaire'))) {
+    await conn.query('ALTER TABLE lots ADD COLUMN cout_unitaire DECIMAL(12,4) NULL');
+    journal('✓ Mise à jour : lots.cout_unitaire ajoutée.');
+  }
+  for (const col of ['frais_presse', 'frais_filtration', 'frais_melange', 'frais_conditionnement']) {
+    if (!(await colonneExiste(conn, 'settings', col))) await conn.query(`ALTER TABLE settings ADD COLUMN ${col} DECIMAL(10,4) NOT NULL DEFAULT 0`);
+  }
+  if (!(await colonneExiste(conn, 'clients', 'email'))) {
+    await conn.query('ALTER TABLE clients ADD COLUMN email VARCHAR(150) NULL');
+    journal('✓ Mise à jour : clients.email ajoutée (envoi des factures par e-mail).');
+  }
+  const [pf] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'paiements_fournisseurs'");
+  if (!pf[0].n) {
+    await conn.query(SQL_PAIEMENTS_FOURNISSEURS);
+    journal('✓ Mise à jour : table paiements_fournisseurs créée.');
+  }
+
+  // V4 — contrôle qualité des lots : paramètres avec seuils, analyses (en-tête dans controles_qualite) et leurs résultats.
+  for (const [col, type] of [['laboratoire', 'VARCHAR(120) NULL'], ['reference_rapport', 'VARCHAR(60) NULL'], ['profil', 'VARCHAR(20) NULL'],
+    ['conforme', 'TINYINT(1) NULL'], ['derogation_motif', 'VARCHAR(255) NULL'], ['created_by', 'INT NULL']]) {
+    if (!(await colonneExiste(conn, 'controles_qualite', col))) await conn.query(`ALTER TABLE controles_qualite ADD COLUMN ${col} ${type}`);
+  }
+  const [qp] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'qualite_parametres'");
+  if (!qp[0].n) {
+    for (const ordre of SQL_QUALITE.split(';').filter(x => /CREATE TABLE/i.test(x))) await conn.query(ordre);
+    for (const [profil, code, nom, unite, min, max, ordreAff] of PARAMETRES_QUALITE_DEFAUT) {
+      await conn.query('INSERT INTO qualite_parametres (profil, code, nom, unite, min_valeur, max_valeur, ordre) VALUES (?,?,?,?,?,?,?)', [profil, code, nom, unite, min, max, ordreAff]);
+    }
+    journal('✓ Mise à jour : contrôle qualité des lots (paramètres et seuils par défaut créés).');
+  }
+  if (!(await colonneExiste(conn, 'settings', 'qualite_quarantaine_etapes'))) {
+    await conn.query("ALTER TABLE settings ADD COLUMN qualite_quarantaine_etapes VARCHAR(100) NOT NULL DEFAULT ''");
+  }
+
+  // V4 — journal d'audit (qui a fait quoi).
+  const [ja] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'journal_audit'");
+  if (!ja[0].n) {
+    await conn.query(SQL_JOURNAL_AUDIT);
+    journal('✓ Mise à jour : table journal_audit créée (journal d\'audit).');
+  }
+
+  // V4 — rôles supplémentaires (magasinier, production, comptable) : la contrainte « gerant ou vendeur » est élargie.
+  const [chk] = await conn.query(`
+    SELECT tc.CONSTRAINT_NAME AS nom, cc.CHECK_CLAUSE AS clause
+    FROM information_schema.TABLE_CONSTRAINTS tc
+    JOIN information_schema.CHECK_CONSTRAINTS cc
+      ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+    WHERE tc.TABLE_SCHEMA = DATABASE() AND tc.TABLE_NAME = 'users' AND tc.CONSTRAINT_TYPE = 'CHECK'`);
+  const ancienRole = chk.find(c => /gerant/.test(c.clause) && !/magasinier/.test(c.clause));
+  if (ancienRole) {
+    try { await conn.query(`ALTER TABLE users DROP CONSTRAINT \`${ancienRole.nom}\``); } // MySQL 8
+    catch { await conn.query(`ALTER TABLE users MODIFY role VARCHAR(20) NOT NULL DEFAULT 'vendeur'`); } // MariaDB : contrainte portée par la colonne
+    await conn.query(`ALTER TABLE users ADD CONSTRAINT users_role_chk CHECK (role IN ('gerant','vendeur','magasinier','production','comptable'))`);
+    journal('✓ Mise à jour : rôles magasinier, production et comptable acceptés.');
+  }
+
   // V3.3 — numérotation configurable des opérations (format actuel / proposé / personnalisé).
   const [nf] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'numerotation_formats'");
   if (!nf[0].n) {
@@ -172,6 +229,85 @@ const SQL_NUMEROTATION_FORMATS = `CREATE TABLE IF NOT EXISTS numerotation_format
   date_application DATE NULL,
   updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   updated_by       INT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+// Seuils de départ — à confirmer avec votre laboratoire et votre cahier des charges.
+//  OLIVE   : huile d'olive vierge extra, règlement délégué (UE) 2022/2104.
+//  GRAINES : huiles vierges pressées à froid (sésame, nigelle…), Codex Stan 210 (indice d'acide ≤ 4 mg KOH/g ; peroxyde ≤ 15 meq O₂/kg).
+const PARAMETRES_QUALITE_DEFAUT = [
+  ['OLIVE', 'ACIDITE', 'Acidité libre', '% ac. oléique', null, 0.8, 1],
+  ['OLIVE', 'PEROXYDE', 'Indice de peroxyde', 'meq O₂/kg', null, 20, 2],
+  ['OLIVE', 'K232', 'K232', '', null, 2.5, 3],
+  ['OLIVE', 'K270', 'K270', '', null, 0.22, 4],
+  ['OLIVE', 'DELTA_K', 'Delta K', '', null, 0.01, 5],
+  ['GRAINES', 'INDICE_ACIDE', "Indice d'acide", 'mg KOH/g', null, 4, 1],
+  ['GRAINES', 'PEROXYDE', 'Indice de peroxyde', 'meq O₂/kg', null, 15, 2],
+];
+
+const SQL_QUALITE = `CREATE TABLE IF NOT EXISTS qualite_parametres (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  profil     VARCHAR(20) NOT NULL,
+  code       VARCHAR(30) NOT NULL,
+  nom        VARCHAR(80) NOT NULL,
+  unite      VARCHAR(30) NOT NULL DEFAULT '',
+  min_valeur DECIMAL(12,4) NULL,
+  max_valeur DECIMAL(12,4) NULL,
+  actif      TINYINT(1) NOT NULL DEFAULT 1,
+  ordre      INT NOT NULL DEFAULT 0,
+  UNIQUE KEY uk_qualite_profil_code (profil, code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS controle_resultats (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  controle_id INT NOT NULL,
+  code        VARCHAR(30) NOT NULL,
+  nom         VARCHAR(80) NOT NULL,
+  unite       VARCHAR(30) NOT NULL DEFAULT '',
+  valeur      DECIMAL(12,4) NOT NULL,
+  min_valeur  DECIMAL(12,4) NULL,
+  max_valeur  DECIMAL(12,4) NULL,
+  conforme    TINYINT(1) NOT NULL,
+  FOREIGN KEY (controle_id) REFERENCES controles_qualite(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_PAIEMENTS_FOURNISSEURS = `CREATE TABLE IF NOT EXISTS paiements_fournisseurs (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  fournisseur_id INT NOT NULL,
+  achat_id       INT NULL,
+  date_paiement  DATE NOT NULL,
+  montant        DECIMAL(12,3) NOT NULL,
+  mode           VARCHAR(20) NOT NULL DEFAULT 'especes',
+  reference      VARCHAR(60) NULL,
+  notes          VARCHAR(250) NULL,
+  annule_le      DATETIME NULL,
+  annule_motif   VARCHAR(255) NULL,
+  annule_par     INT NULL,
+  created_by     INT NULL,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id),
+  FOREIGN KEY (achat_id) REFERENCES achats(id),
+  INDEX idx_pf_achat (achat_id),
+  INDEX idx_pf_fournisseur (fournisseur_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_JOURNAL_AUDIT = `CREATE TABLE IF NOT EXISTS journal_audit (
+  id          BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  cree_le     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  user_id     INT NULL,
+  username    VARCHAR(40) NULL,
+  role        VARCHAR(20) NULL,
+  methode     VARCHAR(8) NOT NULL,
+  chemin      VARCHAR(200) NOT NULL,
+  rubrique    VARCHAR(40) NOT NULL DEFAULT '',
+  entite_id   VARCHAR(40) NULL,
+  statut_http SMALLINT NOT NULL,
+  ip          VARCHAR(45) NULL,
+  resume      TEXT NULL,
+  INDEX idx_audit_date (cree_le),
+  INDEX idx_audit_rubrique (rubrique),
+  INDEX idx_audit_user (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

@@ -1,0 +1,11 @@
+  /* ---------- Conditionnement en 4 étapes (V3.3) ---------- */
+  .etapeCond{display:flex; align-items:center; gap:8px; margin:18px 0 6px; font-weight:700; font-size:13.5px; color:var(--text);}
+  .etapeCond .n{width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:12px; flex:none;}
+  .etapeCond small{font-weight:500; color:var(--text-soft);}
+  .condAuto{margin-top:8px; background:#FAF0DC; border:1px solid #E9D3A6; border-radius:8px; padding:8px 10px; font-size:12.5px; color:#6E4C10;}
+  .condBilan{margin-top:12px; border-radius:8px; padding:8px 10px; font-size:12.5px; background:var(--good-bg); color:var(--good); border:1px solid #BFD6C2;}
+  .condBilan.ko{background:var(--danger-bg); color:var(--danger); border-color:#E7C4BE;}
+  .srcCond{display:grid; grid-template-columns:1fr 92px 44px 30px; gap:8px; align-items:center; margin-bottom:6px;}
+  .srcCond .delField{background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:13px; border-radius:6px; padding:4px;}
+  .srcCond .delField:hover{background:var(--danger-bg); color:var(--danger);}
+  .srcCond .dispo{font-size:11px; color:var(--text-soft); grid-column:1 / -1; margin-top:-4px;}

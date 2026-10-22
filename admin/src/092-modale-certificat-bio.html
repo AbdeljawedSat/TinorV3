@@ -1,0 +1,38 @@
+<!-- ============ MODALE : CERTIFICAT BIO ============ -->
+<div class="modalOverlay" id="certificatModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="certificatModalTitle">Nouveau certificat</h2></div>
+      <button class="modalClose" id="certificatModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="certificatFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="certificatId">
+      <label class="formLbl">N° de certificat</label>
+      <input type="text" id="certificatNumero" class="formInput">
+      <label class="formLbl">Organisme</label>
+      <select id="certificatOrganisme" class="formInput">
+        <option value="INNORPI">INNORPI</option>
+        <option value="ECOCERT">ECOCERT</option>
+        <option value="BCS">BCS</option>
+        <option value="AUTRE">Autre</option>
+      </select>
+      <label class="formLbl">Date de délivrance</label>
+      <input type="date" id="certificatDateDelivrance" class="formInput">
+      <label class="formLbl">Date d'expiration</label>
+      <input type="date" id="certificatDateExpiration" class="formInput">
+      <label class="formLbl">Portée (optionnel)</label>
+      <input type="text" id="certificatPortee" class="formInput" placeholder="ex: huile d'olive, parcelles n°3 et 4">
+      <label class="formLbl">Référence document (optionnel)</label>
+      <input type="text" id="certificatDocumentRef" class="formInput">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="certificatFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="certificatCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="certificatSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

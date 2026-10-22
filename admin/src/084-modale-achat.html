@@ -1,0 +1,43 @@
+<!-- ============ MODALE : ACHAT ============ -->
+<div class="modalOverlay" id="achatModalOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modalHead">
+      <div><h2>Nouvel achat</h2><div class="sub">Bon de commande — totaux calculés automatiquement</div></div>
+      <button class="modalClose" id="achatModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="achatFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Fournisseur</label>
+      <select id="achatFournisseur" class="formInput"></select>
+      <label class="chkLbl" style="margin-top:6px;"><input type="checkbox" id="achatToutesCategories"> Toutes catégories (ignorer le filtre par type de fournisseur)</label>
+      <label class="formLbl">Date</label>
+      <input type="date" id="achatDate" class="formInput">
+      <label class="formLbl">Statut</label>
+      <select id="achatStatut" class="formInput">
+        <option value="brouillon">Brouillon</option>
+        <option value="commande">Commandé</option>
+      </select>
+      <label class="formLbl">TVA (%)</label>
+      <input type="number" step="0.01" id="achatTvaRate" class="formInput" value="19">
+
+      <label class="formLbl" style="margin-top:16px; font-weight:600;">Lignes</label>
+      <div id="achatLignesRows"></div>
+      <button class="btnGhost" id="achatAddLigneBtn" style="margin-top:6px;">＋ Ajouter une ligne</button>
+
+      <label class="formLbl">Notes</label>
+      <input type="text" id="achatNotes" class="formInput">
+
+      <div style="text-align:right; margin-top:14px; font-family:'Fraunces',serif; font-size:16px;">
+        Total estimé (HT) : <span class="num" id="achatTotalPreview">0,000 DT</span>
+      </div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="achatFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="achatCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="achatSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

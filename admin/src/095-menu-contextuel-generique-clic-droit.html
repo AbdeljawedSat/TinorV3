@@ -1,0 +1,33 @@
+<!-- ============ MENU CONTEXTUEL GÉNÉRIQUE (clic droit) ============ -->
+<div id="menuContextuel" style="display:none; position:fixed; z-index:500; background:#fff; border:1px solid var(--line); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:170px; max-width:calc(100vw - 16px); overflow-y:auto; padding:5px; font-size:13px;"></div>
+
+<div class="modalOverlay" id="formatRapideModalOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modalHead">
+      <div><h2>Nouveau format</h2><div class="sub">Volume (ml/L) ou poids (g/kg) — pas les deux</div></div>
+      <button class="modalClose" id="formatRapideModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="formatRapideFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <label class="formLbl">Code (ex: 80g, 200ml)</label>
+      <input type="text" id="formatRapideCode" class="formInput">
+      <label class="formLbl">Nom affiché (ex: "80 g")</label>
+      <input type="text" id="formatRapideNom" class="formInput">
+      <label class="formLbl">Type</label>
+      <select id="formatRapideType" class="formInput">
+        <option value="volume">Volume (ml)</option>
+        <option value="poids">Poids (g)</option>
+      </select>
+      <label class="formLbl">Valeur</label>
+      <input type="number" step="0.01" id="formatRapideValeur" class="formInput" placeholder="ex: 80">
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="formatRapideFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="formatRapideCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="formatRapideSaveBtn">Créer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

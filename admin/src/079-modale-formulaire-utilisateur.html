@@ -1,0 +1,37 @@
+<!-- ============ MODALE : FORMULAIRE UTILISATEUR ============ -->
+<div class="modalOverlay" id="userModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="userModalTitle">Nouvel utilisateur</h2></div>
+      <button class="modalClose" id="userModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="userFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="userId">
+      <label class="formLbl">Identifiant</label>
+      <input type="text" id="userUsername" class="formInput">
+      <label class="formLbl">Mot de passe <span id="userPasswordHint" class="rowMeta"></span></label>
+      <input type="password" id="userPassword" class="formInput">
+      <label class="formLbl">Employé rattaché</label>
+      <select id="userEmploye" class="formInput"><option value="">— Aucun —</option></select>
+      <label class="formLbl">Rôle</label>
+      <select id="userRole" class="formInput">
+        <option value="vendeur">Vendeur</option>
+        <option value="magasinier">Magasinier (stock, réceptions, achats)</option>
+        <option value="production">Production (presse, filtration, mélange, conditionnement, qualité)</option>
+        <option value="comptable">Comptable (factures, paiements, avoirs, achats)</option>
+        <option value="gerant">Gérant</option>
+      </select>
+      <div class="rowMeta" style="margin-top:4px;">Tous les rôles peuvent consulter ; seul le gérant gère les utilisateurs, les paramètres et les sauvegardes.</div>
+      <label class="chkLbl" style="margin-top:12px;"><input type="checkbox" id="userActif" checked> Actif</label>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="userFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="userCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="userSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

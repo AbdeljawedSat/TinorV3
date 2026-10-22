@@ -1,0 +1,51 @@
+<!-- ============ MODALE : FORMULAIRE FOURNISSEUR ============ -->
+<div class="modalOverlay" id="fournisseurModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modalHead">
+      <div><h2 id="fournisseurModalTitle">Nouveau fournisseur</h2></div>
+      <button class="modalClose" id="fournisseurModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px;">
+      <div id="fournisseurFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="fournisseurId">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="fournisseurNom" class="formInput">
+      <label class="formLbl">Matricule fiscal</label>
+      <input type="text" id="fournisseurMatriculeFiscal" class="formInput">
+      <label class="formLbl">Type</label>
+      <select id="fournisseurType" class="formInput">
+        <option value="parcelle">Parcelle</option>
+        <option value="fournisseur_externe">Fournisseur externe</option>
+        <option value="emballage">Emballage</option>
+        <option value="consommable">Consommable</option>
+        <option value="produit_revendu">Produit revendu</option>
+        <option value="service">Service</option>
+        <option value="autre">Autre</option>
+      </select>
+      <label class="formLbl">Localisation</label>
+      <input type="text" id="fournisseurLocalisation" class="formInput">
+      <label class="formLbl">Statut Bio</label>
+      <select id="fournisseurStatutBio" class="formInput">
+        <option value="certifie">Certifié</option>
+        <option value="conversion">Conversion</option>
+        <option value="non_bio">Non bio</option>
+      </select>
+      <label class="formLbl">Certificat Bio (optionnel)</label>
+      <select id="fournisseurCertificat" class="formInput"><option value="">— Aucun —</option></select>
+      <label class="formLbl">Téléphone</label>
+      <input type="text" id="fournisseurTelephone" class="formInput">
+      <label class="formLbl">Email</label>
+      <input type="text" id="fournisseurEmail" class="formInput">
+      <label class="formLbl">Notes</label>
+      <textarea id="fournisseurNotes" class="formInput" rows="2"></textarea>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="fournisseurFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="fournisseurCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="fournisseurSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,15 @@
+  /* ---------- Hors ligne (V3.3) ---------- */
+  #offlineBanner{display:none; align-items:center; justify-content:space-between; gap:12px; padding:8px 18px; font-size:12.5px; color:#fff; cursor:pointer; background:#3d2e14;}
+  #offlineBanner[data-etat="synchro"]{background:#1C6FA6;} #offlineBanner[data-etat="corriger"]{background:var(--danger);}
+  #offlineBanner[data-etat="attente"], #offlineBanner[data-etat="reconnexion"]{background:var(--warn);}
+  .hlEtat{display:flex; flex-wrap:wrap; gap:6px 18px; align-items:center; font-size:12.5px; color:var(--text-soft);}
+  .hlEtat b{font-size:14px; color:var(--good);} .hlEtat.off b{color:#8a5a14;}
+  .hlListe{padding:6px 14px 12px;} .hlVide{padding:10px 4px;}
+  .hlOp{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--paper);}
+  .hlOp.ko{border-color:#E7C4BE; background:#FFFAF9;}
+  .hlTete{display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .hlDesc{font-size:12.5px; color:var(--text-soft); margin-top:2px;}
+  .hlErreur{font-size:12.5px; color:var(--danger); font-weight:600; margin-top:6px;}
+  .hlChamps{display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:8px;}
+  .hlChamps label{font-size:11.5px; color:var(--text-soft); display:flex; flex-direction:column; gap:3px;}
+  .hlActions{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}

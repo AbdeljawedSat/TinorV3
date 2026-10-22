@@ -1,0 +1,65 @@
+name: Tests
+
+# À chaque modification : syntaxe de tout le code, puis la suite complète de tests (API + vraie base MariaDB).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: tinor_ci
+          MARIADB_USER: tinor
+          MARIADB_PASSWORD: tinor
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: tinor
+      DB_PASSWORD: tinor
+      DB_NAME: tinor_ci
+      JWT_SECRET: ci-secret-pour-les-tests-uniquement-0123456789
+      TINOR_ENV: ''
+      PORT: 3001
+      SMTP_HOST: json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Client MariaDB (sauvegarde et restauration)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq mariadb-client
+      - run: npm ci
+      - name: La console assemblée est à jour avec admin/src
+        run: node scripts/construire-console.js --verifier
+      - name: Syntaxe du code et de la console
+        run: node scripts/verifier-syntaxe.js
+      - name: Base de test (schéma, mises à jour, données de démonstration)
+        run: |
+          npm run migrate
+          node scripts/reset-demo.js --confirmer
+      - name: Démarrage de l'API
+        run: |
+          nohup node src/server.js > api.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:3001/api/health && break; sleep 1; done
+      - name: Tests (stock, ventes, sécurité, rôles, qualité…)
+        run: npm run test:stock
+      - name: Restauration d'une sauvegarde (sauvegarde → base temporaire → comparaison)
+        env:
+          DB_ADMIN_USER: root
+          DB_ADMIN_PASSWORD: root
+        run: npm run test:restauration
+      - name: Journal de l'API (en cas d'échec)
+        if: failure()
+        run: cat api.log

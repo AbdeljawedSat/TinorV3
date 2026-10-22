@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { validerMotDePasse } = require('../services/comptes');
 const { JWT_SECRET, requireAuth } = require('../middleware/auth');
 
 // Anti-devinette du mot de passe : 5 échecs par (adresse, identifiant) en 15 minutes → blocage jusqu'à ce que le plus
@@ -66,8 +67,8 @@ module.exports = function (pool) {
     if (!user || !(await bcrypt.compare(String(ancien), user.password_hash))) { noterEchec(cle); return res.status(401).json({ error: 'Ancien mot de passe incorrect.' }); }
     echecs.delete(cle);
     const n = String(nouveau);
-    if (n.length < 8) return res.status(400).json({ error: 'Le nouveau mot de passe doit faire au moins 8 caractères.' });
-    if (n === 'changeme') return res.status(400).json({ error: 'Choisissez un mot de passe différent de celui livré avec TinOR.' });
+    const refuse = validerMotDePasse(n, req.user.username);
+    if (refuse) return res.status(400).json({ error: refuse });
     if (n === String(ancien)) return res.status(400).json({ error: 'Le nouveau mot de passe doit être différent de l\'ancien.' });
     await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [await bcrypt.hash(n, 10), user.id]);
     res.json({ ok: true });

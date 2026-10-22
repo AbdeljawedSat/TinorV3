@@ -1,0 +1,12 @@
+  /* ---------- Rapidité (V3.3) : menu ⋯, Exporter, périodes, statut par bouton ---------- */
+  .rowActionBtn.principal{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .rowActionBtn.principal:hover{opacity:.9;}
+  .rowActionBtn.plus{padding:4px 9px; font-weight:700; letter-spacing:1px;}
+  .statutCell{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .etapeBtn{background:none; border:1px dashed var(--brass-dim); color:var(--text); border-radius:20px; padding:2px 9px; font-size:11px; cursor:pointer; font-family:inherit;}
+  .etapeBtn:hover{border-style:solid; border-color:var(--brass);}
+  .periodeChips{display:flex; gap:6px; flex-wrap:wrap; align-items:center; width:100%;}
+  .periodeChips .chip{cursor:pointer;}
+  .periodeCachee{display:none !important;}
+  .stageInfo{font-size:11.5px; color:var(--text-soft); margin:4px 2px 0;}
+  .stageInfo.alerte{color:var(--danger); font-weight:600;}

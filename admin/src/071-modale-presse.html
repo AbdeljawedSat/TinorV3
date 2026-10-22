@@ -1,0 +1,38 @@
+<!-- ============ MODALE : PRESSE ============ -->
+<div class="modalOverlay" id="presseModalOverlay">
+  <div class="modal" style="max-width:620px;">
+    <div class="modalHead">
+      <div><h2>Nouveau lot de presse</h2><div class="sub">Un ou plusieurs lots de graines → une huile en vrac par graine</div></div>
+      <button class="modalClose" id="presseModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:65vh; overflow-y:auto;">
+      <div id="presseFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <div id="presseQuantitesLockedNote" class="structLocked" style="display:none;">Les quantités et le lot source sont figés une fois la production enregistrée (déjà répercutés sur le stock) — seuls la date et les notes restent modifiables.</div>
+      <input type="hidden" id="presseModalId">
+      <label class="formLbl">Date</label>
+      <input type="date" id="presseDate" class="formInput">
+      <div id="presseSaisie">
+        <label class="chkLbl melangeCase"><input type="checkbox" id="presseMelange"> <b>Mélange de graines</b> <span class="rowMeta">(sésame + nigelle pressés ensemble → une huile mélange)</span></label>
+        <label class="formLbl">Lots de graines consommés</label>
+        <div id="presseSources"></div>
+        <button type="button" class="btnGhost" id="presseAjoutSource" style="margin:2px 0 12px; font-size:12px;">＋ Ajouter un lot de graines</button>
+        <label class="formLbl" id="presseSortiesTitre">Huiles en vrac obtenues (une par graine)</label>
+ <div id="presseSorties"></div>
+        <button type="button" class="lienEffacer" id="presseCreerMelange" style="display:none; padding:4px 0;">＋ Créer un produit « Huile Mélange … — Vrac »</button>
+        <div id="presseBilan" class="rowMeta" style="font-size:11.5px; margin:8px 0 12px;"></div>
+      </div>
+      <div id="presseResume" class="rowMeta" style="display:none; font-size:12.5px; margin:4px 0 12px; line-height:1.6;"></div>
+      <label class="formLbl">Notes</label>
+      <input type="text" id="presseNotes" class="formInput">
+      <div id="presseChampsPerso"></div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="presseFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="presseCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="presseSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+

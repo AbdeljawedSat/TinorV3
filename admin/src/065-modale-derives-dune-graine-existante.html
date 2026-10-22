@@ -1,0 +1,83 @@
+<!-- ============ MODALE : DÉRIVÉS D'UNE GRAINE EXISTANTE ============ -->
+<div class="modalOverlay" id="derivesModalOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modalHead">
+      <div><h2 id="derivesModalTitle">Dérivés de la graine</h2><div class="sub">Huile vrac, huile filtrée, flacons</div></div>
+      <button class="modalClose" id="derivesModalCloseBtn">×</button>
+    </div>
+    <div style="padding:6px 20px 16px; max-height:62vh; overflow-y:auto;">
+      <div id="derivesFormError" style="color:var(--danger); font-size:11.5px; margin:10px 0 0; display:none;"></div>
+      <div id="derivesBoxExistant"></div>
+    </div>
+    <div class="modalFoot">
+      <button class="btnGhost" id="derivesCancelBtn">Annuler</button>
+      <button class="btnPrimary" id="derivesSaveBtn">Créer les dérivés</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="produitModalOverlay">
+  <div class="modal" style="max-width:480px;">
+    <div class="modalHead">
+      <div><h2 id="produitModalTitle">Nouveau produit</h2><div class="sub">Catalogue TinOR</div></div>
+      <button class="modalClose" id="produitModalCloseBtn">×</button>
+    </div>
+    <div style="padding:16px 20px; max-height:60vh; overflow-y:auto;">
+      <div id="produitFormError" style="color:var(--danger); font-size:11.5px; margin-bottom:10px; display:none;"></div>
+      <input type="hidden" id="produitId">
+      <label class="formLbl">Nom</label>
+      <input type="text" id="produitNom" class="formInput">
+      <label class="formLbl">Description (optionnel)</label>
+      <textarea id="produitDescription" class="formInput" rows="2"></textarea>
+      <label class="formLbl">Code-barres (optionnel)</label>
+      <input type="text" id="produitBarcode" class="formInput">
+      <label class="formLbl">Catégorie</label>
+      <select id="produitCategorie" class="formInput"></select>
+      <a href="#" id="nouvelleCategorieBtn" style="display:inline-block; font-size:11.5px; margin:-4px 0 12px; color:var(--brass);">＋ Nouvelle catégorie</a>
+      <label class="formLbl">Unité</label>
+      <select id="produitUnite" class="formInput"></select>
+      <label class="formLbl">Format (optionnel)</label>
+      <select id="produitFormat" class="formInput"><option value="">— Aucun —</option></select>
+      <a href="#" id="nouveauFormatBtn" style="display:inline-block; font-size:11.5px; margin:-4px 0 12px; color:var(--brass);">＋ Nouveau format (volume ou poids)</a>
+      <label class="formLbl">Produit source / vrac (optionnel)</label>
+      <select id="produitSource" class="formInput"><option value="">— Aucun (ce produit est lui-même le vrac, ou indépendant) —</option></select>
+      <div class="rowMeta" style="margin:-4px 0 12px;">En choisissant un produit source, le nom se pré-remplit à partir de lui — modifiable ensuite.</div>
+      <label class="formLbl">Type d'article</label>
+      <select id="produitType" class="formInput">
+        <option value="MATIERE_PREMIERE">Matière première</option>
+        <option value="INGREDIENT">Ingrédient</option>
+        <option value="CONSOMMABLE">Consommable</option>
+        <option value="EMBALLAGE">Emballage</option>
+        <option value="PRODUIT_FABRIQUE">Produit fabriqué</option>
+        <option value="PRODUIT_ACHETE">Produit acheté</option>
+        <option value="PRODUIT_REVENDE">Produit revendu</option>
+        <option value="SOUS_PRODUIT">Sous-produit</option>
+        <option value="DECHET">Déchet</option>
+      </select>
+      <label class="formLbl">Prix de vente (DT, laisser vide si non vendable)</label>
+      <input type="number" step="0.001" id="produitPrix" class="formInput">
+      <label class="formLbl">Seuil d'alerte stock bas (optionnel)</label>
+      <input type="number" step="0.001" id="produitStockMin" class="formInput">
+      <label class="formLbl">Coût standard HT (DT par unité) <span class="rowMeta">— sert au calcul des marges pour une matière première sans prix d'achat enregistré</span></label>
+      <input type="number" step="0.001" min="0" id="produitCoutStandard" class="formInput">
+      <div class="rowMeta" style="margin:-4px 0 12px;">Une alerte apparaît au Tableau de bord si le stock total disponible passe sous ce seuil.</div>
+      <div style="display:flex; gap:16px; margin-top:6px; flex-wrap:wrap;">
+        <label class="chkLbl"><input type="checkbox" id="produitVendable"> Vendable</label>
+        <label class="chkLbl"><input type="checkbox" id="produitAchetable"> Achetable</label>
+        <label class="chkLbl"><input type="checkbox" id="produitFabriquable"> Fabriquable</label>
+        <label class="chkLbl"><input type="checkbox" id="produitStockable" checked> Stockable</label>
+        <label class="chkLbl"><input type="checkbox" id="produitActif" checked> Actif</label>
+        <label class="chkLbl"><input type="checkbox" id="produitBio"> Éligible Bio</label>
+      </div>
+      <div id="derivesBox"></div>
+    </div>
+    <div class="modalFoot">
+      <span class="status" id="produitFormStatus"></span>
+      <div style="display:flex; gap:8px;">
+        <button class="btnGhost" id="produitCancelBtn">Annuler</button>
+        <button class="btnPrimary" id="produitSaveBtn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
