@@ -56,6 +56,23 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V4 — contrôle qualité des lots : paramètres avec seuils, analyses (en-tête dans controles_qualite) et leurs résultats.
+  for (const [col, type] of [['laboratoire', 'VARCHAR(120) NULL'], ['reference_rapport', 'VARCHAR(60) NULL'], ['profil', 'VARCHAR(20) NULL'],
+    ['conforme', 'TINYINT(1) NULL'], ['derogation_motif', 'VARCHAR(255) NULL'], ['created_by', 'INT NULL']]) {
+    if (!(await colonneExiste(conn, 'controles_qualite', col))) await conn.query(`ALTER TABLE controles_qualite ADD COLUMN ${col} ${type}`);
+  }
+  const [qp] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'qualite_parametres'");
+  if (!qp[0].n) {
+    for (const ordre of SQL_QUALITE.split(';').filter(x => /CREATE TABLE/i.test(x))) await conn.query(ordre);
+    for (const [profil, code, nom, unite, min, max, ordreAff] of PARAMETRES_QUALITE_DEFAUT) {
+      await conn.query('INSERT INTO qualite_parametres (profil, code, nom, unite, min_valeur, max_valeur, ordre) VALUES (?,?,?,?,?,?,?)', [profil, code, nom, unite, min, max, ordreAff]);
+    }
+    journal('✓ Mise à jour : contrôle qualité des lots (paramètres et seuils par défaut créés).');
+  }
+  if (!(await colonneExiste(conn, 'settings', 'qualite_quarantaine_etapes'))) {
+    await conn.query("ALTER TABLE settings ADD COLUMN qualite_quarantaine_etapes VARCHAR(100) NOT NULL DEFAULT ''");
+  }
+
   // V4 — journal d'audit (qui a fait quoi).
   const [ja] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'journal_audit'");
   if (!ja[0].n) {
@@ -194,6 +211,45 @@ const SQL_NUMEROTATION_FORMATS = `CREATE TABLE IF NOT EXISTS numerotation_format
   date_application DATE NULL,
   updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   updated_by       INT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+// Seuils de départ — à confirmer avec votre laboratoire et votre cahier des charges.
+//  OLIVE   : huile d'olive vierge extra, règlement délégué (UE) 2022/2104.
+//  GRAINES : huiles vierges pressées à froid (sésame, nigelle…), Codex Stan 210 (indice d'acide ≤ 4 mg KOH/g ; peroxyde ≤ 15 meq O₂/kg).
+const PARAMETRES_QUALITE_DEFAUT = [
+  ['OLIVE', 'ACIDITE', 'Acidité libre', '% ac. oléique', null, 0.8, 1],
+  ['OLIVE', 'PEROXYDE', 'Indice de peroxyde', 'meq O₂/kg', null, 20, 2],
+  ['OLIVE', 'K232', 'K232', '', null, 2.5, 3],
+  ['OLIVE', 'K270', 'K270', '', null, 0.22, 4],
+  ['OLIVE', 'DELTA_K', 'Delta K', '', null, 0.01, 5],
+  ['GRAINES', 'INDICE_ACIDE', "Indice d'acide", 'mg KOH/g', null, 4, 1],
+  ['GRAINES', 'PEROXYDE', 'Indice de peroxyde', 'meq O₂/kg', null, 15, 2],
+];
+
+const SQL_QUALITE = `CREATE TABLE IF NOT EXISTS qualite_parametres (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  profil     VARCHAR(20) NOT NULL,
+  code       VARCHAR(30) NOT NULL,
+  nom        VARCHAR(80) NOT NULL,
+  unite      VARCHAR(30) NOT NULL DEFAULT '',
+  min_valeur DECIMAL(12,4) NULL,
+  max_valeur DECIMAL(12,4) NULL,
+  actif      TINYINT(1) NOT NULL DEFAULT 1,
+  ordre      INT NOT NULL DEFAULT 0,
+  UNIQUE KEY uk_qualite_profil_code (profil, code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS controle_resultats (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  controle_id INT NOT NULL,
+  code        VARCHAR(30) NOT NULL,
+  nom         VARCHAR(80) NOT NULL,
+  unite       VARCHAR(30) NOT NULL DEFAULT '',
+  valeur      DECIMAL(12,4) NOT NULL,
+  min_valeur  DECIMAL(12,4) NULL,
+  max_valeur  DECIMAL(12,4) NULL,
+  conforme    TINYINT(1) NOT NULL,
+  FOREIGN KEY (controle_id) REFERENCES controles_qualite(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

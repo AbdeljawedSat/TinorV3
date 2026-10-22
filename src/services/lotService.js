@@ -216,9 +216,20 @@ async function createLot(pool, { produit_id, origine, quantite, employe_id, moti
     ]
   );
   const lotId = insertRes.insertId;
+  // Contrôle qualité : les étapes cochées dans Réglages › Paramètres qualité créent leurs lots en quarantaine,
+  // jusqu'à une analyse conforme (voir routes/qualite.js).
+  let statut = 'LIBERE', motifStatut = motif || 'Création du lot';
+  try {
+    const reglage = (await pool.query('SELECT qualite_quarantaine_etapes AS e FROM settings WHERE id = 1')).rows[0];
+    if (reglage && reglage.e && reglage.e.split(',').includes(origine)) {
+      statut = 'QUARANTAINE';
+      motifStatut = `${motifStatut} — en quarantaine : en attente d'analyse`.slice(0, 250);
+      await pool.query(`UPDATE lots SET statut = 'QUARANTAINE' WHERE id = $1`, [lotId]);
+    }
+  } catch { /* colonne absente : migration pas encore lancée */ }
   await pool.query(
-    `INSERT INTO lot_statuts_historique (lot_id, statut, motif, employe_id) VALUES ($1,'LIBERE',$2,$3)`,
-    [lotId, motif || 'Création du lot', employe_id || null]
+    `INSERT INTO lot_statuts_historique (lot_id, statut, motif, employe_id) VALUES ($1,$2,$3,$4)`,
+    [lotId, statut, motifStatut, employe_id || null]
   );
   return { lotId, numeroLot };
 }
