@@ -38,6 +38,17 @@ async function main() {
   await appliquerMisesAJour(conn);
   console.log(`Remise à zéro de ${cible}…`);
   await conn.query(sql);
+  // Tables ajoutées depuis la V4 que le script de démonstration ne connaît pas : vidées aussi (sinon des lignes orphelines
+  // se rattacheraient aux nouveaux enregistrements de même numéro).
+  const aVider = ['controle_resultats', 'journal_audit', 'paiements_fournisseurs', 'modules_droits', 'numerotation_formats'];
+  const [paie] = await conn.query("SELECT table_name AS t FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name LIKE 'paie\\_%' AND table_name <> 'paie_schema_version'");
+  await conn.query('SET FOREIGN_KEY_CHECKS = 0');
+  for (const t of [...aVider, ...paie.map(x => x.t)]) {
+    const [ex] = await conn.query('SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?', [t]);
+    if (ex[0].n) await conn.query(`DELETE FROM \`${t}\``);
+  }
+  await conn.query("DELETE FROM sequences WHERE name LIKE 'num:%'");
+  await conn.query('SET FOREIGN_KEY_CHECKS = 1');
   await appliquerMisesAJour(conn); // une 2e fois : les mises à jour de données (ex. huiles filtrées) portent sur les données chargées
   const [[r]] = await conn.query(`SELECT (SELECT COUNT(*) FROM produits) AS produits, (SELECT COUNT(*) FROM lots) AS lots,
     (SELECT COUNT(*) FROM commandes) AS commandes, (SELECT COUNT(*) FROM factures) AS factures`);

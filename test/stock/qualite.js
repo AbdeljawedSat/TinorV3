@@ -20,7 +20,7 @@ const { api, login, check } = require('./api');
   let r = await post('/qualite/controles', { lot_id: lotLibre.id, date_controle: aujourdhui, profil: 'OLIVE', laboratoire: 'Labo test', reference_rapport: 'R-1',
     resultats: [{ code: 'ACIDITE', valeur: 0.4 }, { code: 'PEROXYDE', valeur: 12 }] });
   check(r.status === 201 && r.data.conforme === 1 && r.data.decision === 'LIBERE' && r.data.statut_lot === 'LIBERE', `analyse conforme : lot libéré (${r.status})`);
-  check(r.data.resultats.length === 2 && r.data.resultats.every(x => x.conforme === 1), 'résultats détaillés enregistrés');
+  check(r.data.resultats && r.data.resultats.length === 2 && r.data.resultats.every(x => x.conforme === 1), 'résultats détaillés enregistrés' + (r.data.resultats ? '' : ' ' + JSON.stringify(r.data).slice(0, 300)));
 
   console.log('QC. Analyse hors seuils → lot bloqué');
   r = await post('/qualite/controles', { lot_id: lotLibre.id, date_controle: aujourdhui, profil: 'OLIVE', resultats: [{ code: 'ACIDITE', valeur: 1.3 }, { code: 'PEROXYDE', valeur: 12 }] });
