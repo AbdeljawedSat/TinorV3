@@ -90,6 +90,26 @@ const INDEX = "const express = require('express'); module.exports = { installer(
   const audit = (await appeler(admin, 'GET', '/audit?rubrique=m')).data.lignes;
   check(audit.length > 0 && audit.every(l => !l.resume), 'journal d\'audit TinOR : actions tracées sans détails sensibles (pas de salaires)');
 
+  console.log('MD2. Import des employés de TinOR');
+  const e1 = (await appeler(admin, 'POST', '/employes', { matricule: `E1${sfx}`, nom: 'Hamdi', prenom: 'Sonia', fonction: 'Presse' })).data;
+  const e2 = (await appeler(admin, 'POST', '/employes', { matricule: `E2${sfx}`, nom: 'Jlassi', prenom: 'Karim', fonction: 'Conditionnement' })).data;
+  const liste = (await p(G, 'GET', '/tinor/employes')).data;
+  check(liste.some(e => e.matricule === `E1${sfx}` && !e.dejaImporte), 'les employés de TinOR sont listés pour l\'import');
+  check((await p(prod.token, 'GET', '/tinor/employes')).status === 403 && (await p(vendeur.token, 'GET', '/tinor/employes')).status === 403, 'import : réservé à qui gère les salariés (le valideur et le vendeur sont refusés)');
+  const sansDate = (await p(G, 'POST', '/tinor/importer', { employes: [{ id: e1.id }] })).data;
+  check(sansDate.importes.length === 0 && /date d'entrée/.test(sansDate.ignores[0].raison), `sans date d'entrée : ignoré (${sansDate.ignores[0].raison})`);
+  const imp = (await p(G, 'POST', '/tinor/importer', { employes: [{ id: e1.id, dateEntree: '2022-03-01' }, { id: e2.id, dateEntree: '2023-06-15' }, { id: 999999 }] })).data;
+  check(imp.importes.length === 2 && imp.ignores.length === 1, `2 employés importés, 1 introuvable ignoré`);
+  const sal = (await p(G, 'GET', '/salaries')).data.find(x => x.matricule === `E1${sfx}`);
+  check(sal && sal.nom === 'HAMDI' && sal.prenom === 'Sonia' && sal.fonction === 'Presse' && sal.dateEntree === '2022-03-01', 'fiche de paie : identité reprise de TinOR');
+  const encore = (await p(G, 'POST', '/tinor/importer', { employes: [{ id: e1.id, dateEntree: '2022-03-01' }] })).data;
+  check(encore.importes.length === 0 && encore.ignores[0].raison === 'déjà importé', 'déjà importé : jamais écrasé');
+  check((await p(G, 'GET', '/tinor/employes')).data.find(e => e.matricule === `E1${sfx}`).dejaImporte === true, 'la liste marque « déjà importé »');
+  check((await p(G, 'POST', '/tinor/importer', { employes: [] })).status === 400, 'sélection vide refusée');
+  check((await p(A, 'GET', '/journal?q=IMPORT')).data.some(e => e.action === 'IMPORT'), 'import tracé dans le journal de la paie');
+  for (const x of imp.importes) { const f = (await p(G, 'GET', '/salaries')).data.find(y => y.id === x.id); await p(G, 'PUT', `/salaries/${x.id}`, { ...f, actif: false }); } // sans contrat : hors de la paie du test
+  await appeler(admin, 'DELETE', `/employes/${e1.id}`); await appeler(admin, 'DELETE', `/employes/${e2.id}`);
+
   console.log('ME. Désactivation, réglages, données conservées');
   check((await appeler(admin, 'PUT', '/modules-admin/paie-tn/config', { controleDeuxNiveaux: false })).status === 200, 'réglage : contrôle à deux niveaux désactivé (le module redémarre)');
   const per2 = (await p(G, 'POST', '/periodes', { annee: ANNEE, mois: MOIS2 })).data;

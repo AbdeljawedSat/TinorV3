@@ -1,7 +1,7 @@
 {
   "id": "paie-tn",
   "nom": "Paie Tunisie",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Paie tunisienne : salariés et contrats, éléments variables, simulation, validation à deux niveaux, bulletins (FR ou FR/AR), états CNSS / IRPP / CSS, paramètres réglementaires datés et modifiables.",
   "auteur": "SATOURI Abdeljawed",
   "licence": "Propriétaire",

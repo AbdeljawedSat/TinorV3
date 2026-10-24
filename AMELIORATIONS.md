@@ -599,4 +599,6 @@ TinOR devient extensible : on ajoute des fonctions sans toucher au code. Premier
 - **Paie** : salariés, contrats, éléments variables, simulation, validation à deux niveaux, bulletins FR / FR-AR, états CNSS / IRPP / CSS, paramètres réglementaires datés. ⚠ Bulletins « NON CERTIFIÉS » tant que les paramètres ne sont pas validés (voir `docs/PARAMETRES_A_CONFIRMER.md` du module).
 - **Tests** : `test/stock/modules.js` (installation, zips dangereux, droits, paie de bout en bout, données conservées), moteur et équivalence Java du module en CI, zip du module vérifié à jour.
 
-Pistes suivantes : relier les salariés de la paie aux employés de TinOR, fichiers déclaratifs CNSS / DGI (formats officiels à obtenir), modules hors ligne.
+Paie 1.1.0 : import des employés de TinOR dans la paie (liste cochable, date d'entrée, jamais d'écrasement).
+
+Pistes suivantes : fichiers déclaratifs CNSS / DGI (formats officiels à obtenir), modules hors ligne.

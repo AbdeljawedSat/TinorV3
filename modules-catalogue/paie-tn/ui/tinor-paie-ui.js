@@ -284,7 +284,7 @@ font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:
       var gerer = peut('GERER_SALARIES');
       contenu().innerHTML = '<div class="tp-carte"><div class="tp-barre"><input class="tp-q" placeholder="Rechercher (matricule, nom, fonction)" value="' + esc(etat.q) + '" style="flex:1;min-width:200px">' +
         '<label class="tp-case"><input type="checkbox" class="tp-inactifs"' + (etat.inactifs ? ' checked' : '') + '> inactifs</label>' +
-        (gerer ? '<button class="tp-btn tp-prim tp-nouveau">+ Nouveau salarié</button>' : '') + '</div><div class="tp-table"><table><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th>' +
+        (gerer ? '<button class="tp-btn tp-importer" title="Créer des salariés à partir des employés de TinOR">⇩ Importer depuis TinOR</button><button class="tp-btn tp-prim tp-nouveau">+ Nouveau salarié</button>' : '') + '</div><div class="tp-table"><table><thead><tr><th>Matricule</th><th>Nom</th><th>Prénom</th>' +
         '<th>Fonction</th><th>Entrée</th><th>Sortie</th><th>Chef famille</th><th class="n">Enfants</th><th>Actif</th></tr></thead><tbody>' +
         etat.salaries.map(function (s) {
           return '<tr class="cliquable' + (sel && sel.id === s.id ? ' sel' : '') + '" data-sal="' + s.id + '"><td>' + esc(s.matricule) + '</td><td>' + esc(s.nom) + '</td><td>' + esc(s.prenom) +
@@ -312,12 +312,52 @@ font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:
       c.querySelector('.tp-inactifs').onchange = function (e) { etat.inactifs = e.target.checked; ecranSalaries(); };
       c.querySelectorAll('[data-sal]').forEach(function (tr) { tr.onclick = function () { etat.salarieSel = Number(tr.getAttribute('data-sal')); ecranSalaries(); }; });
       var nv = c.querySelector('.tp-nouveau'); if (nv) nv.onclick = function () { formSalarie(null); };
+      var im = c.querySelector('.tp-importer'); if (im) im.onclick = action(function () { return dialogueImport(); });
       var md = c.querySelector('.tp-modifier'); if (md) md.onclick = function () { formSalarie(sel); };
       var ac = c.querySelector('.tp-ajout-ctr');
       if (ac) ac.onclick = action(function () {
         var o = {}; c.querySelectorAll('.tp-ctr [name]').forEach(function (i) { o[i.name] = i.value.replace(',', '.').trim(); });
         return post('/salaries/' + sel.id + '/contrats', o).then(function () { message('Contrat ajouté.'); ecranSalaries(); });
       });
+    }
+
+    // Import des employés de TinOR : l'identité vient de TinOR, le reste (CNSS, famille, RIB, contrat) se complète ensuite dans la fiche.
+    function dialogueImport() {
+      var dlg = contenu().querySelector('.tp-dlg');
+      return get('/tinor/employes').then(function (liste) {
+        var aImporter = liste.filter(function (e) { return !e.dejaImporte; });
+        dlg.innerHTML = '<h3>Importer depuis les employés de TinOR</h3><div class="tp-zone-dlg"></div>' +
+          (aImporter.length ? '<p class="tp-gris">Cochez les personnes à créer comme salariés de paie. Elles seront créées avec leur matricule, nom, prénom et fonction ; ' +
+            'ajoutez ensuite leur contrat, leur N° CNSS et leur situation familiale dans leur fiche.</p>' +
+            '<div class="tp-barre"><label class="tp-case"><input type="checkbox" class="tp-tout" checked> Tout cocher</label>' +
+            '<label>Date d\'entrée pour celles qui n\'en ont pas dans TinOR *<input type="date" class="tp-date-defaut"></label></div>' +
+            '<div class="tp-table"><table><thead><tr><th></th><th>Matricule</th><th>Nom</th><th>Prénom</th><th>Fonction</th><th>Date d\'entrée</th></tr></thead><tbody>' +
+            liste.map(function (e) {
+              return '<tr' + (e.dejaImporte ? ' class="tp-gris"' : '') + '><td><input type="checkbox" class="tp-ck" data-id="' + e.id + '"' + (e.dejaImporte ? ' disabled' : ' checked') + '></td><td>' + esc(e.matricule) +
+                '</td><td>' + esc(e.nom) + '</td><td>' + esc(e.prenom) + '</td><td>' + esc(e.fonction) + '</td><td>' +
+                (e.dejaImporte ? 'déjà importé' : e.dateEntree ? dfr(e.dateEntree) : '<input type="date" class="tp-date-ind" data-id="' + e.id + '">') + '</td></tr>';
+            }).join('') + '</tbody></table></div>'
+            : '<p class="tp-msg warn">' + (liste.length ? 'Tous les employés de TinOR sont déjà dans la paie.' : 'Aucun employé dans TinOR (Réglages › Employés).') + '</p>') +
+          '<div class="tp-barre" style="justify-content:flex-end"><button class="tp-btn tp-fermer">Fermer</button>' + (aImporter.length ? '<button class="tp-btn tp-prim tp-go">Importer</button>' : '') + '</div>';
+        dlg.querySelector('.tp-fermer').onclick = function () { dlg.close(); };
+        var tout = dlg.querySelector('.tp-tout');
+        if (tout) tout.onchange = function () { dlg.querySelectorAll('.tp-ck:not([disabled])').forEach(function (c) { c.checked = tout.checked; }); };
+        var go = dlg.querySelector('.tp-go');
+        if (go) go.onclick = function () {
+          var defaut = dlg.querySelector('.tp-date-defaut').value;
+          var choix = [].slice.call(dlg.querySelectorAll('.tp-ck:checked')).map(function (c) {
+            var ind = dlg.querySelector('.tp-date-ind[data-id="' + c.getAttribute('data-id') + '"]');
+            return { id: Number(c.getAttribute('data-id')), dateEntree: (ind && ind.value) || defaut || undefined };
+          });
+          post('/tinor/importer', { employes: choix }).then(function (r) {
+            dlg.close();
+            message(r.importes.length + ' salarié(s) importé(s)' + (r.ignores.length ? ' — ' + r.ignores.length + ' ignoré(s) : ' + r.ignores.map(function (x) { return (x.matricule || x.id) + ' (' + x.raison + ')'; }).join(', ') : '') +
+              '. Ajoutez maintenant leur contrat.', r.ignores.length ? 'warn' : 'ok');
+            ecranSalaries();
+          }).catch(function (e) { dlg.querySelector('.tp-zone-dlg').innerHTML = '<div class="tp-msg err">' + esc(e.message) + '</div>'; });
+        };
+        dlg.showModal();
+      }, function (e) { throw new Error(/404|introuvable/.test(e.message) ? "Import indisponible : ce module n'est pas utilisé dans TinOR." : e.message); });
     }
 
     function formSalarie(s) {
