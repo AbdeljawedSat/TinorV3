@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>tn.jas.paie</groupId>
+    <artifactId>paie-tn-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <artifactId>paie-engine</artifactId>
+  <name>Paie Tunisie – moteur de calcul</name>
+  <description>Moteur de paie tunisien sans dépendance : paramètres datés, BigDecimal, résultats identiques au module JS.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <!-- Source unique des paramètres : dossier shared/ (également utilisé par le module JS) -->
+      <resource>
+        <directory>${project.basedir}/../../shared</directory>
+        <includes>
+          <include>parametres-tn.json</include>
+          <include>rubriques-tn.json</include>
+        </includes>
+        <targetPath>tn/jas/paie</targetPath>
+      </resource>
+    </resources>
+  </build>
+</project>

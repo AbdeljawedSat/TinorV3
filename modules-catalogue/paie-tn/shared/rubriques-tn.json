@@ -1,0 +1,23 @@
+{
+  "version": "2026.10-1",
+  "aide": {
+    "type": "GAIN = ajoute au brut ; RETENUE_BRUT = diminue le brut (absence) ; RETENUE_NET = retenue après calcul du net (avance, prêt)",
+    "mode": "MONTANT = montant saisi ; QTE_TAUX = quantité × taux saisis ; HEURES_SUP = heures × taux horaire du contrat × coefficient ; ABS_JOURS = jours × salaire de base / JOURS_OUVRABLES_MOIS ; ABS_HEURES = heures × taux horaire du contrat",
+    "assujettissement": "cnss / irpp : rubrique soumise ou non. Les valeurs par défaut des indemnités sont À CONFIRMER (exonérations éventuelles)."
+  },
+  "rubriques": [
+    { "code": "SAL_BASE",       "libelle": "Salaire de base",                   "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 10,  "statut": "A_CONFIRMER" },
+    { "code": "HS_1",           "libelle": "Heures supplémentaires (niveau 1)", "type": "GAIN",         "mode": "HEURES_SUP", "coefParam": "HS_MAJ_1", "cnss": true, "irpp": true, "ordre": 20, "statut": "A_CONFIRMER" },
+    { "code": "HS_2",           "libelle": "Heures supplémentaires (niveau 2)", "type": "GAIN",         "mode": "HEURES_SUP", "coefParam": "HS_MAJ_2", "cnss": true, "irpp": true, "ordre": 21, "statut": "A_CONFIRMER" },
+    { "code": "PRIME_PRESENCE", "libelle": "Prime de présence",                 "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 30,  "statut": "A_CONFIRMER" },
+    { "code": "PRIME_RENDEMENT","libelle": "Prime de rendement",                "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 31,  "statut": "A_CONFIRMER" },
+    { "code": "PRIME_ANCIENNETE","libelle": "Prime d'ancienneté",               "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 32,  "statut": "A_CONFIRMER" },
+    { "code": "IND_TRANSPORT",  "libelle": "Indemnité de transport",            "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 40,  "statut": "A_CONFIRMER" },
+    { "code": "IND_PANIER",     "libelle": "Indemnité de panier",               "type": "GAIN",         "mode": "MONTANT",    "cnss": true,  "irpp": true,  "ordre": 41,  "statut": "A_CONFIRMER" },
+    { "code": "REMB_FRAIS",     "libelle": "Remboursement de frais (justifiés)","type": "GAIN",         "mode": "MONTANT",    "cnss": false, "irpp": false, "ordre": 50,  "statut": "A_CONFIRMER" },
+    { "code": "ABS_JOURS",      "libelle": "Absence non payée (jours)",         "type": "RETENUE_BRUT", "mode": "ABS_JOURS",  "cnss": true,  "irpp": true,  "ordre": 60,  "statut": "A_CONFIRMER" },
+    { "code": "ABS_HEURES",     "libelle": "Absence non payée (heures)",        "type": "RETENUE_BRUT", "mode": "ABS_HEURES", "cnss": true,  "irpp": true,  "ordre": 61,  "statut": "A_CONFIRMER" },
+    { "code": "AVANCE",         "libelle": "Avance sur salaire",                "type": "RETENUE_NET",  "mode": "MONTANT",    "cnss": false, "irpp": false, "ordre": 90,  "statut": "A_CONFIRMER" },
+    { "code": "PRET",           "libelle": "Remboursement de prêt",             "type": "RETENUE_NET",  "mode": "MONTANT",    "cnss": false, "irpp": false, "ordre": 91,  "statut": "A_CONFIRMER" }
+  ]
+}

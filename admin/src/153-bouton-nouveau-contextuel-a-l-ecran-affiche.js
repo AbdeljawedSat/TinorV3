@@ -156,7 +156,7 @@
   document.getElementById('qaPresse')?.addEventListener('click', () => actionRapide('presse'));
   document.getElementById('qaConditionnement')?.addEventListener('click', () => actionRapide('conditionnement'));
   document.getElementById('qaClient')?.addEventListener('click', () => actionRapide('clients'));
-  const GERANT_ONLY_VIEWS = new Set(['utilisateurs', 'remises', 'grille-prix', 'journal', 'qualite-parametres']);
+  const GERANT_ONLY_VIEWS = new Set(['utilisateurs', 'remises', 'grille-prix', 'journal', 'qualite-parametres', 'modules']);
   document.getElementById('btnNouveau').addEventListener('click', () => {
     if (GERANT_ONLY_VIEWS.has(CURRENT_VIEW_KEY) && !isGerant()) {
       notifier("Réservé au rôle Gérant.");

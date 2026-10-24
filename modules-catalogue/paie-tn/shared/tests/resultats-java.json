@@ -1,0 +1,3699 @@
+{
+  "resultats": [
+    {
+      "id": "C01",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T001",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1200.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1200.000",
+          "baseCnss": "1200.000",
+          "baseIrpp": "1200.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1200.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "110.160",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "198.840"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1200.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "3.000",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "3.000"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "4.800"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "113.160",
+          "imposableMensuel": "1086.840",
+          "imposableAnnuel": "13042.080",
+          "fraisProAnnuel": "1304.208",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "11737.872",
+          "irppAnnuel": "1184.468",
+          "irppMensuel": "98.706",
+          "cssAnnuel": "58.689",
+          "cssMensuel": "4.891"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1200.000",
+          "cnssSalarial": "113.160",
+          "irpp": "98.706",
+          "css": "4.891",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "983.243",
+          "chargesPatronales": "230.640",
+          "coutEmployeur": "1430.640"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "14 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C02",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T002",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "2500.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "PRIME_PRESENCE",
+            "libelle": "Prime de présence",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "100.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "IND_TRANSPORT",
+            "libelle": "Indemnité de transport",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "60.500",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "2660.500",
+          "baseCnss": "2660.500",
+          "baseIrpp": "2660.500"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "2660.500",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "244.234",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "440.845"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "2660.500",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "6.651",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "6.651"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "2660.500",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.006",
+            "montantPatronal": "15.963"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "2660.500",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.02",
+            "montantPatronal": "53.210"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "2660.500",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "26.605"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "250.885",
+          "imposableMensuel": "2409.615",
+          "imposableAnnuel": "28915.380",
+          "fraisProAnnuel": "2000.000",
+          "deductionsFamille": "500.000",
+          "netImposableAnnuel": "26415.380",
+          "irppAnnuel": "5174.614",
+          "irppMensuel": "431.218",
+          "cssAnnuel": "132.077",
+          "cssMensuel": "11.006"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "2660.500",
+          "cnssSalarial": "250.885",
+          "irpp": "431.218",
+          "css": "11.006",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "1967.391",
+          "chargesPatronales": "543.274",
+          "coutEmployeur": "3203.774"
+        },
+        "parametres": [
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:IND_TRANSPORT",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:PRIME_PRESENCE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "17 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C03",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-03",
+        "matricule": "T003",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "9000.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "PRIME_RENDEMENT",
+            "libelle": "Prime de rendement",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1250.750",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "10250.750",
+          "baseCnss": "10250.750",
+          "baseIrpp": "10250.750"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "10250.750",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "941.019",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "1698.549"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "10250.750",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "25.627",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "25.627"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "10250.750",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "41.003"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "10250.750",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "102.508"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "10250.750",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "102.508"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "966.646",
+          "imposableMensuel": "9284.104",
+          "imposableAnnuel": "111409.248",
+          "fraisProAnnuel": "2000.000",
+          "deductionsFamille": "3700.000",
+          "netImposableAnnuel": "105709.248",
+          "irppAnnuel": "35033.699",
+          "irppMensuel": "2919.475",
+          "cssAnnuel": "528.546",
+          "cssMensuel": "44.046"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "10250.750",
+          "cnssSalarial": "966.646",
+          "irpp": "2919.475",
+          "css": "44.046",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "6320.583",
+          "chargesPatronales": "1970.195",
+          "coutEmployeur": "12220.945"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_ETUDIANT",
+            "debut": "2019-01-01",
+            "valeur": "1000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_HANDICAPE",
+            "debut": "2019-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:PRIME_RENDEMENT",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "20 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C04",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T004",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "450.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "450.000",
+          "baseCnss": "450.000",
+          "baseIrpp": "450.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "450.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "41.310",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "74.565"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "450.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "1.125",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "1.125"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "450.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "1.800"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "450.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "4.500"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "450.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "4.500"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "42.435",
+          "imposableMensuel": "407.565",
+          "imposableAnnuel": "4890.780",
+          "fraisProAnnuel": "489.078",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "4401.702",
+          "irppAnnuel": "0.000",
+          "irppMensuel": "0.000",
+          "cssAnnuel": "0.000",
+          "cssMensuel": "0.000"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "450.000",
+          "cnssSalarial": "42.435",
+          "irpp": "0.000",
+          "css": "0.000",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "407.565",
+          "chargesPatronales": "86.490",
+          "coutEmployeur": "536.490"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "14 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C05",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T005",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1500.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "HS_1",
+            "libelle": "Heures supplémentaires (niveau 1)",
+            "type": "GAIN",
+            "quantite": "10",
+            "taux": "1.25",
+            "montant": "90.144",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "HS_2",
+            "libelle": "Heures supplémentaires (niveau 2)",
+            "type": "GAIN",
+            "quantite": "4.5",
+            "taux": "1.5",
+            "montant": "48.678",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1638.822",
+          "baseCnss": "1638.822",
+          "baseIrpp": "1638.822"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1638.822",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "150.444",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "271.553"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1638.822",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "4.097",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "4.097"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1638.822",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "6.555"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1638.822",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "16.388"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1638.822",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "16.388"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "154.541",
+          "imposableMensuel": "1484.281",
+          "imposableAnnuel": "17811.372",
+          "fraisProAnnuel": "1781.137",
+          "deductionsFamille": "400.000",
+          "netImposableAnnuel": "15630.235",
+          "irppAnnuel": "2157.559",
+          "irppMensuel": "179.797",
+          "cssAnnuel": "78.151",
+          "cssMensuel": "6.513"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1638.822",
+          "cnssSalarial": "154.541",
+          "irpp": "179.797",
+          "css": "6.513",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "1297.971",
+          "chargesPatronales": "314.981",
+          "coutEmployeur": "1953.803"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "HS_MAJ_1",
+            "debut": "2010-01-01",
+            "valeur": "1.25",
+            "statut": "A_CONFIRMER",
+            "source": "Code du travail / convention collective applicable.",
+            "valide": false
+          },
+          {
+            "code": "HS_MAJ_2",
+            "debut": "2010-01-01",
+            "valeur": "1.5",
+            "statut": "A_CONFIRMER",
+            "source": "Code du travail / convention collective applicable.",
+            "valide": false
+          },
+          {
+            "code": "RUB:HS_1",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|HEURES_SUP|true|true|HS_MAJ_1",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:HS_2",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|HEURES_SUP|true|true|HS_MAJ_2",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "21 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C06",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T006",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1350.250",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "ABS_JOURS",
+            "libelle": "Absence non payée (jours)",
+            "type": "RETENUE_BRUT",
+            "quantite": "2",
+            "taux": null,
+            "montant": "103.865",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1246.385",
+          "baseCnss": "1246.385",
+          "baseIrpp": "1246.385"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1246.385",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "114.418",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "206.526"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1246.385",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "3.116",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "3.116"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1246.385",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "4.986"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1246.385",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.464"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1246.385",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.464"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "117.534",
+          "imposableMensuel": "1128.851",
+          "imposableAnnuel": "13546.212",
+          "fraisProAnnuel": "1354.621",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "12191.591",
+          "irppAnnuel": "1297.898",
+          "irppMensuel": "108.158",
+          "cssAnnuel": "60.958",
+          "cssMensuel": "5.080"
+        },
+        "retenuesNet": [
+          {
+            "code": "AVANCE",
+            "libelle": "Avance sur salaire",
+            "montant": "200.000"
+          },
+          {
+            "code": "PRET",
+            "libelle": "Remboursement de prêt – Prêt n°3",
+            "montant": "50.000"
+          }
+        ],
+        "synthese": {
+          "brut": "1246.385",
+          "cnssSalarial": "117.534",
+          "irpp": "108.158",
+          "css": "5.080",
+          "totalRetenuesNet": "250.000",
+          "netAPayer": "765.613",
+          "chargesPatronales": "239.556",
+          "coutEmployeur": "1485.941"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "JOURS_OUVRABLES_MOIS",
+            "debut": "2010-01-01",
+            "valeur": "26",
+            "statut": "A_CONFIRMER",
+            "source": "Usage courant (régime 48 h / 6 jours). Adapter au régime horaire.",
+            "valide": false
+          },
+          {
+            "code": "RUB:ABS_JOURS",
+            "debut": "1900-01-01",
+            "valeur": "RETENUE_BRUT|ABS_JOURS|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:AVANCE",
+            "debut": "1900-01-01",
+            "valeur": "RETENUE_NET|MONTANT|false|false|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:PRET",
+            "debut": "1900-01-01",
+            "valeur": "RETENUE_NET|MONTANT|false|false|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "18 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C07",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2024-06",
+        "matricule": "T007",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1800.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1800.000",
+          "baseCnss": "1800.000",
+          "baseIrpp": "1800.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1800.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "165.240",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "298.260"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1800.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "7.200"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1800.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "18.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1800.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "18.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "165.240",
+          "imposableMensuel": "1634.760",
+          "imposableAnnuel": "19617.120",
+          "fraisProAnnuel": "1961.712",
+          "deductionsFamille": "600.000",
+          "netImposableAnnuel": "17055.408",
+          "irppAnnuel": "3134.406",
+          "irppMensuel": "261.201",
+          "cssAnnuel": "85.277",
+          "cssMensuel": "7.106"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1800.000",
+          "cnssSalarial": "165.240",
+          "irpp": "261.201",
+          "css": "7.106",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "1366.453",
+          "chargesPatronales": "341.460",
+          "coutEmployeur": "2141.460"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2017-01-01",
+            "valeur": "0|5000|0;5000|20000|0.26;20000|30000|0.28;30000|50000|0.32;50000||0.35",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 44 avant LF 2025.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "15 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C08",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T008",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1000.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1000.000",
+          "baseCnss": "1000.000",
+          "baseIrpp": "1000.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1000.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "91.800",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "165.700"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1000.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "2.500",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "2.500"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1000.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "4.000"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1000.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "10.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1000.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "10.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "94.300",
+          "imposableMensuel": "905.700",
+          "imposableAnnuel": "10868.400",
+          "fraisProAnnuel": "1086.840",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "9781.560",
+          "irppAnnuel": "717.234",
+          "irppMensuel": "59.770",
+          "cssAnnuel": "48.908",
+          "cssMensuel": "4.076"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1000.000",
+          "cnssSalarial": "94.300",
+          "irpp": "59.770",
+          "css": "4.076",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "841.854",
+          "chargesPatronales": "192.200",
+          "coutEmployeur": "1192.200"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": true,
+        "alertes": [
+          {
+            "niveau": "ERREUR",
+            "code": "RUBRIQUE_INCONNUE",
+            "message": "Rubrique inconnue : XXX"
+          },
+          {
+            "niveau": "ERREUR",
+            "code": "VAR_SAL_BASE",
+            "message": "Le salaire de base provient du contrat : ne pas le saisir en variable"
+          },
+          {
+            "niveau": "ERREUR",
+            "code": "VARIABLE_INCOMPLETE",
+            "message": "Rubrique PRIME_PRESENCE : montant manquant(e)"
+          },
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "14 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C09",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T009",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "2080.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "HS_1",
+            "libelle": "Heures supplémentaires (niveau 1)",
+            "type": "GAIN",
+            "quantite": "3",
+            "taux": "1.25",
+            "montant": "37.969",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "REMB_FRAIS",
+            "libelle": "Remboursement de frais (justifiés)",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "85.250",
+            "cnss": false,
+            "irpp": false
+          },
+          {
+            "code": "ABS_HEURES",
+            "libelle": "Absence non payée (heures)",
+            "type": "RETENUE_BRUT",
+            "quantite": "7.5",
+            "taux": null,
+            "montant": "75.938",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "2127.281",
+          "baseCnss": "2042.031",
+          "baseIrpp": "2042.031"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "2042.031",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "187.458",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "338.365"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "2042.031",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "5.105",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "5.105"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "2042.031",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "8.168"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "2042.031",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "20.420"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "2042.031",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "20.420"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "192.563",
+          "imposableMensuel": "1849.468",
+          "imposableAnnuel": "22193.616",
+          "fraisProAnnuel": "2000.000",
+          "deductionsFamille": "700.000",
+          "netImposableAnnuel": "19493.616",
+          "irppAnnuel": "3123.404",
+          "irppMensuel": "260.284",
+          "cssAnnuel": "97.468",
+          "cssMensuel": "8.122"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "2127.281",
+          "cnssSalarial": "192.563",
+          "irpp": "260.284",
+          "css": "8.122",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "1666.312",
+          "chargesPatronales": "392.478",
+          "coutEmployeur": "2519.759"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "HS_MAJ_1",
+            "debut": "2010-01-01",
+            "valeur": "1.25",
+            "statut": "A_CONFIRMER",
+            "source": "Code du travail / convention collective applicable.",
+            "valide": false
+          },
+          {
+            "code": "RUB:ABS_HEURES",
+            "debut": "1900-01-01",
+            "valeur": "RETENUE_BRUT|ABS_HEURES|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:HS_1",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|HEURES_SUP|true|true|HS_MAJ_1",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:REMB_FRAIS",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|false|false|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "21 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C10",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T010",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1200.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1200.000",
+          "baseCnss": "1200.000",
+          "baseIrpp": "1200.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1200.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "110.160",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "198.840"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1200.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "3.000",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "3.000"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "4.800"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "113.160",
+          "imposableMensuel": "1086.840",
+          "imposableAnnuel": "13042.080",
+          "fraisProAnnuel": "1304.208",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "11737.872",
+          "irppAnnuel": "1184.468",
+          "irppMensuel": "98.706",
+          "cssAnnuel": "58.689",
+          "cssMensuel": "4.891"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1200.000",
+          "cnssSalarial": "113.160",
+          "irpp": "98.706",
+          "css": "4.891",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "983.243",
+          "chargesPatronales": "230.640",
+          "coutEmployeur": "1430.640"
+        },
+        "parametres": [
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": true
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": true
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": true
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": true
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": true
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": true
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": true
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": true
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": true
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": true
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": true
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": true
+          }
+        ],
+        "certifiable": true,
+        "bloquant": false,
+        "alertes": []
+      }
+    },
+    {
+      "id": "C11",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T011",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "560.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "560.000",
+          "baseCnss": "560.000",
+          "baseIrpp": "560.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "560.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "51.408",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "92.792"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "560.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "1.400",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "1.400"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "560.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "2.240"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "560.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "5.600"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "560.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "5.600"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "52.808",
+          "imposableMensuel": "507.192",
+          "imposableAnnuel": "6086.304",
+          "fraisProAnnuel": "608.630",
+          "deductionsFamille": "500.000",
+          "netImposableAnnuel": "4977.674",
+          "irppAnnuel": "0.000",
+          "irppMensuel": "0.000",
+          "cssAnnuel": "0.000",
+          "cssMensuel": "0.000"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "560.000",
+          "cnssSalarial": "52.808",
+          "irpp": "0.000",
+          "css": "0.000",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "507.192",
+          "chargesPatronales": "107.632",
+          "coutEmployeur": "667.632"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "17 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C12",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T012",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1700.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1700.000",
+          "baseCnss": "1700.000",
+          "baseIrpp": "1700.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1700.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "156.060",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "281.690"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1700.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "4.250",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "4.250"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1700.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "6.800"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1700.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "17.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1700.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "17.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "160.310",
+          "imposableMensuel": "1539.690",
+          "imposableAnnuel": "18476.280",
+          "fraisProAnnuel": "1847.628",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "16628.652",
+          "irppAnnuel": "2407.163",
+          "irppMensuel": "200.597",
+          "cssAnnuel": "83.143",
+          "cssMensuel": "6.929"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1700.000",
+          "cnssSalarial": "160.310",
+          "irpp": "200.597",
+          "css": "6.929",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "1332.164",
+          "chargesPatronales": "326.740",
+          "coutEmployeur": "2026.740"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "ENFANTS_SANS_CHEF",
+            "message": "Enfants déclarés mais salarié non chef de famille : déductions pour enfants non appliquées"
+          },
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "14 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C13",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2027-01",
+        "matricule": "T013",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1200.000",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "1200.000",
+          "baseCnss": "1200.000",
+          "baseIrpp": "1200.000"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "1200.000",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "110.160",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "198.840"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "1200.000",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "3.000",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "3.000"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "4.800"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "1200.000",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "12.000"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "113.160",
+          "imposableMensuel": "1086.840",
+          "imposableAnnuel": "13042.080",
+          "fraisProAnnuel": "1304.208",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "11737.872",
+          "irppAnnuel": "1184.468",
+          "irppMensuel": "98.706",
+          "cssAnnuel": "0.000",
+          "cssMensuel": "0.000"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "1200.000",
+          "cnssSalarial": "113.160",
+          "irpp": "98.706",
+          "css": "0.000",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "988.134",
+          "chargesPatronales": "230.640",
+          "coutEmployeur": "1430.640"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": true,
+        "alertes": [
+          {
+            "niveau": "ERREUR",
+            "code": "PARAM_MANQUANT",
+            "message": "Paramètre CSS_MAJORATION absent pour la période 2027-01"
+          },
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "11 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C14",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-10",
+        "matricule": "T014",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "1333.333",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "ABS_JOURS",
+            "libelle": "Absence non payée (jours)",
+            "type": "RETENUE_BRUT",
+            "quantite": "10",
+            "taux": null,
+            "montant": "512.820",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "820.513",
+          "baseCnss": "820.513",
+          "baseIrpp": "820.513"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "820.513",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "75.323",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "135.959"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "820.513",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "2.051",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "2.051"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "820.513",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "3.282"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "820.513",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "8.205"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "820.513",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "8.205"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "77.374",
+          "imposableMensuel": "743.139",
+          "imposableAnnuel": "8917.668",
+          "fraisProAnnuel": "891.767",
+          "deductionsFamille": "0.000",
+          "netImposableAnnuel": "8025.901",
+          "irppAnnuel": "453.885",
+          "irppMensuel": "37.824",
+          "cssAnnuel": "40.130",
+          "cssMensuel": "3.344"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "820.513",
+          "cnssSalarial": "77.374",
+          "irpp": "37.824",
+          "css": "3.344",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "701.971",
+          "chargesPatronales": "157.702",
+          "coutEmployeur": "978.215"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "JOURS_OUVRABLES_MOIS",
+            "debut": "2010-01-01",
+            "valeur": "26",
+            "statut": "A_CONFIRMER",
+            "source": "Usage courant (régime 48 h / 6 jours). Adapter au régime horaire.",
+            "valide": false
+          },
+          {
+            "code": "RUB:ABS_JOURS",
+            "debut": "1900-01-01",
+            "valeur": "RETENUE_BRUT|ABS_JOURS|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "MOIS_INCOMPLET",
+            "message": "Entrée ou sortie en cours de mois : saisir l'absence correspondante (pas de prorata automatique)"
+          },
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "16 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    },
+    {
+      "id": "C15",
+      "resultat": {
+        "moteur": "java-1.0.0",
+        "paramsVersion": "2026.10-1",
+        "periode": "2026-12",
+        "matricule": "T015",
+        "lignes": [
+          {
+            "code": "SAL_BASE",
+            "libelle": "Salaire de base",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "15000.000",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "PRIME_ANCIENNETE",
+            "libelle": "Prime d'ancienneté",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "333.333",
+            "cnss": true,
+            "irpp": true
+          },
+          {
+            "code": "IND_PANIER",
+            "libelle": "Indemnité de panier",
+            "type": "GAIN",
+            "quantite": null,
+            "taux": null,
+            "montant": "45.555",
+            "cnss": true,
+            "irpp": true
+          }
+        ],
+        "totaux": {
+          "brut": "15378.888",
+          "baseCnss": "15378.888",
+          "baseIrpp": "15378.888"
+        },
+        "cotisations": [
+          {
+            "code": "CNSS",
+            "libelle": "CNSS régime général",
+            "base": "15378.888",
+            "tauxSalarial": "0.0918",
+            "montantSalarial": "1411.782",
+            "tauxPatronal": "0.1657",
+            "montantPatronal": "2548.282"
+          },
+          {
+            "code": "PERTE_EMPLOI",
+            "libelle": "Fonds perte d'emploi",
+            "base": "15378.888",
+            "tauxSalarial": "0.0025",
+            "montantSalarial": "38.447",
+            "tauxPatronal": "0.0025",
+            "montantPatronal": "38.447"
+          },
+          {
+            "code": "AT",
+            "libelle": "Accident du travail",
+            "base": "15378.888",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.004",
+            "montantPatronal": "61.516"
+          },
+          {
+            "code": "TFP",
+            "libelle": "Taxe formation professionnelle",
+            "base": "15378.888",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "153.789"
+          },
+          {
+            "code": "FOPROLOS",
+            "libelle": "FOPROLOS",
+            "base": "15378.888",
+            "tauxSalarial": null,
+            "montantSalarial": null,
+            "tauxPatronal": "0.01",
+            "montantPatronal": "153.789"
+          }
+        ],
+        "fiscal": {
+          "cnssDeductible": "1450.229",
+          "imposableMensuel": "13928.659",
+          "imposableAnnuel": "167143.908",
+          "fraisProAnnuel": "2000.000",
+          "deductionsFamille": "400.000",
+          "netImposableAnnuel": "164743.908",
+          "irppAnnuel": "58647.563",
+          "irppMensuel": "4887.297",
+          "cssAnnuel": "823.720",
+          "cssMensuel": "68.643"
+        },
+        "retenuesNet": [],
+        "synthese": {
+          "brut": "15378.888",
+          "cnssSalarial": "1450.229",
+          "irpp": "4887.297",
+          "css": "68.643",
+          "totalRetenuesNet": "0.000",
+          "netAPayer": "8972.719",
+          "chargesPatronales": "2955.823",
+          "coutEmployeur": "18334.711"
+        },
+        "parametres": [
+          {
+            "code": "AT_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.004",
+            "statut": "A_CONFIRMER",
+            "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+            "valide": false
+          },
+          {
+            "code": "BAREME:IRPP",
+            "debut": "2025-01-01",
+            "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PAT_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.1657",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_PAT",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Idem CNSS_PE_SAL.",
+            "valide": false
+          },
+          {
+            "code": "CNSS_PE_SAL",
+            "debut": "2025-01-01",
+            "valeur": "0.0025",
+            "statut": "A_CONFIRMER",
+            "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+            "valide": false
+          },
+          {
+            "code": "CNSS_SAL_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.0918",
+            "statut": "A_CONFIRMER",
+            "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MAJORATION",
+            "debut": "2023-01-01",
+            "valeur": "0.005",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+            "valide": false
+          },
+          {
+            "code": "CSS_MODE",
+            "debut": "2023-01-01",
+            "valeur": "TOUTES",
+            "statut": "A_CONFIRMER",
+            "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+            "valide": false
+          },
+          {
+            "code": "CSS_SEUIL_EXONERATION",
+            "debut": "2020-01-01",
+            "valeur": "5000",
+            "statut": "A_CONFIRMER",
+            "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+            "valide": false
+          },
+          {
+            "code": "DED_CHEF_FAMILLE",
+            "debut": "2010-01-01",
+            "valeur": "300",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT",
+            "debut": "2019-01-01",
+            "valeur": "100",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "DED_ENFANT_MAX",
+            "debut": "2019-01-01",
+            "valeur": "4",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 40 (PwC).",
+            "valide": false
+          },
+          {
+            "code": "FOPROLOS_TAUX",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_PLAFOND",
+            "debut": "2017-01-01",
+            "valeur": "2000",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017.",
+            "valide": false
+          },
+          {
+            "code": "FRAIS_PRO_TAUX",
+            "debut": "2017-01-01",
+            "valeur": "0.1",
+            "statut": "A_CONFIRMER",
+            "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+            "valide": false
+          },
+          {
+            "code": "RUB:IND_PANIER",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:PRIME_ANCIENNETE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "RUB:SAL_BASE",
+            "debut": "1900-01-01",
+            "valeur": "GAIN|MONTANT|true|true|",
+            "statut": "A_CONFIRMER",
+            "source": "Catalogue des rubriques",
+            "valide": false
+          },
+          {
+            "code": "TFP_TAUX_DEFAUT",
+            "debut": "2019-01-01",
+            "valeur": "0.01",
+            "statut": "A_CONFIRMER",
+            "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+            "valide": false
+          }
+        ],
+        "certifiable": false,
+        "bloquant": false,
+        "alertes": [
+          {
+            "niveau": "AVERTISSEMENT",
+            "code": "NON_CERTIFIE",
+            "message": "19 élément(s) réglementaire(s) non validé(s) : bulletin NON CERTIFIÉ"
+          }
+        ]
+      }
+    }
+  ]
+}

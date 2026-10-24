@@ -1,0 +1,22 @@
+      <!-- ===== MODULES ===== -->
+      <div class="view" id="view-modules">
+        <div class="pageHead"><h1>Modules</h1><p>Ajouter des fonctions à TinOR : paie, et d'autres à venir — installation, droits et réglages de chaque module</p></div>
+        <div class="panel" style="padding:16px 20px;">
+          <div class="rowMeta"><b>Modules installés</b></div>
+          <div id="modInstalles" style="margin-top:8px;"></div>
+        </div>
+        <div class="panel" style="padding:16px 20px; margin-top:14px;">
+          <div class="rowMeta"><b>Modules disponibles</b> <span class="rowMeta">(fournis avec TinOR, dossier <code>modules-catalogue</code>)</span></div>
+          <div id="modCatalogue" style="margin-top:8px;"></div>
+        </div>
+        <div class="panel" style="padding:16px 20px; margin-top:14px;">
+          <div class="rowMeta"><b>Ajouter un module</b> depuis un fichier <code>.zip</code></div>
+          <div class="numCtx" style="margin-top:8px; align-items:end;">
+            <div><label>Fichier du module</label><input type="file" id="modFichier" accept=".zip,application/zip"></div>
+            <label class="chkLbl"><input type="checkbox" id="modConfiance"> Je connais l'auteur de ce module</label>
+            <button class="btnPrimary" id="modInstaller">Installer</button>
+          </div>
+          <div class="rowMeta" style="margin-top:8px;">⚠ Un module s'exécute dans le serveur TinOR, avec ses droits : il peut lire et modifier toute la base. N'installez que des modules dont vous connaissez l'auteur. Chaque installation est tracée dans le journal d'audit. Retirer un module ne supprime pas ses données.</div>
+        </div>
+      </div>
+

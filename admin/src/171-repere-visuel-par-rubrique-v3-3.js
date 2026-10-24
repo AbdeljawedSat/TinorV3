@@ -1,7 +1,7 @@
   // ---------- Repère visuel par rubrique (V3.3) ----------
   // Chaque écran porte le nom et la couleur de sa rubrique (Ventes, Production,
   // Stock, Achats, Réglages) : on voit d'un coup d'œil qu'on a changé d'écran.
-  const RUBRIQUE_CLE = { 'Ventes': 'ventes', 'Production': 'production', 'Stock': 'stock', 'Achats': 'achats', 'Réglages': 'reglages' };
+  const RUBRIQUE_CLE = { 'Ventes': 'ventes', 'Production': 'production', 'Stock': 'stock', 'Achats': 'achats', 'Réglages': 'reglages', 'Modules': 'reglages' };
   function rubriqueDe(vue) {
     const lien = document.querySelector(`#navScroll a[data-view="${vue}"]`);
     const groupe = lien?.closest('.navGroup');

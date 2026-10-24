@@ -1,0 +1,157 @@
+{
+  "version": "2026.10-1",
+  "pays": "TN",
+  "devise": "TND",
+  "decimales": 3,
+  "arrondi": "HALF_UP",
+  "avertissement": "Aucun paramètre n'est validé par défaut. Chaque valeur doit être confirmée sur le texte officiel (JORT) et validée par un professionnel de la paie avant tout usage réel. Tant qu'un paramètre utilisé n'est pas validé, le bulletin est marqué NON CERTIFIÉ.",
+  "parametres": [
+    {
+      "code": "CNSS_SAL_TAUX", "libelle": "CNSS part salariale – régime général non agricole (hors perte d'emploi)",
+      "type": "TAUX", "valeur": "0.0918", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Taux usuel 9,18 % relevé sur sources secondaires (calculateurs, cabinets). Vérifier sur cnss.tn / textes CNSS.",
+      "note": ""
+    },
+    {
+      "code": "CNSS_PAT_TAUX", "libelle": "CNSS part patronale – régime général non agricole (hors perte d'emploi et AT)",
+      "type": "TAUX", "valeur": "0.1657", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Taux usuel 16,57 % relevé sur sources secondaires. Vérifier sur cnss.tn.",
+      "note": ""
+    },
+    {
+      "code": "CNSS_PE_SAL", "libelle": "Contribution fonds perte d'emploi – part salariale",
+      "type": "TAUX", "valeur": "0.0025", "debut": "2025-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Loi de finances 2025 : contribution de 0,5 % répartie à parts égales (managers.tn). D'autres sources indiquent +0,5 point de chaque côté (9,68 % / 17,07 %).",
+      "note": "Sources contradictoires : 0,25 % ou 0,50 % par partie. Trancher sur le texte officiel."
+    },
+    {
+      "code": "CNSS_PE_PAT", "libelle": "Contribution fonds perte d'emploi – part patronale",
+      "type": "TAUX", "valeur": "0.0025", "debut": "2025-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Idem CNSS_PE_SAL.",
+      "note": "Sources contradictoires, voir CNSS_PE_SAL."
+    },
+    {
+      "code": "AT_TAUX_DEFAUT", "libelle": "Accident du travail – taux par défaut (le taux de l'entreprise prévaut)",
+      "type": "TAUX", "valeur": "0.004", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Taux fixé par la CNSS selon l'activité (environ 0,4 % à 4 %). Saisir le taux notifié à l'entreprise.",
+      "note": ""
+    },
+    {
+      "code": "TFP_TAUX_DEFAUT", "libelle": "Taxe de formation professionnelle – taux par défaut (le taux de l'entreprise prévaut)",
+      "type": "TAUX", "valeur": "0.01", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "1 % pour les industries manufacturières, 2 % pour les autres activités (usage courant). À confirmer selon l'activité.",
+      "note": ""
+    },
+    {
+      "code": "FOPROLOS_TAUX", "libelle": "FOPROLOS – contribution patronale",
+      "type": "TAUX", "valeur": "0.01", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "1 % de la masse salariale brute (usage courant). À confirmer.",
+      "note": ""
+    },
+    {
+      "code": "FRAIS_PRO_TAUX", "libelle": "Déduction forfaitaire frais professionnels – taux",
+      "type": "TAUX", "valeur": "0.10", "debut": "2017-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 25 modifié LF 2017 (KPMG Flash Alert 2017-011).",
+      "note": ""
+    },
+    {
+      "code": "FRAIS_PRO_PLAFOND", "libelle": "Déduction forfaitaire frais professionnels – plafond annuel",
+      "type": "MONTANT", "valeur": "2000", "debut": "2017-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 25 modifié LF 2017.",
+      "note": ""
+    },
+    {
+      "code": "DED_CHEF_FAMILLE", "libelle": "Déduction chef de famille (annuelle)",
+      "type": "MONTANT", "valeur": "300", "debut": "2010-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 40 (PwC Worldwide Tax Summaries, revu 29/06/2026).",
+      "note": ""
+    },
+    {
+      "code": "DED_ENFANT", "libelle": "Déduction par enfant à charge (annuelle)",
+      "type": "MONTANT", "valeur": "100", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 40 (PwC).",
+      "note": "Enfant de moins de 20 ans au 1er janvier, sans revenu propre."
+    },
+    {
+      "code": "DED_ENFANT_MAX", "libelle": "Nombre maximum d'enfants ouvrant droit à la déduction",
+      "type": "NOMBRE", "valeur": "4", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 40 (PwC).",
+      "note": ""
+    },
+    {
+      "code": "DED_ENFANT_ETUDIANT", "libelle": "Déduction par enfant étudiant non boursier de moins de 25 ans (annuelle)",
+      "type": "MONTANT", "valeur": "1000", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 40 (PwC).",
+      "note": "Remplace la déduction enfant ordinaire pour l'enfant concerné."
+    },
+    {
+      "code": "DED_ENFANT_HANDICAPE", "libelle": "Déduction par enfant handicapé (annuelle)",
+      "type": "MONTANT", "valeur": "2000", "debut": "2019-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 40 (PwC).",
+      "note": "Sans condition d'âge ni de rang. Remplace la déduction enfant ordinaire pour l'enfant concerné."
+    },
+    {
+      "code": "CSS_MAJORATION", "libelle": "CSS salariés – majoration de chaque taux du barème IRPP (retenue à la source)",
+      "type": "TAUX", "valeur": "0.005", "debut": "2023-01-01", "fin": "2026-12-31",
+      "statut": "A_CONFIRMER", "source": "LF 2023 (DL 2022-79 art. 22) et LF 2026 (loi 2025-17 art. 87) : demi-point pour les salaires versés jusqu'au 31/12/2026.",
+      "note": "Retour prévu à 1 point à partir de 2027 sauf nouvelle prorogation."
+    },
+    {
+      "code": "CSS_MODE", "libelle": "CSS – tranches concernées par la majoration (TOUTES = y compris la tranche à 0 %)",
+      "type": "TEXTE", "valeur": "TOUTES", "debut": "2023-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Interprétation : 'majoration de chaque taux du barème'. Valeurs possibles : TOUTES ou HORS_TRANCHE_ZERO.",
+      "note": "TOUTES revient à 0,5 % du revenu net imposable annuel."
+    },
+    {
+      "code": "CSS_SEUIL_EXONERATION", "libelle": "CSS – exonération si revenu net annuel après déductions ≤ seuil",
+      "type": "MONTANT", "valeur": "5000", "debut": "2020-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "LF 2020 (loi 2019-78 art. 39), maintenu par LF 2023.",
+      "note": ""
+    },
+    {
+      "code": "HS_MAJ_1", "libelle": "Heures supplémentaires – coefficient 1er niveau",
+      "type": "COEF", "valeur": "1.25", "debut": "2010-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code du travail / convention collective applicable.",
+      "note": ""
+    },
+    {
+      "code": "HS_MAJ_2", "libelle": "Heures supplémentaires – coefficient 2e niveau",
+      "type": "COEF", "valeur": "1.50", "debut": "2010-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Code du travail / convention collective applicable.",
+      "note": ""
+    },
+    {
+      "code": "JOURS_OUVRABLES_MOIS", "libelle": "Jours ouvrables par mois pour le salaire journalier (absences)",
+      "type": "NOMBRE", "valeur": "26", "debut": "2010-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "Usage courant (régime 48 h / 6 jours). Adapter au régime horaire.",
+      "note": ""
+    }
+  ],
+  "baremes": [
+    {
+      "code": "IRPP", "libelle": "Barème annuel IRPP", "debut": "2017-01-01", "fin": "2024-12-31",
+      "statut": "A_CONFIRMER", "source": "Code IRPP art. 44 avant LF 2025.",
+      "tranches": [
+        { "de": "0", "a": "5000", "taux": "0" },
+        { "de": "5000", "a": "20000", "taux": "0.26" },
+        { "de": "20000", "a": "30000", "taux": "0.28" },
+        { "de": "30000", "a": "50000", "taux": "0.32" },
+        { "de": "50000", "a": null, "taux": "0.35" }
+      ]
+    },
+    {
+      "code": "IRPP", "libelle": "Barème annuel IRPP", "debut": "2025-01-01", "fin": null,
+      "statut": "A_CONFIRMER", "source": "LF 2025 (loi 2024-48) art. 36, modifiant l'art. 44 du Code IRPP.",
+      "tranches": [
+        { "de": "0", "a": "5000", "taux": "0" },
+        { "de": "5000", "a": "10000", "taux": "0.15" },
+        { "de": "10000", "a": "20000", "taux": "0.25" },
+        { "de": "20000", "a": "30000", "taux": "0.30" },
+        { "de": "30000", "a": "40000", "taux": "0.33" },
+        { "de": "40000", "a": "50000", "taux": "0.36" },
+        { "de": "50000", "a": "70000", "taux": "0.38" },
+        { "de": "70000", "a": null, "taux": "0.40" }
+      ]
+    }
+  ]
+}

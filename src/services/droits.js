@@ -9,7 +9,7 @@ const ROLES = ['gerant', 'vendeur', 'magasinier', 'production', 'comptable'];
 const ROLES_LIBELLES = { gerant: 'Gérant', vendeur: 'Vendeur', magasinier: 'Magasinier', production: 'Production', comptable: 'Comptable' };
 const ROLES_COMPLETS = ['gerant', 'vendeur']; // rôles historiques : tout sauf l'administration
 
-const ADMIN = new Set(['users', 'backup', 'audit']); // lecture ET écriture réservées au gérant
+const ADMIN = new Set(['users', 'backup', 'audit', 'modules-admin']); // lecture ET écriture réservées au gérant
 const ADMIN_ECRITURE = new Set(['settings']);         // lecture ouverte (nom de l'entreprise…), écriture réservée au gérant
 
 const ECRITURE = {
@@ -23,6 +23,7 @@ function refus(role, methode, chemin) {
   const rubrique = String(chemin || '').replace(/^\/api\//, '').split(/[/?]/)[0];
   if (!ROLES.includes(role)) return 'Rôle inconnu.';
   if (role === 'gerant') return null;
+  if (rubrique === 'm') return null; // modules : chaque module contrôle lui-même les rôles qu'il définit (voir Réglages › Modules)
   if (ADMIN.has(rubrique)) return 'Réservé au gérant.';
   const lecture = methode === 'GET' || methode === 'HEAD' || methode === 'OPTIONS';
   if (lecture) return null;
