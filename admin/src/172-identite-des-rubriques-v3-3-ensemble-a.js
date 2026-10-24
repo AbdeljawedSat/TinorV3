@@ -7,7 +7,7 @@
     presse: 'presse', filtration: 'filtre', melanges: 'filtre', conditionnement: 'flacon', recettes: 'recette', 'historique-prod': 'historique',
     lots: 'lot', stock: 'stock', inventaires: 'inventaire', reprise: 'inventaire', 'stock-mouvements': 'mouvement', tracabilite: 'trace', produits: 'produit',
     achats: 'achat', receptions: 'graine', fournisseurs: 'camion', certificats: 'bio',
-    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', journal: 'parametre', 'qualite-parametres': 'parametre', marges: 'stats', 'paiements-fournisseurs': 'achat', apropos: 'parametre',
+    parametres: 'parametre', utilisateurs: 'utilisateur', employes: 'employe', locaux: 'local', numerotation: 'parametre', journal: 'parametre', modules: 'parametre', 'qualite-parametres': 'parametre', marges: 'stats', 'paiements-fournisseurs': 'achat', apropos: 'parametre',
   };
   const iconeEcran = (vue, classe = 'ecranIc') => ICONE_ECRAN[vue] ? `<svg class="${classe}" aria-hidden="true"><use href="#e-${ICONE_ECRAN[vue]}"/></svg>` : '';
   document.querySelectorAll('#navScroll .navGroup').forEach(g => { g.dataset.rubrique = RUBRIQUE_CLE[g.querySelector('.lbl').textContent] || ''; });

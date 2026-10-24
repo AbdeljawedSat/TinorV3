@@ -26,7 +26,8 @@ function audit(pool) {
       const user = req.user || {};
       const identifiant = user.username || (connexion && req.body ? String(req.body.username || '') : '') || null;
       let resume = '';
-      try { resume = JSON.stringify(nettoyer(req.body || {})).slice(0, 1500); } catch { /* corps illisible */ }
+      if (Buffer.isBuffer(req.body)) resume = `(fichier de ${req.body.length} octets)`;
+      else if (!chemin.startsWith('/api/m/')) { try { resume = JSON.stringify(nettoyer(req.body || {})).slice(0, 1500); } catch { /* corps illisible */ } } // les modules tiennent leur propre journal (pas de salaires ni de RIB ici)
       pool.query(
         `INSERT INTO journal_audit (user_id, username, role, methode, chemin, rubrique, entite_id, statut_http, ip, resume)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,

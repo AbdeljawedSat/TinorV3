@@ -207,7 +207,7 @@
     'stock':'view-stock',
     'stock-mouvements':'view-stock-mouvements', inventaires:'view-inventaires', reprise:'view-reprise',
     notifications:'view-notifications', synchro:'view-synchro', paiements:'view-paiements', livraisons:'view-livraisons', proformas:'view-proformas', avoirs:'view-avoirs', stats:'view-stats',
-    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', journal:'view-journal', 'qualite-parametres':'view-qualite-parametres', marges:'view-marges', 'paiements-fournisseurs':'view-paiements-fournisseurs', apropos:'view-apropos'
+    certificats:'view-certificats', parametres:'view-parametres', numerotation:'view-numerotation', journal:'view-journal', modules:'view-modules', 'qualite-parametres':'view-qualite-parametres', marges:'view-marges', 'paiements-fournisseurs':'view-paiements-fournisseurs', apropos:'view-apropos'
   };
   const titles = {
     dashboard:['Tableau de bord',null], notifications:['Notifications',null], synchro:['Synchronisation',null],
@@ -222,7 +222,7 @@
     achats:['Achats & Système','Achats'], receptions:['Achats & Système','Réceptions MP'],
     fournisseurs:['Achats & Système','Fournisseurs'], certificats:['Achats & Système','Certificats Bio'],
     locaux:['Achats & Système','Locaux & Zones'], employes:['Achats & Système','Employés'],
-    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], journal:['Achats & Système','Journal d\'audit'], 'qualite-parametres':['Achats & Système','Paramètres qualité'], marges:['Ventes','Marges & coûts'], 'paiements-fournisseurs':['Achats & Système','Paiements fournisseurs'], apropos:['Achats & Système','À propos']
+    utilisateurs:['Achats & Système','Utilisateurs'], parametres:['Achats & Système','Paramètres'], numerotation:['Achats & Système','Numérotation'], journal:['Achats & Système','Journal d\'audit'], modules:['Achats & Système','Modules'], 'qualite-parametres':['Achats & Système','Paramètres qualité'], marges:['Ventes','Marges & coûts'], 'paiements-fournisseurs':['Achats & Système','Paiements fournisseurs'], apropos:['Achats & Système','À propos']
   };
 
   document.querySelectorAll('#navScroll .navGroup').forEach(g => {
@@ -286,8 +286,10 @@
     if (key === 'marges' && TOKEN) chargerMarges().catch(e => notifier(e.message, 'erreur'));
     if (key === 'paiements-fournisseurs' && TOKEN) chargerPaiementsFournisseurs().catch(e => notifier(e.message, 'erreur'));
     if (key === 'qualite-parametres' && TOKEN) chargerParametresQualite().catch(e => notifier(e.message, 'erreur'));
+    if (key === 'modules' && TOKEN) chargerModules().catch(e => notifier(e.message, 'erreur'));
+    if (key.startsWith('m-') && TOKEN) monterModule(key.slice(2));
     if (key === 'journal' && TOKEN) chargerJournal().catch(e => notifier(e.message, 'erreur'));
-    if (key === 'numerotation' && TOKEN) chargerNumerotation().catch(e => notifier(e.message, 'error'));
+    if (key === 'numerotation' && TOKEN) chargerNumerotation().catch(e => notifier(e.message, 'erreur'));
 
     if(window.innerWidth <= 880) document.getElementById('sidebar').classList.remove('open');
     majOngletsMobile(key);

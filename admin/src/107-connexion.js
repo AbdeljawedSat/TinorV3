@@ -44,9 +44,10 @@
       if (role) role.textContent = LIBELLES_ROLES[user.role] || user.role;
       const utilisateursLink = document.querySelector('a[data-view="utilisateurs"]');
       if (utilisateursLink) utilisateursLink.style.display = isGerant() ? '' : 'none';
-      document.querySelectorAll('a[data-view="journal"], a[data-view="qualite-parametres"]').forEach(a => { a.style.display = isGerant() ? '' : 'none'; });
+      document.querySelectorAll('a[data-view="journal"], a[data-view="qualite-parametres"], a[data-view="modules"]').forEach(a => { a.style.display = isGerant() ? '' : 'none'; });
       majEnvironnement();
       await loadAllData();
+      chargerMenuModules();
     };
     // Changement de serveur (ex. version TEST → version RÉEL) : les opérations faites hors ligne
     // pour l'autre serveur ne doivent jamais partir vers celui-ci, ni sa copie locale s'afficher ici.

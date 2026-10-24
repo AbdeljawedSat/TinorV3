@@ -43,6 +43,10 @@ jobs:
       - run: npm ci
       - name: La console assemblée est à jour avec admin/src
         run: node scripts/construire-console.js --verifier
+      - name: Module Paie Tunisie (moteur, équivalence Java) et zip à jour
+        run: |
+          node --test modules-catalogue/paie-tn/test/moteur.test.js modules-catalogue/paie-tn/test/equivalence.test.js
+          node scripts/empaqueter-module.js modules-catalogue/paie-tn --verifier
       - name: Syntaxe du code et de la console
         run: node scripts/verifier-syntaxe.js
       - name: Base de test (schéma, mises à jour, données de démonstration)

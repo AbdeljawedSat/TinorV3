@@ -1,0 +1,117 @@
+{
+  "description": "Cas d'entrée partagés pour vérifier que les moteurs Java et JS donnent des résultats identiques au millime. Ce ne sont PAS des cas de référence validés par un spécialiste : ils contrôlent l'équivalence des deux implémentations, pas la conformité réglementaire.",
+  "cas": [
+    {
+      "id": "C01", "description": "Célibataire, salaire de base seul",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T001", "nom": "TEST", "prenom": "Un", "chefFamille": false, "nbEnfants": 0 },
+        "contrat": { "salaireBase": "1200", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C02", "description": "Chef de famille, 2 enfants, primes",
+      "entree": { "periode": "2026-10", "entreprise": { "tauxAT": "0.006", "tauxTFP": "0.02" },
+        "salarie": { "matricule": "T002", "nom": "TEST", "prenom": "Deux", "chefFamille": true, "nbEnfants": 2 },
+        "contrat": { "salaireBase": "2500", "horaireMensuel": "208" },
+        "variables": [ { "rubrique": "PRIME_PRESENCE", "montant": "100" }, { "rubrique": "IND_TRANSPORT", "montant": "60.500" } ] }
+    },
+    {
+      "id": "C03", "description": "Cadre, frais professionnels plafonnés, enfants étudiant et handicapé",
+      "entree": { "periode": "2026-03", "entreprise": {},
+        "salarie": { "matricule": "T003", "nom": "TEST", "prenom": "Trois", "chefFamille": true, "nbEnfants": 4, "nbEnfantsEtudiants": 1, "nbEnfantsHandicapes": 1 },
+        "contrat": { "salaireBase": "9000", "horaireMensuel": "173.33" },
+        "variables": [ { "rubrique": "PRIME_RENDEMENT", "montant": "1250.750" } ] }
+    },
+    {
+      "id": "C04", "description": "Bas salaire : IRPP et CSS nuls",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T004", "nom": "TEST", "prenom": "Quatre", "chefFamille": false },
+        "contrat": { "salaireBase": "450", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C05", "description": "Heures supplémentaires (taux horaire calculé)",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T005", "nom": "TEST", "prenom": "Cinq", "chefFamille": true, "nbEnfants": 1 },
+        "contrat": { "salaireBase": "1500", "horaireMensuel": "208" },
+        "variables": [ { "rubrique": "HS_1", "quantite": "10" }, { "rubrique": "HS_2", "quantite": "4.5" } ] }
+    },
+    {
+      "id": "C06", "description": "Absence en jours, avance et prêt",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T006", "nom": "TEST", "prenom": "Six", "chefFamille": false },
+        "contrat": { "salaireBase": "1350.250", "horaireMensuel": "208" },
+        "variables": [ { "rubrique": "ABS_JOURS", "quantite": "2" }, { "rubrique": "AVANCE", "montant": "200" }, { "rubrique": "PRET", "montant": "50", "commentaire": "Prêt n°3" } ] }
+    },
+    {
+      "id": "C07", "description": "Période 2024 : ancien barème, pas de perte d'emploi",
+      "entree": { "periode": "2024-06", "entreprise": {},
+        "salarie": { "matricule": "T007", "nom": "TEST", "prenom": "Sept", "chefFamille": true, "nbEnfants": 3 },
+        "contrat": { "salaireBase": "1800", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C08", "description": "Erreurs de saisie : rubrique inconnue, salaire de base en variable, montant manquant",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T008", "nom": "TEST", "prenom": "Huit", "chefFamille": false },
+        "contrat": { "salaireBase": "1000", "horaireMensuel": "208" },
+        "variables": [ { "rubrique": "XXX", "montant": "10" }, { "rubrique": "SAL_BASE", "montant": "500" }, { "rubrique": "PRIME_PRESENCE" } ] }
+    },
+    {
+      "id": "C09", "description": "Taux horaire saisi, absence en heures, remboursement de frais non soumis",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T009", "nom": "TEST", "prenom": "Neuf", "chefFamille": true, "nbEnfants": 5 },
+        "contrat": { "salaireBase": "2080", "horaireMensuel": "208", "tauxHoraire": "10.125" },
+        "variables": [ { "rubrique": "ABS_HEURES", "quantite": "7.5" }, { "rubrique": "REMB_FRAIS", "montant": "85.250" }, { "rubrique": "HS_1", "quantite": "3" } ] }
+    },
+    {
+      "id": "C10", "description": "Tous les éléments utilisés sont validés : bulletin certifiable",
+      "entree": { "periode": "2026-10", "entreprise": { "tauxAT": "0.004", "tauxTFP": "0.01" },
+        "salarie": { "matricule": "T010", "nom": "TEST", "prenom": "Dix", "chefFamille": false },
+        "contrat": { "salaireBase": "1200", "horaireMensuel": "208" }, "variables": [],
+        "validations": [
+          { "code": "CNSS_SAL_TAUX", "debut": "2019-01-01", "valeur": "0.0918" },
+          { "code": "CNSS_PAT_TAUX", "debut": "2019-01-01", "valeur": "0.1657" },
+          { "code": "CNSS_PE_SAL", "debut": "2025-01-01", "valeur": "0.0025" },
+          { "code": "CNSS_PE_PAT", "debut": "2025-01-01", "valeur": "0.0025" },
+          { "code": "FOPROLOS_TAUX", "debut": "2019-01-01", "valeur": "0.01" },
+          { "code": "FRAIS_PRO_TAUX", "debut": "2017-01-01", "valeur": "0.1" },
+          { "code": "FRAIS_PRO_PLAFOND", "debut": "2017-01-01", "valeur": "2000.000" },
+          { "code": "CSS_MAJORATION", "debut": "2023-01-01", "valeur": "0.005" },
+          { "code": "CSS_SEUIL_EXONERATION", "debut": "2020-01-01", "valeur": "5000" },
+          { "code": "CSS_MODE", "debut": "2023-01-01", "valeur": "TOUTES" },
+          { "code": "BAREME:IRPP", "debut": "2025-01-01", "valeur": "0|5000|0;5000|10000|0.15;10000|20000|0.25;20000|30000|0.3;30000|40000|0.33;40000|50000|0.36;50000|70000|0.38;70000||0.4" },
+          { "code": "RUB:SAL_BASE", "debut": "1900-01-01", "valeur": "GAIN|MONTANT|true|true|" }
+        ] }
+    },
+    {
+      "id": "C11", "description": "Revenu proche du seuil d'exonération CSS",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T011", "nom": "TEST", "prenom": "Onze", "chefFamille": true, "nbEnfants": 2 },
+        "contrat": { "salaireBase": "560", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C12", "description": "Enfants déclarés sans chef de famille",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T012", "nom": "TEST", "prenom": "Douze", "chefFamille": false, "nbEnfants": 2 },
+        "contrat": { "salaireBase": "1700", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C13", "description": "Période 2027 : paramètre CSS absent (fin d'effet 2026) => erreur bloquante",
+      "entree": { "periode": "2027-01", "entreprise": {},
+        "salarie": { "matricule": "T013", "nom": "TEST", "prenom": "Treize", "chefFamille": false },
+        "contrat": { "salaireBase": "1200", "horaireMensuel": "208" }, "variables": [] }
+    },
+    {
+      "id": "C14", "description": "Entrée en cours de mois, absence de 10 jours",
+      "entree": { "periode": "2026-10", "entreprise": {},
+        "salarie": { "matricule": "T014", "nom": "TEST", "prenom": "Quatorze", "chefFamille": false, "dateEntree": "2026-10-13" },
+        "contrat": { "salaireBase": "1333.333", "horaireMensuel": "208" },
+        "variables": [ { "rubrique": "ABS_JOURS", "quantite": "10" } ] }
+    },
+    {
+      "id": "C15", "description": "Très haut salaire, toutes tranches",
+      "entree": { "periode": "2026-12", "entreprise": {},
+        "salarie": { "matricule": "T015", "nom": "TEST", "prenom": "Quinze", "chefFamille": true, "nbEnfants": 1 },
+        "contrat": { "salaireBase": "15000", "horaireMensuel": "173.33" },
+        "variables": [ { "rubrique": "PRIME_ANCIENNETE", "montant": "333.333" }, { "rubrique": "IND_PANIER", "montant": "45.555" } ] }
+    }
+  ]
+}

@@ -4,7 +4,8 @@
 |---|---|---|
 | **Statut 1** — référence de secours 1 | dépôt `WiFi-Voice-Controlled-Robot`, dossier `reference-secours-1/` | Archive d'origine (console + API V3) avec les premiers correctifs de déploiement Railway |
 | **Statut 2** — V3.2 (archive) | branche **`archive/statut-2`** (commit `4df5c34`) · APK : version GitHub `android-v5` | Péremption FEFO, inventaires, étiquettes QR, cohérence du stock, base MySQL 8, application Android, pressage multi-graines, contraintes de cohérence |
-| **V4.0** — version actuelle | branche `main` · APK : prochaine version GitHub `android-vN` | Sécurité (droits par rôle, journal d'audit), fiabilité (restauration testée, tests automatiques), qualité des lots, rappel de lot, coûts et marges, paiements fournisseurs, e-mail des factures, numérotation configurable (voir ci-dessous) |
+| **V4.1** — version actuelle | branche `main` | **Modules installables** (Réglages › Modules) ; premier module : **Paie Tunisie** — voir `MODULES.md` |
+| **V4.0** | branche `main` · APK : prochaine version GitHub `android-vN` | Sécurité (droits par rôle, journal d'audit), fiabilité (restauration testée, tests automatiques), qualité des lots, rappel de lot, coûts et marges, paiements fournisseurs, e-mail des factures, numérotation configurable (voir ci-dessous) |
 | **V3.3** | tag/commits avant la V4 | Refonte de l'interface (voir plus bas) |
 
 Télécharger une archive : sur GitHub, choisir la branche `archive/statut-2` puis **Code → Download ZIP**,
@@ -12,6 +13,10 @@ ou `https://github.com/AbdeljawedSat/TinorV3/archive/refs/heads/archive/statut-2
 Copies zip prêtes à télécharger dans le dossier `archive/` : `tinor-v3.2-statut-2.zip` (Statut 2) et `tinor-v3.3.zip` (V3.3).
 
 Une branche d'archive ne doit plus recevoir de modifications.
+
+## V4.1 — modules installables
+
+TinOR devient extensible : Réglages › Modules installe, active, désactive et retire des modules (zip vérifié, droits propres à chaque module, réglages, menu dynamique, journal d'audit). Premier module fourni : **Paie Tunisie**, avec son moteur de calcul (identique à la version Java NetBeans), ses bulletins et ses états. Guide complet : `MODULES.md`.
 
 ## V4.0 — sécurité, qualité, gestion
 

@@ -1,0 +1,15 @@
+# Configuration de l'application Paie Tunisie (test)
+# Base MariaDB / MySQL : créer la base et l'utilisateur avant le premier lancement, les tables sont créées automatiquement.
+db.url=jdbc:mariadb://localhost:3306/paie
+db.user=paie
+db.password=CHANGER_MOI
+
+# Dossier d'archivage des bulletins PDF et états
+documents.dir=paie-documents
+
+# Contrôle à deux niveaux : la personne qui valide la paie doit être différente de celle qui a lancé le calcul
+controle.deux.niveaux=true
+
+# Facultatif : fichiers de paramètres externes (mise à jour réglementaire sans recompiler)
+#parametres.fichier=C:/paie/parametres-tn.json
+#rubriques.fichier=C:/paie/rubriques-tn.json

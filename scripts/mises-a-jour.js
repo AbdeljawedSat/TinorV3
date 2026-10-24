@@ -56,6 +56,13 @@ async function appliquerMisesAJour(conn, journal = console.log) {
     journal('✓ Mise à jour : table operations_sync créée (mode hors ligne).');
   }
 
+  // V4.1 — modules installables (Réglages › Modules).
+  const [mi] = await conn.query("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'modules_installes'");
+  if (!mi[0].n) {
+    for (const ordre of SQL_MODULES.split(';').filter(x => /CREATE TABLE/i.test(x))) await conn.query(ordre);
+    journal('✓ Mise à jour : tables des modules créées.');
+  }
+
   // V4 — coûts : coût unitaire saisi sur un lot, frais d'étape (main-d'œuvre, énergie), e-mail du client, paiements fournisseurs.
   if (!(await colonneExiste(conn, 'lots', 'cout_unitaire'))) {
     await conn.query('ALTER TABLE lots ADD COLUMN cout_unitaire DECIMAL(12,4) NULL');
@@ -289,6 +296,24 @@ const SQL_PAIEMENTS_FOURNISSEURS = `CREATE TABLE IF NOT EXISTS paiements_fournis
   FOREIGN KEY (achat_id) REFERENCES achats(id),
   INDEX idx_pf_achat (achat_id),
   INDEX idx_pf_fournisseur (fournisseur_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`;
+
+const SQL_MODULES = `CREATE TABLE IF NOT EXISTS modules_installes (
+  id           VARCHAR(40) NOT NULL PRIMARY KEY,
+  nom          VARCHAR(100) NOT NULL,
+  version      VARCHAR(20) NOT NULL,
+  actif        TINYINT(1) NOT NULL DEFAULT 0,
+  config       TEXT NULL,
+  sha256       CHAR(64) NULL,
+  installe_par VARCHAR(40) NULL,
+  installe_le  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS modules_droits (
+  module_id VARCHAR(40) NOT NULL,
+  user_id   INT NOT NULL,
+  role      VARCHAR(30) NOT NULL,
+  PRIMARY KEY (module_id, user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 

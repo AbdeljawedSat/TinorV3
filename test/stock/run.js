@@ -4,7 +4,7 @@
 const { execFileSync } = require('child_process');
 const path = require('path');
 let echec = false;
-for (const t of ['ecarts', 'peremption', 'inventaire', 'contraintes', 'ventes', 'hors-ligne', 'livraisons', 'tracabilite', 'numerotation', 'reprise', 'registres', 'melange', 'derives', 'securite', 'numerotation-formats', 'droits', 'concurrence', 'qualite', 'gestion']) {
+for (const t of ['ecarts', 'peremption', 'inventaire', 'contraintes', 'ventes', 'hors-ligne', 'livraisons', 'tracabilite', 'numerotation', 'reprise', 'registres', 'melange', 'derives', 'securite', 'numerotation-formats', 'droits', 'concurrence', 'qualite', 'gestion', 'modules']) {
   console.log(`\n=== ${t} ===`);
   try { execFileSync(process.execPath, [path.join(__dirname, `${t}.js`)], { stdio: 'inherit' }); }
   catch { echec = true; }

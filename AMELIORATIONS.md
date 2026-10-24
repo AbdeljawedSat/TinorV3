@@ -587,3 +587,18 @@ Tous ces seuils se modifient dans Réglages › Paramètres qualité.
 - Le coût d'un lot de graines sans achat enregistré demande un prix : le saisir sur la fiche produit (« Coût standard ») ou sur le lot (« 💰 Coût du lot »).
 - Le tourteau n'est pas valorisé (tout le coût est porté par l'huile).
 - Les opérations d'écriture des nouveaux écrans (analyses, paiements fournisseurs, e-mail) demandent d'être en ligne : elles ne passent pas par la file hors ligne.
+
+## V4.1 — modules installables (Réglages › Modules)
+
+TinOR devient extensible : on ajoute des fonctions sans toucher au code. Premier module : **Paie Tunisie** (moteur identique à la version Java NetBeans). Guide : `MODULES.md`.
+
+- **Écran Modules** (gérant) : modules installés (activer / désactiver / retirer, réglages, droits par utilisateur), modules disponibles (catalogue fourni), ajout d'un fichier `.zip`.
+- **Installation sûre** : zip contrôlé (taille, nombre de fichiers, chemins `../`, liens), `module.json` validé, version de TinOR vérifiée, module qui plante → rien n'est installé, mise à jour qui plante → version précédente rétablie.
+- **Droits** : chaque module a ses rôles ; par défaut selon le rôle TinOR (gérant → ADMIN, comptable → GESTIONNAIRE pour la paie), modifiables par utilisateur. Les données d'un module ne sont jamais supprimées.
+- **Console** : menu « Modules » dynamique, interface du module chargée à la demande et montée dans son écran.
+- **Paie** : salariés, contrats, éléments variables, simulation, validation à deux niveaux, bulletins FR / FR-AR, états CNSS / IRPP / CSS, paramètres réglementaires datés. ⚠ Bulletins « NON CERTIFIÉS » tant que les paramètres ne sont pas validés (voir `docs/PARAMETRES_A_CONFIRMER.md` du module).
+- **Tests** : `test/stock/modules.js` (installation, zips dangereux, droits, paie de bout en bout, données conservées), moteur et équivalence Java du module en CI, zip du module vérifié à jour.
+
+Paie 1.1.0 : import des employés de TinOR dans la paie (liste cochable, date d'entrée, jamais d'écrasement).
+
+Pistes suivantes : fichiers déclaratifs CNSS / DGI (formats officiels à obtenir), modules hors ligne.

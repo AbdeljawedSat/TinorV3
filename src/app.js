@@ -121,6 +121,32 @@ function createApp(pool) {
   app.use('/api/paiements-fournisseurs', acces, require('./routes/paiementsFournisseurs')(pool));
   app.use('/api/couts', acces, require('./routes/couts')(pool));
   app.use('/api/qualite', acces, require('./routes/qualite')(pool));
+  // ---- Modules installables (Réglages › Modules) ----
+  const { Modules } = require('./services/modules');
+  const modules = new Modules(pool, () => pool.creerPoolBrut());
+  modules.pret = modules.demarrer().catch(e => console.error('[modules]', e.message));
+  app.set('modules', modules);
+  const { routeurListe, routeurAdmin } = require('./routes/modules');
+  app.use('/api/modules-admin', acces, routeurAdmin(pool, modules));
+  app.use('/api/modules', acces, routeurListe(pool, modules));
+  // API d'un module : /api/m/<id>/… (le rôle du module est décidé ici, d'après Réglages › Modules › Droits)
+  app.use('/api/m/:id', acces, async (req, res, next) => {
+    await modules.pret;
+    const m = modules.actifs.get(req.params.id);
+    if (!m) return res.status(404).json({ error: 'Module non installé ou désactivé.' });
+    const surcharges = await modules.droitsSauves(req.params.id);
+    const role = modules.roleDans(m.manifeste, { id: req.user.id, role: req.user.role }, surcharges);
+    if (!role) return res.status(403).json({ error: `Vous n'avez pas accès au module « ${m.manifeste.nom} » (Réglages › Modules › Droits).` });
+    req.moduleUtilisateur = { id: req.user.id, login: req.user.username, roleTinor: req.user.role, role };
+    m.routeur(req, res, next);
+  });
+  // Interface d'un module (scripts du dossier ui/ seulement), servie tant que le module est actif.
+  app.use('/modules-ui/:id', (req, res, next) => {
+    const m = modules.actifs.get(req.params.id);
+    if (!m) return res.status(404).end();
+    res.set('Cache-Control', 'no-cache');
+    express.static(require('path').join(m.dossier, 'ui'), { dotfiles: 'deny', index: false })(req, res, next);
+  });
   app.use('/api/audit', acces, require('./routes/audit')(pool));
   app.use('/api/numerotation', acces, require('./routes/numerotation')(pool));
   app.use('/api/certificats', acces, require('./routes/certificats')(pool));

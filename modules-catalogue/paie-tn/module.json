@@ -1,0 +1,57 @@
+{
+  "id": "paie-tn",
+  "nom": "Paie Tunisie",
+  "version": "1.1.0",
+  "description": "Paie tunisienne : salariés et contrats, éléments variables, simulation, validation à deux niveaux, bulletins (FR ou FR/AR), états CNSS / IRPP / CSS, paramètres réglementaires datés et modifiables.",
+  "auteur": "SATOURI Abdeljawed",
+  "licence": "Propriétaire",
+  "tinor": ">=4.0.0",
+  "main": "tinor-module.js",
+  "dependances": [
+    "decimal.js"
+  ],
+  "ecran": {
+    "titre": "Paie",
+    "icone": "employe",
+    "ui": {
+      "script": "ui/tinor-paie-ui.js",
+      "global": "TinorPaie",
+      "monter": "monter"
+    }
+  },
+  "roles": {
+    "liste": [
+      "ADMIN",
+      "GESTIONNAIRE",
+      "VALIDEUR",
+      "CONSULTATION"
+    ],
+    "parDefaut": {
+      "gerant": "ADMIN",
+      "comptable": "GESTIONNAIRE"
+    },
+    "descriptions": {
+      "ADMIN": "Tout : paramètres réglementaires, entreprise, clôture, réouverture, journal",
+      "GESTIONNAIRE": "Salariés, contrats, éléments variables, simulation, exports",
+      "VALIDEUR": "Valide la paie et les paramètres réglementaires",
+      "CONSULTATION": "Lecture seule"
+    }
+  },
+  "config": [
+    {
+      "cle": "controleDeuxNiveaux",
+      "type": "booleen",
+      "defaut": true,
+      "libelle": "Contrôle à deux niveaux : la paie doit être validée par une autre personne que celle qui l'a calculée (recommandé ; à désactiver seulement s'il n'y a qu'un seul utilisateur autorisé)"
+    }
+  ],
+  "donnees": "Tables paie_* dans la base TinOR. Elles sont conservées si le module est désactivé ou retiré.",
+  "empaqueter": {
+    "exclure": [
+      "java/",
+      "test/",
+      "scripts/",
+      "README-paie-tn.md"
+    ]
+  }
+}

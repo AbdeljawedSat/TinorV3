@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>tn.jas.paie</groupId>
+    <artifactId>paie-tn-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+  <artifactId>paie-app</artifactId>
+  <name>Paie Tunisie – application de test (Swing)</name>
+
+  <properties>
+    <exec.mainClass>tn.jas.paie.app.App</exec.mainClass>
+    <skipITs>false</skipITs>
+    <it.url>jdbc:mariadb://localhost:3306/</it.url>
+    <it.password></it.password>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>tn.jas.paie</groupId>
+      <artifactId>paie-engine</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>2.0.32</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mariadb.jdbc</groupId>
+      <artifactId>mariadb-java-client</artifactId>
+      <version>3.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/../../shared/sql</directory>
+        <targetPath>db</targetPath>
+      </resource>
+    </resources>
+    <plugins>
+      <!-- Tests unitaires : mvn test. Test d'intégration MariaDB : mvn verify -Dit.user=... -Dit.password=... -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals><goal>integration-test</goal><goal>verify</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <skipITs>${skipITs}</skipITs>
+          <systemPropertyVariables>
+            <it.url>${it.url}</it.url>
+            <it.user>${it.user}</it.user>
+            <it.password>${it.password}</it.password>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <!-- JAR exécutable autonome : target/paie-app-1.0.0.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>tn.jas.paie.app.App</mainClass>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+              </transformers>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes><exclude>META-INF/*.SF</exclude><exclude>META-INF/*.DSA</exclude><exclude>META-INF/*.RSA</exclude></excludes>
+                </filter>
+              </filters>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>sans-it</id>
+      <activation><property><name>!it.user</name></property></activation>
+      <properties><skipITs>true</skipITs></properties>
+    </profile>
+  </profiles>
+</project>
